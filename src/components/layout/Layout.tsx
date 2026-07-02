@@ -1,6 +1,7 @@
 import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { useLiveSwapNotifications } from '@/hooks/useLiveSwapNotifications';
 
 // Defer decorative backgrounds — pure visuals, not part of the critical path.
 const WaveBackground = lazy(() =>
