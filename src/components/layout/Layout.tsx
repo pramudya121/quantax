@@ -21,6 +21,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [showBot, setShowBot] = useState(false);
+  useLiveSwapNotifications();
 
   useEffect(() => {
     const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
