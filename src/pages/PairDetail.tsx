@@ -150,6 +150,11 @@ export default function PairDetail() {
           ))}
         </div>
 
+        {/* On-chain Swap Event Price History */}
+        <div className="mb-6">
+          <PriceHistoryChart pools={singlePool} logs={swapLogs} latestBlock={latestBlock} isLoading={volLoading} />
+        </div>
+
         {/* Chart + Pricing */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
           <div className="lg:col-span-2">
