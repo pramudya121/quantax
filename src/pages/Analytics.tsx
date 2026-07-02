@@ -16,6 +16,7 @@ import { TOKEN_LIST } from '@/config/contracts';
 import { Link } from 'react-router-dom';
 import { TokenDetails } from '@/components/analytics/TokenDetails';
 import { TokenIcon } from '@/components/ui/TokenIcon';
+import { PriceHistoryChart } from '@/components/analytics/PriceHistoryChart';
 
 type AnalyticsTab = 'overview' | 'pools' | 'tokens' | 'activity';
 
