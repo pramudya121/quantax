@@ -10,9 +10,11 @@ import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { GlowOrb } from '@/components/ui/premium/GlowOrb';
 import { SwapPriceChart } from '@/components/swap/SwapPriceChart';
+import { PriceHistoryChart } from '@/components/analytics/PriceHistoryChart';
 import { TokenIcon } from '@/components/ui/TokenIcon';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices, usePoolTVL } from '@/hooks/usePrices';
+import { useSwapVolume } from '@/hooks/useSwapVolume';
 
 export default function PairDetail() {
   const { address } = useParams<{ address: string }>();
