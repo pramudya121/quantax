@@ -16,6 +16,7 @@ import { TOKEN_LIST } from '@/config/contracts';
 import { Link } from 'react-router-dom';
 import { TokenDetails } from '@/components/analytics/TokenDetails';
 import { TokenIcon } from '@/components/ui/TokenIcon';
+import { PriceHistoryChart } from '@/components/analytics/PriceHistoryChart';
 
 type AnalyticsTab = 'overview' | 'pools' | 'tokens' | 'activity';
 
@@ -68,7 +69,7 @@ function StatCard({ icon: Icon, label, value, prefix = '', suffix = '', delay = 
 export default function Analytics() {
   const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
-  const { logs: swapLogs, stats: volStats, isLoading: volLoading, refetch: refetchVol } = useSwapVolume(pools, prices);
+  const { logs: swapLogs, stats: volStats, isLoading: volLoading, refetch: refetchVol, latestBlock } = useSwapVolume(pools, prices);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
 
   const totalTVL = useMemo(() => {
@@ -214,7 +215,8 @@ export default function Analytics() {
         {/* Tab Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-4">
+              <PriceHistoryChart pools={pools} logs={swapLogs} latestBlock={latestBlock} isLoading={volLoading} />
               <div className="grid md:grid-cols-2 gap-4">
                 {/* TVL Bar Chart */}
                 <div className="glass-card p-4 md:p-5">

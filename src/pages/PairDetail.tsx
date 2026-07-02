@@ -10,9 +10,11 @@ import { Card } from '@/components/ui/card';
 import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { GlowOrb } from '@/components/ui/premium/GlowOrb';
 import { SwapPriceChart } from '@/components/swap/SwapPriceChart';
+import { PriceHistoryChart } from '@/components/analytics/PriceHistoryChart';
 import { TokenIcon } from '@/components/ui/TokenIcon';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices, usePoolTVL } from '@/hooks/usePrices';
+import { useSwapVolume } from '@/hooks/useSwapVolume';
 
 export default function PairDetail() {
   const { address } = useParams<{ address: string }>();
@@ -38,6 +40,9 @@ export default function PairDetail() {
     dec1,
     prices
   );
+
+  const singlePool = useMemo(() => (pool ? [pool] : []), [pool]);
+  const { logs: swapLogs, latestBlock, isLoading: volLoading } = useSwapVolume(singlePool, prices);
 
   const price0in1 = reserve0 > 0 ? reserve1 / reserve0 : 0;
   const price1in0 = reserve1 > 0 ? reserve0 / reserve1 : 0;
@@ -143,6 +148,11 @@ export default function PairDetail() {
               <div className={`font-mono font-bold text-lg mt-1 ${s.color}`}>{s.value}</div>
             </Card>
           ))}
+        </div>
+
+        {/* On-chain Swap Event Price History */}
+        <div className="mb-6">
+          <PriceHistoryChart pools={singlePool} logs={swapLogs} latestBlock={latestBlock} isLoading={volLoading} />
         </div>
 
         {/* Chart + Pricing */}
