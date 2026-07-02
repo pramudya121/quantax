@@ -215,7 +215,8 @@ export default function Analytics() {
         {/* Tab Content */}
         <AnimatePresence mode="wait">
           {activeTab === 'overview' && (
-            <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+            <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-4">
+              <PriceHistoryChart pools={pools} logs={swapLogs} latestBlock={latestBlock} isLoading={volLoading} />
               <div className="grid md:grid-cols-2 gap-4">
                 {/* TVL Bar Chart */}
                 <div className="glass-card p-4 md:p-5">
