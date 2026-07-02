@@ -41,6 +41,9 @@ export default function PairDetail() {
     prices
   );
 
+  const singlePool = useMemo(() => (pool ? [pool] : []), [pool]);
+  const { logs: swapLogs, latestBlock, isLoading: volLoading } = useSwapVolume(singlePool, prices);
+
   const price0in1 = reserve0 > 0 ? reserve1 / reserve0 : 0;
   const price1in0 = reserve1 > 0 ? reserve0 / reserve1 : 0;
 
