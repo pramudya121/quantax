@@ -49,51 +49,25 @@ export function useLiveSwapNotifications() {
         const from = cursor.current;
         if (from > latest) return;
 
-        const logs = await client.getLogs({
-          address: addresses,
-          event: SWAP_EVENT,
-          fromBlock: from,
-          toBlock: latest,
-        });
+        const fmt = (n: number) =>
+          n.toLocaleString(undefined, { maximumFractionDigits: 6 });
+
+        const [swapLogs, mintLogs, burnLogs] = await Promise.all([
+          client.getLogs({ address: addresses, event: SWAP_EVENT, fromBlock: from, toBlock: latest }).catch(() => []),
+          client.getLogs({ address: addresses, event: MINT_EVENT, fromBlock: from, toBlock: latest }).catch(() => []),
+          client.getLogs({ address: addresses, event: BURN_EVENT, fromBlock: from, toBlock: latest }).catch(() => []),
+        ]);
 
         cursor.current = latest + 1n;
 
-        for (const log of logs) {
-          const key = `${log.transactionHash}-${log.logIndex}`;
-          if (seenTx.current.has(key)) continue;
-          seenTx.current.add(key);
-
-          const sender = (log.args.sender as string).toLowerCase();
-          const to = (log.args.to as string).toLowerCase();
-          if (sender !== lower && to !== lower) continue;
-
-          // Skip toasts fired for the historical backfill on first run —
-          // the user hasn't performed those in the current session.
-          if (!initialised.current) continue;
-
-          const pool = poolByAddr.get((log.address as string).toLowerCase());
-          if (!pool) continue;
-          const dec0 = pool.token0?.decimals ?? 18;
-          const dec1 = pool.token1?.decimals ?? 18;
-          const a0In = log.args.amount0In as bigint;
-          const a0Out = log.args.amount0Out as bigint;
-          const a1In = log.args.amount1In as bigint;
-          const a1Out = log.args.amount1Out as bigint;
-          const isToken0In = a0In > 0n;
-          const amountIn = parseFloat(
-            formatUnits(isToken0In ? a0In : a1In, isToken0In ? dec0 : dec1)
-          );
-          const amountOut = parseFloat(
-            formatUnits(isToken0In ? a1Out : a0Out, isToken0In ? dec1 : dec0)
-          );
-          const symIn = isToken0In ? pool.token0Symbol : pool.token1Symbol;
-          const symOut = isToken0In ? pool.token1Symbol : pool.token0Symbol;
-          const fmt = (n: number) =>
-            n.toLocaleString(undefined, { maximumFractionDigits: 6 });
-
-          toast.success(`Swap confirmed`, {
+        const notify = (
+          log: any,
+          title: string,
+          description: string,
+        ) => {
+          toast.success(title, {
             id: log.transactionHash,
-            description: `${fmt(amountIn)} ${symIn} → ${fmt(amountOut)} ${symOut}`,
+            description,
             action: {
               label: 'View',
               onClick: () =>
@@ -104,6 +78,59 @@ export function useLiveSwapNotifications() {
                 ),
             },
           });
+        };
+
+        for (const log of swapLogs) {
+          const key = `${log.transactionHash}-${log.logIndex}`;
+          if (seenTx.current.has(key)) continue;
+          seenTx.current.add(key);
+          const sender = (log.args.sender as string).toLowerCase();
+          const to = (log.args.to as string).toLowerCase();
+          if (sender !== lower && to !== lower) continue;
+          if (!initialised.current) continue;
+          const pool = poolByAddr.get((log.address as string).toLowerCase());
+          if (!pool) continue;
+          const dec0 = pool.token0?.decimals ?? 18;
+          const dec1 = pool.token1?.decimals ?? 18;
+          const a0In = log.args.amount0In as bigint;
+          const a0Out = log.args.amount0Out as bigint;
+          const a1In = log.args.amount1In as bigint;
+          const a1Out = log.args.amount1Out as bigint;
+          const isToken0In = a0In > 0n;
+          const amountIn = parseFloat(formatUnits(isToken0In ? a0In : a1In, isToken0In ? dec0 : dec1));
+          const amountOut = parseFloat(formatUnits(isToken0In ? a1Out : a0Out, isToken0In ? dec1 : dec0));
+          const symIn = isToken0In ? pool.token0Symbol : pool.token1Symbol;
+          const symOut = isToken0In ? pool.token1Symbol : pool.token0Symbol;
+          notify(log, 'Swap confirmed', `${fmt(amountIn)} ${symIn} → ${fmt(amountOut)} ${symOut}`);
+        }
+
+        for (const log of mintLogs) {
+          const key = `${log.transactionHash}-${log.logIndex}`;
+          if (seenTx.current.has(key)) continue;
+          seenTx.current.add(key);
+          const sender = (log.args.sender as string).toLowerCase();
+          if (sender !== lower) continue;
+          if (!initialised.current) continue;
+          const pool = poolByAddr.get((log.address as string).toLowerCase());
+          if (!pool) continue;
+          const a0 = parseFloat(formatUnits(log.args.amount0 as bigint, pool.token0?.decimals ?? 18));
+          const a1 = parseFloat(formatUnits(log.args.amount1 as bigint, pool.token1?.decimals ?? 18));
+          notify(log, 'Liquidity added', `+${fmt(a0)} ${pool.token0Symbol} + ${fmt(a1)} ${pool.token1Symbol}`);
+        }
+
+        for (const log of burnLogs) {
+          const key = `${log.transactionHash}-${log.logIndex}`;
+          if (seenTx.current.has(key)) continue;
+          seenTx.current.add(key);
+          const sender = (log.args.sender as string).toLowerCase();
+          const to = (log.args.to as string).toLowerCase();
+          if (sender !== lower && to !== lower) continue;
+          if (!initialised.current) continue;
+          const pool = poolByAddr.get((log.address as string).toLowerCase());
+          if (!pool) continue;
+          const a0 = parseFloat(formatUnits(log.args.amount0 as bigint, pool.token0?.decimals ?? 18));
+          const a1 = parseFloat(formatUnits(log.args.amount1 as bigint, pool.token1?.decimals ?? 18));
+          notify(log, 'Liquidity removed', `-${fmt(a0)} ${pool.token0Symbol} + ${fmt(a1)} ${pool.token1Symbol}`);
         }
 
         // Mark ready after the first successful poll so future logs alert.
