@@ -12,9 +12,11 @@ interface PoolCardProps {
   pool: LiquidityPool;
   index: number;
   prices: Record<string, number>;
+  volume24h?: number;
+  isHot?: boolean;
 }
 
-export function PoolCard({ pool, index, prices }: PoolCardProps) {
+export function PoolCard({ pool, index, prices, volume24h = 0, isHot = false }: PoolCardProps) {
   const token0Logo = pool.token0?.logoURI || '/tokens/opn.jpg';
   const token1Logo = pool.token1?.logoURI || '/tokens/opn.jpg';
 
@@ -29,13 +31,13 @@ export function PoolCard({ pool, index, prices }: PoolCardProps) {
   );
 
   const hasLiquidity = pool.reserve0 > 0n && pool.reserve1 > 0n;
-  
-  // Simulated APY based on TVL (would be real in production)
-  const apy = hasLiquidity ? (5 + Math.random() * 20).toFixed(2) : '0';
-  // Simulated 24h volume
-  const volume24h = hasLiquidity ? tvl * (0.03 + Math.random() * 0.08) : 0;
-  // Simulated 24h fees
+
+  // Real APR from on-chain 24h volume (fallback: 0 when no volume yet)
   const fees24h = volume24h * 0.003;
+  const aprNum = hasLiquidity && tvl > 0 && volume24h > 0
+    ? (fees24h * 365 / tvl) * 100
+    : 0;
+  const apy = aprNum > 0 ? aprNum.toFixed(2) : '0';
 
   return (
     <motion.div
@@ -61,12 +63,19 @@ export function PoolCard({ pool, index, prices }: PoolCardProps) {
                 className="border-2 border-background ring-1 ring-border/50" />
             </div>
             <div>
-              <h3 className="font-display font-bold text-sm md:text-base tracking-tight">{pool.token0Symbol}<span className="text-muted-foreground/60">/</span>{pool.token1Symbol}</h3>
+              <h3 className="font-display font-bold text-sm md:text-base tracking-tight flex items-center gap-1.5">
+                {pool.token0Symbol}<span className="text-muted-foreground/60">/</span>{pool.token1Symbol}
+                {isHot && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-primary/15 text-primary border border-primary/30">
+                    🔥 HOT
+                  </span>
+                )}
+              </h3>
               <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
                 <span className="px-1.5 py-0.5 rounded bg-muted/60 font-medium">0.30% fee</span>
-                {hasLiquidity && (
+                {hasLiquidity && volume24h > 0 && (
                   <span className="flex items-center gap-0.5 text-success">
-                    <TrendingUp className="w-2.5 h-2.5" />+0.00%
+                    <TrendingUp className="w-2.5 h-2.5" />Active
                   </span>
                 )}
               </div>

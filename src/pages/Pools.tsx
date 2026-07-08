@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices } from '@/hooks/usePrices';
+import { useSwapVolume } from '@/hooks/useSwapVolume';
 import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { PoolCardSkeleton } from '@/components/ui/loading/Skeleton';
 import { PoolCard } from '@/components/pools/PoolCard';
@@ -17,6 +18,15 @@ import { formatUnits } from 'viem';
 export default function Pools() {
   const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
+  const { stats: swapStats } = useSwapVolume(pools, prices);
+  const perPool = swapStats.perPool;
+  const hotPoolAddr = useMemo(() => {
+    let top: string | null = null; let max = 0;
+    for (const [addr, vol] of Object.entries(perPool)) {
+      if (vol > max) { max = vol; top = addr; }
+    }
+    return max > 0 ? top : null;
+  }, [perPool]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filter, setFilter] = useState<'all' | 'active' | 'empty'>('all');
@@ -55,17 +65,17 @@ export default function Pools() {
     return filtered.sort((a, b) => {
       if (sortBy === 'tvl') return computeTvl(b) - computeTvl(a);
       if (sortBy === 'volume') {
-        // Proxy: total reserves magnitude (no historic volume on-chain yet)
-        const aMag = Number(a.reserve0) + Number(a.reserve1);
-        const bMag = Number(b.reserve0) + Number(b.reserve1);
-        return bMag - aMag;
+        return (perPool[b.pairAddress] || 0) - (perPool[a.pairAddress] || 0);
       }
-      // APY proxy: pools with higher TVL get lower implied APR — invert
-      const tA = computeTvl(a) || 1;
-      const tB = computeTvl(b) || 1;
-      return (1 / tA) - (1 / tB);
+      // APR = fees24h * 365 / TVL
+      const aprOf = (p: typeof pools[number]) => {
+        const t = computeTvl(p);
+        const v = perPool[p.pairAddress] || 0;
+        return t > 0 && v > 0 ? (v * 0.003 * 365) / t : 0;
+      };
+      return aprOf(b) - aprOf(a);
     });
-  }, [pools, prices, searchQuery, filter, sortBy]);
+  }, [pools, prices, searchQuery, filter, sortBy, perPool]);
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8 pb-24 lg:pb-8 relative min-h-screen">
@@ -189,7 +199,14 @@ export default function Pools() {
             viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'
           )}>
             {filteredPools.map((pool, i) => (
-              <PoolCard key={pool.pairAddress} pool={pool} index={i} prices={prices} />
+              <PoolCard
+                key={pool.pairAddress}
+                pool={pool}
+                index={i}
+                prices={prices}
+                volume24h={perPool[pool.pairAddress] || 0}
+                isHot={hotPoolAddr === pool.pairAddress}
+              />
             ))}
           </div>
         ) : (
