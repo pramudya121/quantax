@@ -7,6 +7,12 @@ import { useLiquidityPools } from './useLiquidityPools';
 const SWAP_EVENT = parseAbiItem(
   'event Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)'
 );
+const MINT_EVENT = parseAbiItem(
+  'event Mint(address indexed sender, uint256 amount0, uint256 amount1)'
+);
+const BURN_EVENT = parseAbiItem(
+  'event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to)'
+);
 
 const POLL_MS = 15_000;
 const LOOKBACK_BLOCKS = 500n; // small window so first poll doesn't spam old toasts
