@@ -65,17 +65,17 @@ export default function Pools() {
     return filtered.sort((a, b) => {
       if (sortBy === 'tvl') return computeTvl(b) - computeTvl(a);
       if (sortBy === 'volume') {
-        // Proxy: total reserves magnitude (no historic volume on-chain yet)
-        const aMag = Number(a.reserve0) + Number(a.reserve1);
-        const bMag = Number(b.reserve0) + Number(b.reserve1);
-        return bMag - aMag;
+        return (perPool[b.pairAddress] || 0) - (perPool[a.pairAddress] || 0);
       }
-      // APY proxy: pools with higher TVL get lower implied APR — invert
-      const tA = computeTvl(a) || 1;
-      const tB = computeTvl(b) || 1;
-      return (1 / tA) - (1 / tB);
+      // APR = fees24h * 365 / TVL
+      const aprOf = (p: typeof pools[number]) => {
+        const t = computeTvl(p);
+        const v = perPool[p.pairAddress] || 0;
+        return t > 0 && v > 0 ? (v * 0.003 * 365) / t : 0;
+      };
+      return aprOf(b) - aprOf(a);
     });
-  }, [pools, prices, searchQuery, filter, sortBy]);
+  }, [pools, prices, searchQuery, filter, sortBy, perPool]);
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8 pb-24 lg:pb-8 relative min-h-screen">
