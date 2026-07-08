@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices } from '@/hooks/usePrices';
+import { useSwapVolume } from '@/hooks/useSwapVolume';
 import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { PoolCardSkeleton } from '@/components/ui/loading/Skeleton';
 import { PoolCard } from '@/components/pools/PoolCard';
@@ -17,6 +18,15 @@ import { formatUnits } from 'viem';
 export default function Pools() {
   const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
+  const { stats: swapStats } = useSwapVolume(pools, prices);
+  const perPool = swapStats.perPool;
+  const hotPoolAddr = useMemo(() => {
+    let top: string | null = null; let max = 0;
+    for (const [addr, vol] of Object.entries(perPool)) {
+      if (vol > max) { max = vol; top = addr; }
+    }
+    return max > 0 ? top : null;
+  }, [perPool]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filter, setFilter] = useState<'all' | 'active' | 'empty'>('all');
