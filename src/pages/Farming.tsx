@@ -351,7 +351,7 @@ function FarmCard({
                   This will immediately unstake <b>{formatTokenAmount(staked, 18, 6)} LP</b> from the farm.
                 </span>
                 <span className="block text-destructive font-medium">
-                  All pending rewards ({formatTokenAmount(pending, 18, 6)} {pool.rewardSymbol}) will be forfeited.
+                  All pending rewards ({formatTokenAmount(pending, pool.rewardDecimals, 6)} {pool.rewardSymbol}) will be forfeited.
                 </span>
                 <span className="block text-muted-foreground text-xs">
                   Use this only if the farm contract is misbehaving or you need funds instantly. Prefer "Harvest" + "Unstake" for normal exits.
