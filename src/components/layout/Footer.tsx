@@ -12,6 +12,7 @@ const footerLinks = {
   ],
   Resources: [
     { name: 'Documentation', path: '/docs' },
+    { name: 'Learn DeFi', path: '/learn' },
     { name: 'Portfolio', path: '/portfolio' },
     { name: 'OPN Explorer', path: 'https://testnet.iopn.tech', external: true },
   ],

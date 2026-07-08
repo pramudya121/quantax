@@ -21,6 +21,7 @@ const Analytics = lazy(() => import("./pages/Analytics"));
 const Portfolio = lazy(() => import("./pages/Portfolio"));
 const CreatePool = lazy(() => import("./pages/CreatePool"));
 const Docs = lazy(() => import("./pages/Docs"));
+const Learn = lazy(() => import("./pages/Learn"));
 const Farming = lazy(() => import("./pages/Farming"));
 const AdminFarming = lazy(() => import("./pages/AdminFarming"));
 const PairDetail = lazy(() => import("./pages/PairDetail"));
@@ -81,7 +82,9 @@ function AppRoutes() {
       <Route path="/analytics" element={<PageWrapper><Analytics /></PageWrapper>} />
       <Route path="/portfolio" element={<PageWrapper><Portfolio /></PageWrapper>} />
       <Route path="/docs" element={<PageWrapper><Docs /></PageWrapper>} />
+      <Route path="/learn" element={<PageWrapper><Learn /></PageWrapper>} />
       <Route path="/farming" element={<PageWrapper><Farming /></PageWrapper>} />
+
       <Route path="/admin/farming" element={<PageWrapper><AdminFarming /></PageWrapper>} />
       <Route path="/pool/:address" element={<PageWrapper><PairDetail /></PageWrapper>} />
       <Route path="/status" element={<PageWrapper><ContractStatus /></PageWrapper>} />

@@ -655,4 +655,38 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  /* ---- Mobile UX pass (P3) ---- */
+
+  /* Momentum + hidden scrollbar for horizontal tab strips on mobile */
+  .scroll-x-snap {
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+  .scroll-x-snap::-webkit-scrollbar { display: none; }
+  .scroll-x-snap > * { scroll-snap-align: start; }
+
+  /* Sticky bottom CTA container — sits above the mobile FloatingDock (~64px)
+     and respects device safe-area insets. */
+  .sticky-cta {
+    position: sticky;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 72px);
+    z-index: 30;
+  }
+  @media (min-width: 1024px) {
+    .sticky-cta { position: static; bottom: auto; }
+  }
+
+  /* Ensure every interactive control on touch devices meets the 44×44 tap
+     target minimum without touching each component. Applies only on coarse
+     pointers (phones/tablets) so desktop density is untouched. */
+  @media (pointer: coarse) {
+    button:not(.no-tap-min),
+    a[role="button"]:not(.no-tap-min),
+    [role="tab"]:not(.no-tap-min),
+    [role="menuitem"]:not(.no-tap-min) {
+      min-height: 40px;
+    }
+  }
 }

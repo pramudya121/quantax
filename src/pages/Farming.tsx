@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { GlowOrb } from '@/components/ui/premium/GlowOrb';
 import { Meteors } from '@/components/ui/magic/Meteors';
@@ -79,6 +81,8 @@ function FarmCard({
   const [amount, setAmount] = useState('');
   const [busy, setBusy] = useState(false);
   const [allowance, setAllowance] = useState<bigint>(0n);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
+  const [emergencyAck, setEmergencyAck] = useState(false);
 
   const { data: balanceRaw } = useReadContract({
     address: pool.stakingToken,
@@ -325,15 +329,64 @@ function FarmCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-full text-destructive hover:bg-destructive/10"
+                className="w-full min-h-11 text-destructive hover:bg-destructive/10"
                 disabled={busy || staked === 0n}
-                onClick={() => handle(() => emergencyWithdraw(pool.pid))}
+                onClick={() => { setEmergencyAck(false); setEmergencyOpen(true); }}
               >
                 <AlertTriangle className="w-3 h-3 mr-1" /> Emergency Withdraw (forfeit rewards)
               </Button>
             </TabsContent>
           </Tabs>
         </div>
+
+        <Dialog open={emergencyOpen} onOpenChange={setEmergencyOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-destructive">
+                <AlertTriangle className="w-5 h-5" />
+                Emergency Withdraw
+              </DialogTitle>
+              <DialogDescription className="text-left space-y-2 pt-2">
+                <span className="block">
+                  This will immediately unstake <b>{formatTokenAmount(staked, 18, 6)} LP</b> from the farm.
+                </span>
+                <span className="block text-destructive font-medium">
+                  All pending rewards ({formatTokenAmount(pending, pool.rewardDecimals, 6)} {pool.rewardSymbol}) will be forfeited.
+                </span>
+                <span className="block text-muted-foreground text-xs">
+                  Use this only if the farm contract is misbehaving or you need funds instantly. Prefer "Harvest" + "Unstake" for normal exits.
+                </span>
+              </DialogDescription>
+            </DialogHeader>
+            <label className="flex items-start gap-2 p-3 rounded-lg border border-destructive/30 bg-destructive/5 cursor-pointer">
+              <Checkbox
+                checked={emergencyAck}
+                onCheckedChange={(v) => setEmergencyAck(v === true)}
+                className="mt-0.5"
+              />
+              <span className="text-xs leading-relaxed">
+                I understand I will <b>forfeit all pending rewards</b> and cannot recover them.
+              </span>
+            </label>
+            <DialogFooter className="flex-col-reverse sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setEmergencyOpen(false)} className="min-h-11">
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={!emergencyAck || busy}
+                className="min-h-11"
+                onClick={async () => {
+                  setEmergencyOpen(false);
+                  await handle(() => emergencyWithdraw(pool.pid));
+                }}
+              >
+                {busy ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <AlertTriangle className="w-4 h-4 mr-2" />}
+                Confirm Emergency Withdraw
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Card>
     </motion.div>
   );

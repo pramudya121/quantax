@@ -14,6 +14,7 @@ DRAGONDEX runs entirely on-chain with non-custodial wallet connections (MetaMask
 - [Analytics](/analytics): Protocol-wide analytics — TVL, volume, top pairs, charts.
 - [Portfolio](/portfolio): Track token balances, LP positions, transaction history, and send tokens.
 - [Docs](/docs): User guides, DeFi concepts, smart-contract addresses, FAQ, and roadmap.
+- [Learn](/learn): Plain-English guides — What is a DEX, How to Swap, Providing Liquidity, Impermanent Loss, Farming Risks.
 
 ## Optional
 
