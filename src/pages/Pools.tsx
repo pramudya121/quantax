@@ -199,7 +199,14 @@ export default function Pools() {
             viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2'
           )}>
             {filteredPools.map((pool, i) => (
-              <PoolCard key={pool.pairAddress} pool={pool} index={i} prices={prices} />
+              <PoolCard
+                key={pool.pairAddress}
+                pool={pool}
+                index={i}
+                prices={prices}
+                volume24h={perPool[pool.pairAddress] || 0}
+                isHot={hotPoolAddr === pool.pairAddress}
+              />
             ))}
           </div>
         ) : (
