@@ -39,6 +39,7 @@ export function SwapCard() {
   const [showDetails, setShowDetails] = useState(false);
   const [autoSlippage, setAutoSlippage] = useState(true);
   const [processedHash, setProcessedHash] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(false);
 
   const NATIVE_GAS_RESERVE = 0.01;
 
