@@ -39,6 +39,7 @@ export function SwapCard() {
   const [showDetails, setShowDetails] = useState(false);
   const [autoSlippage, setAutoSlippage] = useState(true);
   const [processedHash, setProcessedHash] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(false);
 
   const NATIVE_GAS_RESERVE = 0.01;
 
@@ -339,6 +340,13 @@ export function SwapCard() {
 
   const handleSwap = useCallback(async () => {
     if (!address || !fromToken || !toToken || !fromAmount) return;
+    if (cooldown) {
+      toast.info('Please wait…', { description: 'Cooldown active to prevent double-submit.' });
+      return;
+    }
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 3000);
+
 
     if (fromToken.isNative) {
       const nativeBal = nativeBalance ? parseFloat(formatEther(nativeBalance.value)) : 0;
@@ -391,7 +399,7 @@ export function SwapCard() {
     } else {
       router.swapExactTokensForTokens(amountIn!, minOutput, swapPath, address, deadline);
     }
-  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, nativeBalance, wethAddress]);
+  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, nativeBalance, wethAddress, cooldown]);
 
   const handleApprove = async () => {
     if (!fromToken || fromToken.isNative) return;
@@ -838,6 +846,7 @@ export function SwapCard() {
                   disabled={
                     !fromAmount || 
                     isLoading || 
+                    cooldown ||
                     (!isWrapUnwrap && isPoolDataLoading) || 
                     parseFloat(fromAmount) > parseFloat(maxSpendableFromBalance) || 
                     (!isWrapUnwrap && !hasLiquidity && !isPoolDataLoading) || 
