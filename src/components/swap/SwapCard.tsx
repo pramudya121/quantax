@@ -399,7 +399,7 @@ export function SwapCard() {
     } else {
       router.swapExactTokensForTokens(amountIn!, minOutput, swapPath, address, deadline);
     }
-  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, nativeBalance, wethAddress]);
+  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, nativeBalance, wethAddress, cooldown]);
 
   const handleApprove = async () => {
     if (!fromToken || fromToken.isNative) return;
