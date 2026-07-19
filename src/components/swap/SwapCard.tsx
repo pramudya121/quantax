@@ -340,6 +340,13 @@ export function SwapCard() {
 
   const handleSwap = useCallback(async () => {
     if (!address || !fromToken || !toToken || !fromAmount) return;
+    if (cooldown) {
+      toast.info('Please wait…', { description: 'Cooldown active to prevent double-submit.' });
+      return;
+    }
+    setCooldown(true);
+    setTimeout(() => setCooldown(false), 3000);
+
 
     if (fromToken.isNative) {
       const nativeBal = nativeBalance ? parseFloat(formatEther(nativeBalance.value)) : 0;
