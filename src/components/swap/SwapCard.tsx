@@ -846,6 +846,7 @@ export function SwapCard() {
                   disabled={
                     !fromAmount || 
                     isLoading || 
+                    cooldown ||
                     (!isWrapUnwrap && isPoolDataLoading) || 
                     parseFloat(fromAmount) > parseFloat(maxSpendableFromBalance) || 
                     (!isWrapUnwrap && !hasLiquidity && !isPoolDataLoading) || 
