@@ -936,9 +936,10 @@ export default function Liquidity() {
                     ) : (
                       <Button 
                         onClick={handleRemoveLiquidity}
-                        className="w-full h-12 text-base"
+                        className="w-full h-12 text-base sticky-cta"
                         variant="destructive"
                         disabled={isLoading || !lpBalance || lpBalance === 0n || removePercent === 0 || !!needsLPApproval || isSameUnderlyingPair}
+
                       >
                         {isLoading ? (
                           <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Removing Liquidity...</>
