@@ -435,16 +435,7 @@ export function SwapCard() {
     approve(fromToken.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, safeAmount);
   };
 
-  const fromBalance = useMemo(() => {
-    if (fromToken?.isNative) return nativeBalance ? formatEther(nativeBalance.value) : '0';
-    return tokenBalance ? formatUnits(tokenBalance, fromToken?.decimals || 18) : '0';
-  }, [fromToken, nativeBalance, tokenBalance]);
 
-  const maxSpendableFromBalance = useMemo(() => {
-    if (!fromToken?.isNative) return fromBalance;
-    const spendable = Math.max(parseFloat(fromBalance) - NATIVE_GAS_RESERVE, 0);
-    return spendable.toString();
-  }, [fromToken, fromBalance]);
 
   const isLoading = router.isPending || router.isConfirming || weth.isPending || weth.isConfirming;
 
