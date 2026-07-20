@@ -567,6 +567,11 @@ export default function Liquidity() {
                       </span>
                     </div>
 
+                    <SlippageDeadlineControls
+                      slippage={slippage} setSlippage={setSlippage}
+                      deadline={deadlineMinutes} setDeadline={setDeadlineMinutes}
+                    />
+
                     {/* Pool Rate Info */}
                     {isPoolDataLoading && (
                       <motion.div
