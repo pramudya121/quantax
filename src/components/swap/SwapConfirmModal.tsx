@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowDown, Loader2, Check, ExternalLink, Zap, Flame } from 'lucide-react';
+import { X, ArrowDown, Loader2, Check, ExternalLink, Zap, Flame, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/ui/TokenIcon';
 import { TokenInfo } from '@/config/contracts';
@@ -26,6 +26,9 @@ interface SwapConfirmModalProps {
   txHash?: string;
   /** transaction confirmed on-chain */
   isSuccess?: boolean;
+  /** transaction failed / reverted */
+  isError?: boolean;
+  errorMessage?: string;
 }
 
 export function SwapConfirmModal({
@@ -46,6 +49,8 @@ export function SwapConfirmModal({
   isProcessing,
   txHash,
   isSuccess,
+  isError,
+  errorMessage,
 }: SwapConfirmModalProps) {
   if (!fromToken || !toToken) return null;
 
