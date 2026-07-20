@@ -338,7 +338,17 @@ export function SwapCard() {
     setToAmount(fromAmount);
   };
 
-  const handleSwap = useCallback(async () => {
+  const fromBalance = useMemo(() => {
+    if (fromToken?.isNative) return nativeBalance ? formatEther(nativeBalance.value) : '0';
+    return tokenBalance ? formatUnits(tokenBalance, fromToken?.decimals || 18) : '0';
+  }, [fromToken, nativeBalance, tokenBalance]);
+
+  const maxSpendableFromBalance = useMemo(() => {
+    if (!fromToken?.isNative) return fromBalance;
+    const spendable = Math.max(parseFloat(fromBalance) - NATIVE_GAS_RESERVE, 0);
+    return spendable.toString();
+  }, [fromToken, fromBalance]);
+
     if (!address || !fromToken || !toToken || !fromAmount) return;
     if (cooldown) {
       toast.info('Please wait…', { description: 'Cooldown active to prevent double-submit.' });
