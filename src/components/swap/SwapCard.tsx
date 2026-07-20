@@ -16,7 +16,7 @@ import { RouteComparison } from './RouteComparison';
 import { useWallet } from '@/hooks/useWallet';
 import { usePriceImpact, useTokenPrices } from '@/hooks/usePrices';
 import { parseTransactionError, getErrorToastConfig } from '@/lib/transactionErrors';
-import { sanitizeAmountInput, sanitizeSlippage, getSafeDeadline, calculateMinOutput, getSafeApprovalAmount } from '@/lib/inputValidation';
+import { sanitizeAmountInput, sanitizeSlippage, getSafeDeadline, calculateMinOutput, getSafeApprovalAmount, validatePreTx } from '@/lib/inputValidation';
 import { WalletConnectModal } from '@/components/wallet/WalletConnectModal';
 import { SwapConfirmModal } from './SwapConfirmModal';
 import { useTransactionHistory } from '@/components/history/TransactionHistory';
@@ -344,20 +344,31 @@ export function SwapCard() {
       toast.info('Please wait…', { description: 'Cooldown active to prevent double-submit.' });
       return;
     }
+
+    // Strict pre-transaction validation
+    const v = validatePreTx({
+      amount: fromAmount,
+      decimals: fromToken.decimals,
+      balance: fromBalance,
+      isNative: fromToken.isNative,
+      gasReserve: NATIVE_GAS_RESERVE,
+      needsApproval,
+      requiredAllowance: amountIn,
+      currentAllowance: allowance,
+      symbol: fromToken.symbol,
+    });
+    if (!v.ok) {
+      toast.error(v.title || 'Cannot Swap', { description: v.error });
+      return;
+    }
+    if (!isWrapUnwrap && !hasLiquidity) {
+      toast.error('No Route', { description: 'No liquidity route available for this pair.' });
+      return;
+    }
+
     setCooldown(true);
     setTimeout(() => setCooldown(false), 3000);
 
-
-    if (fromToken.isNative) {
-      const nativeBal = nativeBalance ? parseFloat(formatEther(nativeBalance.value)) : 0;
-      const spendable = Math.max(nativeBal - NATIVE_GAS_RESERVE, 0);
-      if (parseFloat(fromAmount) > spendable) {
-        toast.error('Insufficient OPN for swap + gas', {
-          description: `Sisakan minimal ${NATIVE_GAS_RESERVE} OPN untuk biaya gas.`,
-        });
-        return;
-      }
-    }
     
     setLastSwapParams({ from: fromAmount, to: toAmount });
     
