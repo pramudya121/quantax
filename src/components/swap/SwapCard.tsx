@@ -349,6 +349,7 @@ export function SwapCard() {
     return spendable.toString();
   }, [fromToken, fromBalance]);
 
+  const handleSwap = useCallback(async () => {
     if (!address || !fromToken || !toToken || !fromAmount) return;
     if (cooldown) {
       toast.info('Please wait…', { description: 'Cooldown active to prevent double-submit.' });
