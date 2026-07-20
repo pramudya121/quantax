@@ -844,7 +844,7 @@ export function SwapCard() {
                   </div>
                   <Button 
                     onClick={handleApprove} 
-                    className="w-full btn-dragon h-11 sm:h-12 rounded-xl text-sm" 
+                    className="w-full btn-dragon h-11 sm:h-12 rounded-xl text-sm sticky-cta" 
                     disabled={isApproving}
                   >
                     {isApproving ? (
@@ -858,7 +858,7 @@ export function SwapCard() {
                 <Button 
                   onClick={() => setShowConfirm(true)} 
                   className={cn(
-                    "w-full h-11 sm:h-12 rounded-xl text-sm font-semibold",
+                    "w-full h-11 sm:h-12 rounded-xl text-sm font-semibold sticky-cta",
                     isHighImpact ? "bg-destructive hover:bg-destructive/90" : "btn-dragon"
                   )}
                   disabled={
@@ -937,6 +937,8 @@ export function SwapCard() {
         isProcessing={isLoading}
         txHash={router.hash || weth.hash || undefined}
         isSuccess={(router.isSuccess || weth.isSuccess) && !isLoading && !!(router.hash || weth.hash)}
+        isError={!!(router.error || weth.error) && !isLoading}
+        errorMessage={router.error?.message || weth.error?.message}
       />
     </div>
   );
