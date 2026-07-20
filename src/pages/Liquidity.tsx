@@ -376,6 +376,19 @@ export default function Liquidity() {
       return;
     }
 
+    // Strict pre-transaction validation for both sides
+    const vA = validatePreTx({
+      amount: amountA, decimals: tokenA.decimals, balance: getTokenADisplayBalance(),
+      isNative: tokenA.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenA.symbol,
+    });
+    if (!vA.ok) { toast.error(vA.title || 'Cannot Add', { description: vA.error }); return; }
+    const vB = validatePreTx({
+      amount: amountB, decimals: tokenB.decimals, balance: getTokenBDisplayBalance(),
+      isNative: tokenB.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenB.symbol,
+    });
+    if (!vB.ok) { toast.error(vB.title || 'Cannot Add', { description: vB.error }); return; }
+
+
     toast.loading('Adding liquidity...', { id: 'add-liq' });
     const deadline = getSafeDeadline(deadlineMinutes);
 
