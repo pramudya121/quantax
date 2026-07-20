@@ -102,3 +102,82 @@ export function isAmountWithinBalance(amount: string, balance: string): boolean 
   if (isNaN(amountNum) || isNaN(balanceNum)) return true;
   return amountNum <= balanceNum;
 }
+
+/**
+ * Deadline schema — minutes, 1..60
+ */
+export const deadlineSchema = z.number().int().min(1, 'Deadline too short').max(60, 'Deadline too long');
+
+export function sanitizeDeadline(value: number): number {
+  if (isNaN(value) || value < 1) return 30;
+  return Math.min(Math.max(Math.floor(value), 1), 60);
+}
+
+export interface PreTxValidation {
+  ok: boolean;
+  title?: string;
+  error?: string;
+}
+
+/**
+ * Strict pre-transaction validation for amount, balance, allowance, and native gas reserve.
+ */
+export function validatePreTx(params: {
+  amount: string;
+  decimals?: number;
+  balance?: string;
+  isNative?: boolean;
+  gasReserve?: number;
+  needsApproval?: boolean;
+  requiredAllowance?: bigint;
+  currentAllowance?: bigint;
+  symbol?: string;
+}): PreTxValidation {
+  const {
+    amount, decimals = 18, balance, isNative, gasReserve = 0.01,
+    needsApproval, requiredAllowance, currentAllowance, symbol = 'token',
+  } = params;
+
+  if (!amount || amount.trim() === '') {
+    return { ok: false, title: 'Enter Amount', error: 'Please enter an amount to continue.' };
+  }
+  const num = parseFloat(amount);
+  if (isNaN(num) || num <= 0) {
+    return { ok: false, title: 'Invalid Amount', error: 'Amount must be a positive number.' };
+  }
+  const parseCheck = swapAmountSchema.safeParse(amount);
+  if (!parseCheck.success) {
+    return { ok: false, title: 'Invalid Amount', error: parseCheck.error.issues[0]?.message ?? 'Invalid amount format.' };
+  }
+  if (amount.includes('.') && amount.split('.')[1].length > decimals) {
+    return { ok: false, title: 'Too Many Decimals', error: `${symbol} supports at most ${decimals} decimals.` };
+  }
+  if (balance !== undefined) {
+    const bal = parseFloat(balance);
+    if (!isNaN(bal)) {
+      if (isNative) {
+        if (num + gasReserve > bal) {
+          return {
+            ok: false,
+            title: 'Insufficient Balance',
+            error: `Keep at least ${gasReserve} OPN for gas. Available: ${(Math.max(bal - gasReserve, 0)).toFixed(4)}.`,
+          };
+        }
+      } else if (num > bal) {
+        return {
+          ok: false,
+          title: 'Insufficient Balance',
+          error: `You only have ${bal.toFixed(6)} ${symbol}.`,
+        };
+      }
+    }
+  }
+  if (needsApproval && requiredAllowance !== undefined && currentAllowance !== undefined && currentAllowance < requiredAllowance) {
+    return {
+      ok: false,
+      title: 'Approval Required',
+      error: `Approve ${symbol} spending before continuing.`,
+    };
+  }
+  return { ok: true };
+}
