@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ArrowDown, Loader2, Check, ExternalLink, Zap, Flame } from 'lucide-react';
+import { X, ArrowDown, Loader2, Check, ExternalLink, Zap, Flame, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TokenIcon } from '@/components/ui/TokenIcon';
 import { TokenInfo } from '@/config/contracts';
@@ -26,6 +26,9 @@ interface SwapConfirmModalProps {
   txHash?: string;
   /** transaction confirmed on-chain */
   isSuccess?: boolean;
+  /** transaction failed / reverted */
+  isError?: boolean;
+  errorMessage?: string;
 }
 
 export function SwapConfirmModal({
@@ -46,6 +49,8 @@ export function SwapConfirmModal({
   isProcessing,
   txHash,
   isSuccess,
+  isError,
+  errorMessage,
 }: SwapConfirmModalProps) {
   if (!fromToken || !toToken) return null;
 
@@ -94,7 +99,7 @@ export function SwapConfirmModal({
                   <Flame className="w-4 h-4 text-primary" />
                 </div>
                 <h3 className="text-base font-bold">
-                  {isSuccess ? 'Transaction Confirmed' : isProcessing ? 'Processing Transaction' : 'Confirm Swap'}
+                  {isError ? 'Transaction Failed' : isSuccess ? 'Transaction Confirmed' : isProcessing ? 'Processing Transaction' : 'Confirm Swap'}
                 </h3>
               </div>
               <button
@@ -124,7 +129,7 @@ export function SwapConfirmModal({
               </div>
 
               {/* Details */}
-              {!isProcessing && !isSuccess && (
+              {!isProcessing && !isSuccess && !isError && (
                 <div className="rounded-xl bg-muted/30 border border-border/40 p-3 space-y-1.5 text-xs">
                   {rate && (
                     <Row label="Rate" value={`1 ${fromToken.symbol} = ${rate.toFixed(6)} ${toToken.symbol}`} />
@@ -148,7 +153,7 @@ export function SwapConfirmModal({
               )}
 
               {/* Processing visual */}
-              {isProcessing && !isSuccess && (
+              {isProcessing && !isSuccess && !isError && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -210,8 +215,35 @@ export function SwapConfirmModal({
                 </motion.div>
               )}
 
+              {/* Error visual */}
+              {isError && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="rounded-xl bg-destructive/10 border border-destructive/30 p-5 flex flex-col items-center text-center gap-2"
+                >
+                  <div className="w-14 h-14 rounded-full bg-destructive/20 flex items-center justify-center">
+                    <AlertTriangle className="w-7 h-7 text-destructive" />
+                  </div>
+                  <p className="text-sm font-semibold text-destructive">Transaction Failed</p>
+                  {errorMessage && (
+                    <p className="text-[11px] text-muted-foreground max-w-xs line-clamp-3">{errorMessage}</p>
+                  )}
+                  {txHash && (
+                    <a
+                      href={`https://testnet.iopn.tech/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-destructive inline-flex items-center gap-1 hover:underline"
+                    >
+                      View transaction <ExternalLink className="w-3 h-3" />
+                    </a>
+                  )}
+                </motion.div>
+              )}
+
               {/* Actions */}
-              {!isProcessing && !isSuccess && (
+              {!isProcessing && !isSuccess && !isError && (
                 <div className="flex gap-2 pt-1">
                   <Button
                     variant="outline"
@@ -232,7 +264,7 @@ export function SwapConfirmModal({
                 </div>
               )}
 
-              {isSuccess && (
+              {(isSuccess || isError) && (
                 <Button onClick={onClose} className="w-full h-12 rounded-xl btn-dragon">
                   Done
                 </Button>

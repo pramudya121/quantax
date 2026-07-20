@@ -16,7 +16,7 @@ import { RouteComparison } from './RouteComparison';
 import { useWallet } from '@/hooks/useWallet';
 import { usePriceImpact, useTokenPrices } from '@/hooks/usePrices';
 import { parseTransactionError, getErrorToastConfig } from '@/lib/transactionErrors';
-import { sanitizeAmountInput, sanitizeSlippage, getSafeDeadline, calculateMinOutput, getSafeApprovalAmount } from '@/lib/inputValidation';
+import { sanitizeAmountInput, sanitizeSlippage, getSafeDeadline, calculateMinOutput, getSafeApprovalAmount, validatePreTx } from '@/lib/inputValidation';
 import { WalletConnectModal } from '@/components/wallet/WalletConnectModal';
 import { SwapConfirmModal } from './SwapConfirmModal';
 import { useTransactionHistory } from '@/components/history/TransactionHistory';
@@ -338,26 +338,48 @@ export function SwapCard() {
     setToAmount(fromAmount);
   };
 
+  const fromBalance = useMemo(() => {
+    if (fromToken?.isNative) return nativeBalance ? formatEther(nativeBalance.value) : '0';
+    return tokenBalance ? formatUnits(tokenBalance, fromToken?.decimals || 18) : '0';
+  }, [fromToken, nativeBalance, tokenBalance]);
+
+  const maxSpendableFromBalance = useMemo(() => {
+    if (!fromToken?.isNative) return fromBalance;
+    const spendable = Math.max(parseFloat(fromBalance) - NATIVE_GAS_RESERVE, 0);
+    return spendable.toString();
+  }, [fromToken, fromBalance]);
+
   const handleSwap = useCallback(async () => {
     if (!address || !fromToken || !toToken || !fromAmount) return;
     if (cooldown) {
       toast.info('Please wait…', { description: 'Cooldown active to prevent double-submit.' });
       return;
     }
+
+    // Strict pre-transaction validation
+    const v = validatePreTx({
+      amount: fromAmount,
+      decimals: fromToken.decimals,
+      balance: fromBalance,
+      isNative: fromToken.isNative,
+      gasReserve: NATIVE_GAS_RESERVE,
+      needsApproval,
+      requiredAllowance: amountIn,
+      currentAllowance: allowance,
+      symbol: fromToken.symbol,
+    });
+    if (!v.ok) {
+      toast.error(v.title || 'Cannot Swap', { description: v.error });
+      return;
+    }
+    if (!isWrapUnwrap && !hasLiquidity) {
+      toast.error('No Route', { description: 'No liquidity route available for this pair.' });
+      return;
+    }
+
     setCooldown(true);
     setTimeout(() => setCooldown(false), 3000);
 
-
-    if (fromToken.isNative) {
-      const nativeBal = nativeBalance ? parseFloat(formatEther(nativeBalance.value)) : 0;
-      const spendable = Math.max(nativeBal - NATIVE_GAS_RESERVE, 0);
-      if (parseFloat(fromAmount) > spendable) {
-        toast.error('Insufficient OPN for swap + gas', {
-          description: `Sisakan minimal ${NATIVE_GAS_RESERVE} OPN untuk biaya gas.`,
-        });
-        return;
-      }
-    }
     
     setLastSwapParams({ from: fromAmount, to: toAmount });
     
@@ -399,25 +421,21 @@ export function SwapCard() {
     } else {
       router.swapExactTokensForTokens(amountIn!, minOutput, swapPath, address, deadline);
     }
-  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, nativeBalance, wethAddress, cooldown]);
+  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, wethAddress, cooldown, fromBalance, needsApproval, allowance, hasLiquidity]);
 
   const handleApprove = async () => {
-    if (!fromToken || fromToken.isNative) return;
+    if (!fromToken || fromToken.isNative || !amountIn) return;
+    const v = validatePreTx({
+      amount: fromAmount, decimals: fromToken.decimals, balance: fromBalance,
+      isNative: false, symbol: fromToken.symbol,
+    });
+    if (!v.ok) { toast.error(v.title || 'Cannot Approve', { description: v.error }); return; }
     toast.loading(`Approving ${fromToken.symbol}...`, { id: 'approve' });
-    const safeAmount = getSafeApprovalAmount(amountIn || 0n);
+    const safeAmount = getSafeApprovalAmount(amountIn);
     approve(fromToken.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, safeAmount);
   };
 
-  const fromBalance = useMemo(() => {
-    if (fromToken?.isNative) return nativeBalance ? formatEther(nativeBalance.value) : '0';
-    return tokenBalance ? formatUnits(tokenBalance, fromToken?.decimals || 18) : '0';
-  }, [fromToken, nativeBalance, tokenBalance]);
 
-  const maxSpendableFromBalance = useMemo(() => {
-    if (!fromToken?.isNative) return fromBalance;
-    const spendable = Math.max(parseFloat(fromBalance) - NATIVE_GAS_RESERVE, 0);
-    return spendable.toString();
-  }, [fromToken, fromBalance]);
 
   const isLoading = router.isPending || router.isConfirming || weth.isPending || weth.isConfirming;
 
@@ -826,7 +844,7 @@ export function SwapCard() {
                   </div>
                   <Button 
                     onClick={handleApprove} 
-                    className="w-full btn-dragon h-11 sm:h-12 rounded-xl text-sm" 
+                    className="w-full btn-dragon h-11 sm:h-12 rounded-xl text-sm sticky-cta" 
                     disabled={isApproving}
                   >
                     {isApproving ? (
@@ -840,7 +858,7 @@ export function SwapCard() {
                 <Button 
                   onClick={() => setShowConfirm(true)} 
                   className={cn(
-                    "w-full h-11 sm:h-12 rounded-xl text-sm font-semibold",
+                    "w-full h-11 sm:h-12 rounded-xl text-sm font-semibold sticky-cta",
                     isHighImpact ? "bg-destructive hover:bg-destructive/90" : "btn-dragon"
                   )}
                   disabled={
@@ -919,6 +937,8 @@ export function SwapCard() {
         isProcessing={isLoading}
         txHash={router.hash || weth.hash || undefined}
         isSuccess={(router.isSuccess || weth.isSuccess) && !isLoading && !!(router.hash || weth.hash)}
+        isError={!!(router.error || weth.error) && !isLoading}
+        errorMessage={router.error?.message || weth.error?.message}
       />
     </div>
   );

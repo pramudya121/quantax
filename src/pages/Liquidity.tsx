@@ -21,7 +21,8 @@ import { cn } from '@/lib/utils';
 import { WalletConnectModal } from '@/components/wallet/WalletConnectModal';
 import { toast } from 'sonner';
 import { useWallet } from '@/hooks/useWallet';
-import { sanitizeAmountInput, getSafeDeadline, getSafeApprovalAmount } from '@/lib/inputValidation';
+import { sanitizeAmountInput, getSafeDeadline, getSafeApprovalAmount, sanitizeSlippage, validatePreTx } from '@/lib/inputValidation';
+import { SlippageDeadlineControls } from '@/components/tx/SlippageDeadlineControls';
 
 const MAX_UINT256 = 2n ** 256n - 1n; // Still needed for LP token approval only
 const NATIVE_GAS_RESERVE = 0.01;
@@ -45,6 +46,12 @@ export default function Liquidity() {
   
   // Remove Liquidity state
   const [removePercent, setRemovePercent] = useState(25);
+
+  // Slippage & deadline controls (shared by Add / Remove)
+  const [slippage, setSlippage] = useState(0.5); // percent
+  const [deadlineMinutes, setDeadlineMinutes] = useState(30);
+  const slippageBps = useMemo(() => BigInt(Math.floor((100 - sanitizeSlippage(slippage)) * 100)), [slippage]);
+  
   
   // Token balances
   const { data: tokenABalance } = useTokenBalance(
@@ -370,8 +377,21 @@ export default function Liquidity() {
       return;
     }
 
+    // Strict pre-transaction validation for both sides
+    const vA = validatePreTx({
+      amount: amountA, decimals: tokenA.decimals, balance: getTokenADisplayBalance(),
+      isNative: tokenA.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenA.symbol,
+    });
+    if (!vA.ok) { toast.error(vA.title || 'Cannot Add', { description: vA.error }); return; }
+    const vB = validatePreTx({
+      amount: amountB, decimals: tokenB.decimals, balance: getTokenBDisplayBalance(),
+      isNative: tokenB.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenB.symbol,
+    });
+    if (!vB.ok) { toast.error(vB.title || 'Cannot Add', { description: vB.error }); return; }
+
+
     toast.loading('Adding liquidity...', { id: 'add-liq' });
-    const deadline = getSafeDeadline(30);
+    const deadline = getSafeDeadline(deadlineMinutes);
 
     if (tokenA.isNative || tokenB.isNative) {
       const token = tokenA.isNative ? tokenB : tokenA;
@@ -381,8 +401,8 @@ export default function Liquidity() {
       router.addLiquidityETH(
         token.address as `0x${string}`,
         tokenAmount,
-        (tokenAmount * 95n) / 100n,
-        (ethAmount * 95n) / 100n,
+        (tokenAmount * slippageBps) / 10000n,
+        (ethAmount * slippageBps) / 10000n,
         address,
         deadline,
         ethAmount
@@ -393,8 +413,8 @@ export default function Liquidity() {
         tokenB.address as `0x${string}`,
         amountABigInt,
         amountBBigInt,
-        (amountABigInt * 95n) / 100n,
-        (amountBBigInt * 95n) / 100n,
+        (amountABigInt * slippageBps) / 10000n,
+        (amountBBigInt * slippageBps) / 10000n,
         address,
         deadline
       );
@@ -422,13 +442,13 @@ export default function Liquidity() {
 
     toast.loading('Removing liquidity...', { id: 'remove-liq' });
     const liquidityToRemove = (lpBalance * BigInt(removePercent)) / 100n;
-    const deadline = getSafeDeadline(30);
+    const deadline = getSafeDeadline(deadlineMinutes);
 
-    // Compute expected token amounts and apply 1% slippage tolerance (MEV protection)
+    // Compute expected token amounts and apply slippage tolerance (MEV protection)
     const expectedA = (reserveA * liquidityToRemove) / lpTotalSupply;
     const expectedB = (reserveB * liquidityToRemove) / lpTotalSupply;
-    const minA = (expectedA * 99n) / 100n;
-    const minB = (expectedB * 99n) / 100n;
+    const minA = (expectedA * slippageBps) / 10000n;
+    const minB = (expectedB * slippageBps) / 10000n;
 
     if (tokenA.isNative || tokenB.isNative) {
       const token = tokenA.isNative ? tokenB : tokenA;
@@ -547,6 +567,11 @@ export default function Liquidity() {
                         Earn 0.3% fees
                       </span>
                     </div>
+
+                    <SlippageDeadlineControls
+                      slippage={slippage} setSlippage={setSlippage}
+                      deadline={deadlineMinutes} setDeadline={setDeadlineMinutes}
+                    />
 
                     {/* Pool Rate Info */}
                     {isPoolDataLoading && (
@@ -810,6 +835,11 @@ export default function Liquidity() {
                       <h3 className="font-semibold text-lg">Remove Liquidity</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">Withdraw your liquidity position and reclaim tokens</p>
+
+                    <SlippageDeadlineControls
+                      slippage={slippage} setSlippage={setSlippage}
+                      deadline={deadlineMinutes} setDeadline={setDeadlineMinutes}
+                    />
                     
                     {/* Token Pair Selection */}
                     <div className="bg-muted/30 rounded-xl p-4 space-y-3">
