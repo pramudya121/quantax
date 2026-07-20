@@ -22,6 +22,7 @@ import { WalletConnectModal } from '@/components/wallet/WalletConnectModal';
 import { toast } from 'sonner';
 import { useWallet } from '@/hooks/useWallet';
 import { sanitizeAmountInput, getSafeDeadline, getSafeApprovalAmount, sanitizeSlippage, validatePreTx } from '@/lib/inputValidation';
+import { SlippageDeadlineControls } from '@/components/tx/SlippageDeadlineControls';
 
 const MAX_UINT256 = 2n ** 256n - 1n; // Still needed for LP token approval only
 const NATIVE_GAS_RESERVE = 0.01;
