@@ -834,6 +834,11 @@ export default function Liquidity() {
                       <h3 className="font-semibold text-lg">Remove Liquidity</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">Withdraw your liquidity position and reclaim tokens</p>
+
+                    <SlippageDeadlineControls
+                      slippage={slippage} setSlippage={setSlippage}
+                      deadline={deadlineMinutes} setDeadline={setDeadlineMinutes}
+                    />
                     
                     {/* Token Pair Selection */}
                     <div className="bg-muted/30 rounded-xl p-4 space-y-3">
