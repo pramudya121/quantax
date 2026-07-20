@@ -410,12 +410,17 @@ export function SwapCard() {
     } else {
       router.swapExactTokensForTokens(amountIn!, minOutput, swapPath, address, deadline);
     }
-  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, nativeBalance, wethAddress, cooldown]);
+  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, wethAddress, cooldown, fromBalance, needsApproval, allowance, hasLiquidity]);
 
   const handleApprove = async () => {
-    if (!fromToken || fromToken.isNative) return;
+    if (!fromToken || fromToken.isNative || !amountIn) return;
+    const v = validatePreTx({
+      amount: fromAmount, decimals: fromToken.decimals, balance: fromBalance,
+      isNative: false, symbol: fromToken.symbol,
+    });
+    if (!v.ok) { toast.error(v.title || 'Cannot Approve', { description: v.error }); return; }
     toast.loading(`Approving ${fromToken.symbol}...`, { id: 'approve' });
-    const safeAmount = getSafeApprovalAmount(amountIn || 0n);
+    const safeAmount = getSafeApprovalAmount(amountIn);
     approve(fromToken.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, safeAmount);
   };
 
