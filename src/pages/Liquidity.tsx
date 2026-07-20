@@ -45,6 +45,12 @@ export default function Liquidity() {
   
   // Remove Liquidity state
   const [removePercent, setRemovePercent] = useState(25);
+
+  // Slippage & deadline controls (shared by Add / Remove)
+  const [slippage, setSlippage] = useState(0.5); // percent
+  const [deadlineMinutes, setDeadlineMinutes] = useState(30);
+  const slippageBps = useMemo(() => BigInt(Math.floor((100 - sanitizeSlippage(slippage)) * 100)), [slippage]);
+  
   
   // Token balances
   const { data: tokenABalance } = useTokenBalance(
