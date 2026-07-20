@@ -377,7 +377,7 @@ export default function Liquidity() {
     }
 
     toast.loading('Adding liquidity...', { id: 'add-liq' });
-    const deadline = getSafeDeadline(30);
+    const deadline = getSafeDeadline(deadlineMinutes);
 
     if (tokenA.isNative || tokenB.isNative) {
       const token = tokenA.isNative ? tokenB : tokenA;
@@ -387,8 +387,8 @@ export default function Liquidity() {
       router.addLiquidityETH(
         token.address as `0x${string}`,
         tokenAmount,
-        (tokenAmount * 95n) / 100n,
-        (ethAmount * 95n) / 100n,
+        (tokenAmount * slippageBps) / 10000n,
+        (ethAmount * slippageBps) / 10000n,
         address,
         deadline,
         ethAmount
@@ -399,8 +399,8 @@ export default function Liquidity() {
         tokenB.address as `0x${string}`,
         amountABigInt,
         amountBBigInt,
-        (amountABigInt * 95n) / 100n,
-        (amountBBigInt * 95n) / 100n,
+        (amountABigInt * slippageBps) / 10000n,
+        (amountBBigInt * slippageBps) / 10000n,
         address,
         deadline
       );
@@ -428,13 +428,13 @@ export default function Liquidity() {
 
     toast.loading('Removing liquidity...', { id: 'remove-liq' });
     const liquidityToRemove = (lpBalance * BigInt(removePercent)) / 100n;
-    const deadline = getSafeDeadline(30);
+    const deadline = getSafeDeadline(deadlineMinutes);
 
-    // Compute expected token amounts and apply 1% slippage tolerance (MEV protection)
+    // Compute expected token amounts and apply slippage tolerance (MEV protection)
     const expectedA = (reserveA * liquidityToRemove) / lpTotalSupply;
     const expectedB = (reserveB * liquidityToRemove) / lpTotalSupply;
-    const minA = (expectedA * 99n) / 100n;
-    const minB = (expectedB * 99n) / 100n;
+    const minA = (expectedA * slippageBps) / 10000n;
+    const minB = (expectedB * slippageBps) / 10000n;
 
     if (tokenA.isNative || tokenB.isNative) {
       const token = tokenA.isNative ? tokenB : tokenA;
