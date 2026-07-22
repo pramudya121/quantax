@@ -630,3 +630,15 @@ export const MULTICALL_ABI = [
     type: 'function',
   },
 ] as const;
+
+// -------------------- Faucet (AEREDIUM) --------------------
+export const FAUCET_ABI = [
+  { inputs: [{ internalType: 'uint8', name: 'tokenIndex', type: 'uint8' }], name: 'claim', outputs: [], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [], name: 'claimAll', outputs: [], stateMutability: 'nonpayable', type: 'function' },
+  { inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], name: 'claimAmounts', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [], name: 'cooldown', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ internalType: 'address', name: '', type: 'address' }, { internalType: 'uint8', name: '', type: 'uint8' }], name: 'lastClaimed', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], name: 'maxClaims', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], name: 'tokens', outputs: [{ internalType: 'contract IERC20', name: '', type: 'address' }], stateMutability: 'view', type: 'function' },
+  { inputs: [{ internalType: 'address', name: '', type: 'address' }, { internalType: 'uint8', name: '', type: 'uint8' }], name: 'userClaimCount', outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }], stateMutability: 'view', type: 'function' },
+] as const;
