@@ -1,6 +1,5 @@
-import { useAccount, useBalance } from 'wagmi';
-import { useReadContracts } from 'wagmi';
-import { TOKENS, TOKEN_LIST } from '@/config/contracts';
+import { useAccount, useBalance, useChainId, useReadContracts } from 'wagmi';
+import { getTokenList } from '@/config/contracts';
 import { formatUnits } from 'viem';
 
 const ERC20_BALANCE_ABI = [
@@ -15,18 +14,20 @@ const ERC20_BALANCE_ABI = [
 
 export function useWalletPortfolio() {
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
 
-  const { data: nativeBalance } = useBalance({ address });
+  const { data: nativeBalance } = useBalance({ address, chainId });
 
-  const tokenAddresses = Object.values(TOKENS);
+  const tokens = getTokenList(chainId).filter((t) => !t.isNative);
 
   const { data: tokenBalances } = useReadContracts({
     contracts: address
-      ? tokenAddresses.map((addr) => ({
-          address: addr as `0x${string}`,
+      ? tokens.map((t) => ({
+          address: t.address as `0x${string}`,
           abi: ERC20_BALANCE_ABI,
-          functionName: 'balanceOf',
+          functionName: 'balanceOf' as const,
           args: [address],
+          chainId,
         }))
       : [],
     query: { enabled: !!address, refetchInterval: 15000 },
@@ -35,22 +36,19 @@ export function useWalletPortfolio() {
   const getPortfolioSummary = (): string => {
     if (!isConnected || !address) return 'Wallet not connected';
 
-    const lines: string[] = [`Wallet: ${address}`];
+    const lines: string[] = [`Wallet: ${address}`, `Chain: ${chainId}`];
 
-    // Native OPN
     if (nativeBalance) {
-      const opnBal = parseFloat(formatUnits(nativeBalance.value, 18));
-      lines.push(`OPN (native): ${opnBal.toFixed(4)}`);
+      const bal = parseFloat(formatUnits(nativeBalance.value, nativeBalance.decimals));
+      lines.push(`${nativeBalance.symbol} (native): ${bal.toFixed(4)}`);
     }
 
-    // ERC20 tokens
-    const symbols = Object.keys(TOKENS);
     if (tokenBalances) {
       tokenBalances.forEach((result, i) => {
         if (result.status === 'success' && result.result) {
-          const bal = parseFloat(formatUnits(result.result as bigint, 18));
+          const bal = parseFloat(formatUnits(result.result as bigint, tokens[i].decimals));
           if (bal > 0) {
-            lines.push(`${symbols[i]}: ${bal.toFixed(4)}`);
+            lines.push(`${tokens[i].symbol}: ${bal.toFixed(4)}`);
           }
         }
       });
@@ -59,5 +57,5 @@ export function useWalletPortfolio() {
     return lines.join('\n');
   };
 
-  return { isConnected, address, getPortfolioSummary };
+  return { isConnected, address, chainId, getPortfolioSummary };
 }

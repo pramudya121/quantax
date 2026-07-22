@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ExternalLink, ArrowLeftRight, Droplets, LayoutGrid, BarChart3, Wallet, BookOpen, Home, Sprout } from 'lucide-react';
+import { Menu, X, ArrowLeftRight, Droplets, LayoutGrid, BarChart3, Wallet, BookOpen, Home, Sprout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WalletButton } from '@/components/wallet/WalletButton';
+import { NetworkSelector } from '@/components/layout/NetworkSelector';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { FloatingDock } from '@/components/ui/aceternity/FloatingDock';
 import { prefetchRoute } from '@/lib/prefetchRoutes';
@@ -76,19 +77,7 @@ export function Header() {
 
             {/* Right Side */}
             <div className="flex items-center gap-2 sm:gap-3">
-              <a
-                href="https://testnet.iopn.tech"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden md:inline-flex ember-pill hover:scale-[1.03] transition-transform"
-              >
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success" />
-                </span>
-                OPN Testnet
-                <ExternalLink className="w-3 h-3 opacity-70" />
-              </a>
+              <NetworkSelector />
               <NotificationCenter />
               <WalletButton />
 
