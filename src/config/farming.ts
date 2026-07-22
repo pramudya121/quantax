@@ -1,5 +1,17 @@
-// DRAGONDEX Farming / Staking Contract Configuration
-export const FARMING_CONTRACT = '0xfc911Ef8F6372786cd671bdC99dc4f9255b85596' as const;
+// DRAGONDEX Farming / Staking Contract Configuration (per chain)
+import { OPN_CHAIN_ID, AER_CHAIN_ID } from './chains';
+
+export const FARMING_BY_CHAIN: Record<number, `0x${string}`> = {
+  [OPN_CHAIN_ID]: '0xfc911Ef8F6372786cd671bdC99dc4f9255b85596',
+  [AER_CHAIN_ID]: '0x31351646e2c5479A30f846dFa4297E9Dbe189a63',
+};
+
+// Legacy singleton (defaults to OPN) — kept for backwards compatibility.
+export const FARMING_CONTRACT = FARMING_BY_CHAIN[OPN_CHAIN_ID];
+
+export function getFarmingContract(chainId?: number): `0x${string}` {
+  return FARMING_BY_CHAIN[chainId ?? OPN_CHAIN_ID] ?? FARMING_BY_CHAIN[OPN_CHAIN_ID];
+}
 
 // Owner address allowed to manage farming pools (admin panel access).
 // This should match the contract owner returned by owner().
