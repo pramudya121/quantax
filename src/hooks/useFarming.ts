@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAccount, usePublicClient, useWriteContract, useReadContract } from 'wagmi';
+import { useAccount, usePublicClient, useWriteContract, useReadContract, useChainId } from 'wagmi';
 import { parseUnits, formatUnits, erc20Abi, type Address } from 'viem';
-import { FARMING_CONTRACT, FARMING_ABI } from '@/config/farming';
+import { getFarmingContract, FARMING_ABI } from '@/config/farming';
 import { getTokenByAddress } from '@/config/contracts';
 import { toast } from 'sonner';
 
@@ -25,8 +25,8 @@ export interface UserFarmInfo {
   pending: bigint;
 }
 
-async function fetchTokenMeta(client: any, addr: Address) {
-  const known = getTokenByAddress(addr);
+async function fetchTokenMeta(client: any, addr: Address, chainId?: number) {
+  const known = getTokenByAddress(addr, chainId);
   if (known) return { symbol: known.symbol, decimals: known.decimals };
   try {
     const [symbol, decimals] = await Promise.all([
@@ -40,6 +40,8 @@ async function fetchTokenMeta(client: any, addr: Address) {
 }
 
 export function useFarmingOwner() {
+  const chainId = useChainId();
+  const FARMING_CONTRACT = getFarmingContract(chainId);
   const { data: owner } = useReadContract({
     address: FARMING_CONTRACT,
     abi: FARMING_ABI,
@@ -51,6 +53,8 @@ export function useFarmingOwner() {
 }
 
 export function useFarmingPools() {
+  const chainId = useChainId();
+  const FARMING_CONTRACT = getFarmingContract(chainId);
   const client = usePublicClient() as any;
   const [pools, setPools] = useState<FarmPool[]>([]);
   const [loading, setLoading] = useState(false);
@@ -111,6 +115,8 @@ export function useFarmingPools() {
 }
 
 export function useUserFarmInfo(pid: number | null) {
+  const chainId = useChainId();
+  const FARMING_CONTRACT = getFarmingContract(chainId);
   const { address } = useAccount();
   const client = usePublicClient() as any;
   const [info, setInfo] = useState<UserFarmInfo | null>(null);
@@ -158,6 +164,8 @@ export function useUserFarmInfo(pid: number | null) {
 }
 
 export function useFarmingActions() {
+  const chainId = useChainId();
+  const FARMING_CONTRACT = getFarmingContract(chainId);
   const { writeContractAsync: writeRaw } = useWriteContract();
   const writeContractAsync = writeRaw as any;
   const { address } = useAccount();
