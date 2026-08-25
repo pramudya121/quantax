@@ -1,44 +1,53 @@
-# Multi-Chain Support: AEREDIUM Testnet
+# Audit On-Chain + Penyelesaian Fitur + Peningkatan UI/UX
 
-Menambahkan AEREDIUM Testnet (Chain ID 1237) sebagai jaringan kedua di DragonDEX, di samping OPN Testnet yang sudah ada. User bisa switch antar-jaringan lewat dropdown Network Selector di header, dan seluruh saldo, harga, pool, farming, serta swap otomatis mengikuti jaringan aktif.
+Hasil audit kode saat ini: multi-chain baru selesai di lapisan konfigurasi (chains, contracts, wagmi, NetworkSelector, portfolio). Seluruh logika trading masih memakai konstanta singleton OPN, sehingga di AEREDIUM Testnet swap/liquidity/farming/analytics belum benar-benar berfungsi. Rencana ini menuntaskan itu lalu naik ke perbaikan UI/UX per halaman.
 
-## Arsitektur Multi-Chain
+## Fase 1 — Audit & Perbaikan On-Chain (prioritas tertinggi)
 
-Refactor konfigurasi dari singleton (`CONTRACTS`, `TOKENS`, `TOKEN_LIST`) menjadi map per-chain, lalu semua hook membaca alamat dari `useChainId()`.
+Temuan hardcode OPN yang harus dijadikan chain-aware (`const chainId = useChainId()` → `getContracts(chainId)` / `getTokenList(chainId)`):
 
-```text
-src/config/
-  chains.ts          → daftar chain (OPN, AEREDIUM) + metadata
-  contracts.ts       → CONTRACTS_BY_CHAIN[chainId] = {FACTORY, ROUTER, WETH, …}
-  tokens.ts          → TOKEN_LIST_BY_CHAIN[chainId] = TokenInfo[]
-  farming.ts         → FARMING_BY_CHAIN[chainId]
-  abis.ts            → tambah FAUCET_ABI, MULTIPOOL_FARM_ABI
-```
+| File | Masalah |
+|---|---|
+| `src/hooks/useContract.ts` | Semua read/write pakai `CONTRACTS.ROUTER` / `CONTRACTS.FACTORY` statis |
+| `src/hooks/useLiquidityPools.ts` | Factory statis, query key tanpa `chainId` (cache bocor antar-chain) |
+| `src/hooks/useSwapRouter.ts` | Router + path WOPN statis |
+| `src/hooks/useFarming.ts` | Farm OPN statis, belum kenal MultiPoolFarm AEREDIUM |
+| `src/hooks/usePrices.ts`, `useSwapVolume.ts`, `useLiveSwapNotifications.ts` | Token list & pair discovery statis, event watcher tak remount saat ganti chain |
+| `src/components/swap/SwapCard.tsx`, `TokenSelector.tsx` | Default token dari `TOKEN_LIST[0]`, wrap/unwrap pakai `CONTRACTS.WETH` |
+| `src/pages/Liquidity.tsx`, `Portfolio.tsx`, `Analytics.tsx` | Token & alamat OPN hardcode (Portfolio bahkan baca MON yang tak ada di AEREDIUM) |
+| `src/components/pools/PoolStats.tsx`, `home/TokenGlobe3D.tsx` | Jumlah/logo token dari list OPN saja |
 
-## Perubahan Utama
+Tindakan:
+1. Seluruh hook & komponen di atas membaca alamat lewat `getContracts(chainId)`, token lewat `getTokenList(chainId)`, wrapped native lewat `getWrappedNative(chainId)`.
+2. Semua `queryKey` menyertakan `chainId` di depan; token state di Swap/Liquidity di-reset saat chain berubah.
+3. Explorer link diambil dari metadata chain aktif (bukan hardcode `testnet.iopn.tech`).
+4. Guard UI seragam: kalau chain di luar [984, 1237] → kartu "Switch Network".
+5. Verifikasi on-chain nyata: baca `factory.allPairsLength`, `router.WETH()`, dan `factory` dari router pada kedua chain; tampilkan hasilnya di `/status` sebagai health check (bukan sekadar daftar alamat).
 
-1. **`src/config/chains.ts`** (baru) — export `opnTestnet` + `aerediumTestnet` (id 1237, RPC `https://testnet.rpc.aeredium.io`, explorer `https://testnet.explorer.aeredium.io`, native `AER`).
-2. **`src/config/wagmi.ts`** — `chains: [opnTestnet, aerediumTestnet]`, transports untuk kedua chain.
-3. **`src/config/contracts.ts`** — refactor jadi `CONTRACTS_BY_CHAIN` + helper `getContracts(chainId)`, `getTokenList(chainId)`, `getTokenByAddress(chainId, addr)`. Isi alamat AEREDIUM sesuai input user (Factory, WAER, Router, Library, Multicall, Farm, Faucet, BNB/HYPE/UNI/ETH/XRP/DRAGON).
-4. **`src/config/abis.ts`** — tambah `FAUCET_ABI`, `MULTIPOOL_FARM_ABI` (WAER pakai `WETH_ABI` yang sudah ada; Factory/Router ABI kompatibel).
-5. **Aset logo AER/WAER** — upload gambar berlian biru dari user ke `src/assets/aer.jpg.asset.json` via `lovable-assets`, dipakai untuk symbol `AER` (native) dan `WAER`.
-6. **`src/components/layout/NetworkSelector.tsx`** (baru) — dropdown di Header. Menampilkan chain aktif + logo, klik → `switchChain({ chainId })`. Jika wallet belum add jaringan, panggil `wallet_addEthereumChain` fallback.
-7. **`src/components/layout/Header.tsx`** — mount `NetworkSelector` di sebelah `WalletButton`.
-8. **Semua hook on-chain** (`useContract`, `useLiquidityPools`, `useSwapRouter`, `useFarming`, `usePrices`, `useSwapVolume`, `useLiveSwapNotifications`, `useWalletPortfolio`, `useTokenSafety`, `useAgentExecutor`) — ganti import konstanta jadi `getContracts(chainId)` / `getTokenList(chainId)` dengan `chainId = useChainId()`. Query keys sertakan `chainId` supaya cache tidak bocor antar-chain.
-9. **UI enforcement** — komponen `SwapCard`, `Liquidity`, `Farming` cek `chainId ∈ [984, 1237]`; kalau bukan, tampilkan tombol "Switch Network" dengan pilihan default OPN.
-10. **`src/pages/ContractStatus.tsx`** & **`Docs`** — tampilkan status untuk kedua chain.
-11. **Native/wrap mapping** — `getWrappedNative(chainId)` (WOPN utk 984, WAER utk 1237) menggantikan konstanta `TOKENS.WOPN` di logika wrap/unwrap swap.
+## Fase 2 — Fitur yang Belum Dibangun
+
+1. **Farming di AEREDIUM** — MultiPoolFarm `0x3135…` belum terhubung; `useFarming` diperluas jadi map per-chain.
+2. **Halaman `/faucet`** — kontrak Faucet AEREDIUM (`0xa12C…`) sudah ada tapi tanpa UI: klaim token testnet + cooldown.
+3. **Multicall** — tersedia di kedua chain tapi belum dipakai; batch pembacaan reserves/balance untuk memangkas RPC call.
+4. **Create Pool** — validasi pair sudah ada / token identik / approval ganda belum lengkap.
+5. **Portfolio** — posisi LP per-chain, nilai USD, dan riwayat transaksi masih terbatas ke OPN.
+6. **Analytics** — Activity feed & volume belum chain-aware; tambah filter token dan rentang waktu.
+
+## Fase 3 — UI/UX
+
+1. **Navigasi**: Farm/Status/Faucet belum konsisten di header & dock mobile; rapikan grup menu + indikator chain aktif berwarna.
+2. **Empty & error states** konsisten di semua halaman (Pools, Farming, Portfolio, Analytics) — ikon, penjelasan, dan aksi lanjutan.
+3. **Skeleton menyeluruh** untuk Pools, Farming, Portfolio (Analytics sudah punya).
+4. **Feedback transaksi**: `TransactionLifecycleModal` dipakai di semua aksi on-chain (saat ini belum di Farming & Create Pool).
+5. **Mobile**: sticky-CTA untuk Farming & Create Pool, target sentuh ≥44px, bottom-sheet konsisten.
+6. **Performa**: turunkan polling agresif saat tab tidak aktif, memoisasi daftar pool, kurangi beban komponen 3D di perangkat low-end.
 
 ## Detail Teknis
 
-- Chain-aware React Query: setiap `queryKey` sekarang array dengan `chainId` di depan (`['pools', chainId]`, `['prices', chainId, …]`).
-- `useLiveSwapNotifications` & `useWatchContractEvent` di-mount ulang saat chain berubah (dependency `chainId`).
-- Transaction explorer link diambil dari `chain.blockExplorers.default.url` (bukan hardcode `testnet.iopn.tech`).
-- Faucet AEREDIUM (`0xa12C…`) diekspose sebagai halaman opsional `/faucet` hanya aktif saat `chainId === 1237` (di luar scope inti, akan disiapkan hook `useFaucet` tapi UI minimal — bisa dilanjut nanti kalau diminta).
-- WalletConnect metadata tetap; connector tidak berubah karena wagmi handle multi-chain per connector.
+- Tidak ada perubahan backend/database — seluruh data dari RPC on-chain.
+- Refactor bersifat mekanis dan bertahap per file agar preview tetap hijau di tiap langkah.
+- Kontrak OPN Testnet yang berjalan sekarang tidak berubah perilakunya.
 
-## Yang TIDAK Diubah
+## Urutan Eksekusi
 
-- Wallet list & modal koneksi (MetaMask, Rabby, OKX, Bitget, Phantom, WalletConnect, Coinbase) — sudah universal EVM.
-- Desain visual/tema Dragon.
-- Kontrak OPN Testnet yang existing tetap berjalan penuh.
+Fase 1 dulu (tanpa ini AEREDIUM tidak bisa dipakai), lalu Fase 2, lalu Fase 3.
