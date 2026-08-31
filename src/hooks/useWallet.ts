@@ -1,5 +1,6 @@
 import { useAccount, useBalance, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { opnTestnet } from '@/config/wagmi';
+import { SUPPORTED_CHAINS } from '@/config/chains';
 
 export function useWallet() {
   const { address, isConnected, isConnecting, connector } = useAccount();
@@ -12,7 +13,9 @@ export function useWallet() {
     address: address,
   });
 
-  const isCorrectNetwork = chainId === opnTestnet.id;
+  // Any supported network (OPN Testnet / AEREDIUM Testnet) is valid.
+  const isCorrectNetwork = SUPPORTED_CHAINS.some((c) => c.id === chainId);
+  const activeChain = SUPPORTED_CHAINS.find((c) => c.id === chainId) ?? opnTestnet;
 
   const switchToOPN = () => {
     if (switchChain) {
@@ -36,6 +39,7 @@ export function useWallet() {
     balance,
     chainId,
     isCorrectNetwork,
+    activeChain,
     switchToOPN,
     formatAddress,
   };
