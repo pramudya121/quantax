@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownUp, Settings, Loader2, ExternalLink, Check, Info, X, Flame, Wallet, RotateCw, Route, Zap, Clock, ChevronDown, RefreshCw, Sparkles } from 'lucide-react';
 import { useAccount, useBalance } from 'wagmi';
+import { useChainId } from 'wagmi';
 import { parseUnits, formatUnits, formatEther, parseEther } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { TokenSelector } from './TokenSelector';
 import { PriceImpactWarning } from './PriceImpactWarning';
 import { SwapPriceChart } from './SwapPriceChart';
-import { TOKEN_LIST, TokenInfo, CONTRACTS } from '@/config/contracts';
+import { getTokenList, TokenInfo, getContracts } from '@/config/contracts';
 import { useRouter, useApprove, useTokenBalance, useTokenAllowance, useGetPair, usePairReserves, usePairTokens, useWETH, useRouterWETH } from '@/hooks/useContract';
 import { useBestRoute } from '@/hooks/useSwapRouter';
 import { RouteComparison } from './RouteComparison';
@@ -27,8 +28,11 @@ export function SwapCard() {
   const { address, isConnected } = useAccount();
   const { isCorrectNetwork, switchToOPN } = useWallet();
 
-  const [fromToken, setFromToken] = useState<TokenInfo | null>(TOKEN_LIST[0]);
-  const [toToken, setToToken] = useState<TokenInfo | null>(TOKEN_LIST[2]);
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const tokenList = useMemo(() => getTokenList(chainId), [chainId]);
+  const [fromToken, setFromToken] = useState<TokenInfo | null>(tokenList[0]);
+  const [toToken, setToToken] = useState<TokenInfo | null>(tokenList[2]);
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
   const [slippage, setSlippage] = useState(0.5);
@@ -43,6 +47,14 @@ export function SwapCard() {
 
   const NATIVE_GAS_RESERVE = 0.01;
 
+  // Reset token selection when the active network changes.
+  useEffect(() => {
+    setFromToken(tokenList[0] ?? null);
+    setToToken(tokenList[2] ?? tokenList[1] ?? null);
+    setFromAmount('');
+    setToAmount('');
+  }, [chainId, tokenList]);
+
   const router = useRouter();
   const weth = useWETH();
   const { data: routerWETH } = useRouterWETH();
@@ -55,13 +67,15 @@ export function SwapCard() {
     if (!fromToken || !toToken) return false;
     const fromIsNative = fromToken.isNative;
     const toIsNative = toToken.isNative;
-    const fromIsWOPN = fromToken.symbol === 'WOPN';
-    const toIsWOPN = toToken.symbol === 'WOPN';
-    return (fromIsNative && toIsWOPN) || (fromIsWOPN && toIsNative);
-  }, [fromToken, toToken]);
+    const isWrappedAddr = (t: TokenInfo) =>
+      !t.isNative && t.address.toLowerCase() === C.WETH.toLowerCase();
+    return (fromIsNative && isWrappedAddr(toToken)) || (isWrappedAddr(fromToken) && toIsNative);
+  }, [fromToken, toToken, C.WETH]);
 
-  const isWrapping = fromToken?.isNative && toToken?.symbol === 'WOPN';
-  const isUnwrapping = fromToken?.symbol === 'WOPN' && toToken?.isNative;
+  const isWrappedToken = (t: TokenInfo | null) =>
+    !!t && !t.isNative && t.address.toLowerCase() === C.WETH.toLowerCase();
+  const isWrapping = fromToken?.isNative && isWrappedToken(toToken);
+  const isUnwrapping = isWrappedToken(fromToken) && toToken?.isNative;
 
   const { data: nativeBalance } = useBalance({ address });
   const { data: tokenBalance } = useTokenBalance(
@@ -71,15 +85,15 @@ export function SwapCard() {
 
   // Use router's actual WETH address if available, fallback to configured
   const wethAddress = useMemo(() => {
-    return (routerWETH || CONTRACTS.WETH) as `0x${string}`;
-  }, [routerWETH]);
+    return (routerWETH || C.WETH) as `0x${string}`;
+  }, [routerWETH, C.WETH]);
 
   // Log WETH mismatch for debugging
   useEffect(() => {
-    if (routerWETH && routerWETH.toLowerCase() !== CONTRACTS.WETH.toLowerCase()) {
-      console.warn(`⚠️ WETH mismatch! Router: ${routerWETH}, Config: ${CONTRACTS.WETH}`);
+    if (routerWETH && routerWETH.toLowerCase() !== C.WETH.toLowerCase()) {
+      console.warn(`⚠️ Wrapped-native mismatch! Router: ${routerWETH}, Config: ${C.WETH}`);
     }
-  }, [routerWETH]);
+  }, [routerWETH, C.WETH]);
 
   // Get pair for price impact calculation
   const fromAddr = useMemo(() => {
@@ -133,7 +147,7 @@ export function SwapCard() {
   const { data: allowance, refetch: refetchAllowance } = useTokenAllowance(
     fromToken && !fromToken.isNative ? (fromToken.address as `0x${string}`) : undefined,
     address,
-    CONTRACTS.ROUTER as `0x${string}`
+    C.ROUTER
   );
 
   const needsApproval = useMemo(() => {
@@ -432,7 +446,7 @@ export function SwapCard() {
     if (!v.ok) { toast.error(v.title || 'Cannot Approve', { description: v.error }); return; }
     toast.loading(`Approving ${fromToken.symbol}...`, { id: 'approve' });
     const safeAmount = getSafeApprovalAmount(amountIn);
-    approve(fromToken.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, safeAmount);
+    approve(fromToken.address as `0x${string}`, C.ROUTER, safeAmount);
   };
 
 

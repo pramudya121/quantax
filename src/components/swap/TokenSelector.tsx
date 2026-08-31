@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search, X, Loader2, AlertCircle, Check, Plus, Download, Shield, ShieldAlert, ShieldX, AlertTriangle, Trash2 } from 'lucide-react';
-import { TOKEN_LIST, TokenInfo } from '@/config/contracts';
+import { getTokenList, TokenInfo } from '@/config/contracts';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAccount, useBalance } from 'wagmi';
+import { useAccount, useBalance, useChainId } from 'wagmi';
 import { useTokenBalance } from '@/hooks/useContract';
 import { useValidateToken } from '@/hooks/useLiquidityPools';
 import { useTokenSafety, SafetyLevel } from '@/hooks/useTokenSafety';
@@ -198,6 +198,8 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
   const [activeTab, setActiveTab] = useState<'all' | 'imported'>('all');
   const [showImportConfirm, setShowImportConfirm] = useState(false);
   const { address } = useAccount();
+  const chainId = useChainId();
+  const TOKEN_LIST = getTokenList(chainId);
 
   const isAddressSearch = /^0x[a-fA-F0-9]{40}$/.test(search);
   const { isValid, isLoading: isValidating, symbol, name, decimals } = useValidateToken(

@@ -3,10 +3,11 @@ import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Loader2, ExternalLink, AlertCircle, Check, ArrowRight } from 'lucide-react';
 import { useAccount, useBalance } from 'wagmi';
+import { useChainId } from 'wagmi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TokenSelector } from '@/components/swap/TokenSelector';
-import { TOKEN_LIST, TokenInfo, CONTRACTS } from '@/config/contracts';
+import { getTokenList, TokenInfo, getContracts } from '@/config/contracts';
 import { useFactory, useGetPair, useApprove, useTokenAllowance, useTokenBalance, useRouter } from '@/hooks/useContract';
 import { MovingBorder } from '@/components/ui/aceternity/MovingBorder';
 import { BackgroundGradient } from '@/components/ui/aceternity/BackgroundGradient';
@@ -19,6 +20,9 @@ const NATIVE_GAS_RESERVE = 0.01;
 
 export default function CreatePool() {
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const tokenList = getTokenList(chainId);
   const [tokenA, setTokenA] = useState<TokenInfo | null>(null);
   const [tokenB, setTokenB] = useState<TokenInfo | null>(null);
   const [amountA, setAmountA] = useState('');
@@ -34,8 +38,8 @@ export default function CreatePool() {
   const { data: nativeBalance } = useBalance({ address });
 
   // Check if pair exists
-  const tokenAForPair = tokenA ? (tokenA.isNative ? CONTRACTS.WETH : tokenA.address) : undefined;
-  const tokenBForPair = tokenB ? (tokenB.isNative ? CONTRACTS.WETH : tokenB.address) : undefined;
+  const tokenAForPair = tokenA ? (tokenA.isNative ? C.WETH : tokenA.address) : undefined;
+  const tokenBForPair = tokenB ? (tokenB.isNative ? C.WETH : tokenB.address) : undefined;
 
   const { data: pairAddress, refetch: refetchPair } = useGetPair(
     tokenAForPair as `0x${string}` | undefined,
@@ -56,12 +60,12 @@ export default function CreatePool() {
   const { data: allowanceA, refetch: refetchAllowanceA } = useTokenAllowance(
     tokenA && !tokenA.isNative ? (tokenA.address as `0x${string}`) : undefined,
     address,
-    CONTRACTS.ROUTER as `0x${string}`
+    C.ROUTER
   );
   const { data: allowanceB, refetch: refetchAllowanceB } = useTokenAllowance(
     tokenB && !tokenB.isNative ? (tokenB.address as `0x${string}`) : undefined,
     address,
-    CONTRACTS.ROUTER as `0x${string}`
+    C.ROUTER
   );
 
   const pairExists = pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000';
@@ -162,8 +166,8 @@ export default function CreatePool() {
 
   const handleCreatePair = () => {
     if (!tokenA || !tokenB) return;
-    const addressA = tokenA.isNative ? CONTRACTS.WETH : tokenA.address;
-    const addressB = tokenB.isNative ? CONTRACTS.WETH : tokenB.address;
+    const addressA = tokenA.isNative ? C.WETH : tokenA.address;
+    const addressB = tokenB.isNative ? C.WETH : tokenB.address;
     toast.loading('Creating pool...', { id: 'create-pool' });
     setStep('create');
     factory.createPair(addressA as `0x${string}`, addressB as `0x${string}`);
@@ -172,13 +176,13 @@ export default function CreatePool() {
   const handleApproveA = () => {
     if (!tokenA || tokenA.isNative) return;
     toast.loading(`Approving ${tokenA.symbol}...`, { id: 'approve-a' });
-    approveA(tokenA.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, parseUnits('999999999', tokenA.decimals));
+    approveA(tokenA.address as `0x${string}`, C.ROUTER, parseUnits('999999999', tokenA.decimals));
   };
 
   const handleApproveB = () => {
     if (!tokenB || tokenB.isNative) return;
     toast.loading(`Approving ${tokenB.symbol}...`, { id: 'approve-b' });
-    approveB(tokenB.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, parseUnits('999999999', tokenB.decimals));
+    approveB(tokenB.address as `0x${string}`, C.ROUTER, parseUnits('999999999', tokenB.decimals));
   };
 
   const handleAddLiquidity = () => {

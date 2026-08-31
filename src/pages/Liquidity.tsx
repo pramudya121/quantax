@@ -3,13 +3,14 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus, Loader2, Check, ExternalLink, Droplets, Info, Calculator, TrendingUp, Wallet, Shield, AlertCircle } from 'lucide-react';
 import { useAccount, useBalance } from 'wagmi';
+import { useChainId } from 'wagmi';
 import { parseEther, formatEther, parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTokenBalance, useRouter, useApprove, useTokenAllowance, useGetPair, usePairReserves, useApprovePair, usePairBalance, usePairAllowance, usePairTokens, usePairTotalSupply, useRouterWETH } from '@/hooks/useContract';
 import { useTransactionHistory } from '@/components/history/TransactionHistory';
-import { CONTRACTS, TOKEN_LIST, TokenInfo } from '@/config/contracts';
+import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
 import { TokenSelector } from '@/components/swap/TokenSelector';
 import { TextGenerateEffect } from '@/components/ui/aceternity/TextGenerateEffect';
 import { MovingBorder } from '@/components/ui/aceternity/MovingBorder';
@@ -32,13 +33,16 @@ export default function Liquidity() {
   const { isCorrectNetwork, switchToOPN } = useWallet();
   const { addTransaction } = useTransactionHistory();
   const { data: routerWETH } = useRouterWETH();
-  const wethAddress = useMemo(() => (routerWETH || CONTRACTS.WETH) as `0x${string}`, [routerWETH]);
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const tokenList = useMemo(() => getTokenList(chainId), [chainId]);
+  const wethAddress = useMemo(() => (routerWETH || C.WETH) as `0x${string}`, [routerWETH, C.WETH]);
   const [activeTab, setActiveTab] = useState('add');
   const [showWalletModal, setShowWalletModal] = useState(false);
   
   // Add Liquidity state
-  const [tokenA, setTokenA] = useState<TokenInfo | null>(TOKEN_LIST[1]); // WOPN
-  const [tokenB, setTokenB] = useState<TokenInfo | null>(TOKEN_LIST[2]); // DRAGON
+  const [tokenA, setTokenA] = useState<TokenInfo | null>(tokenList[1]); // wrapped native
+  const [tokenB, setTokenB] = useState<TokenInfo | null>(tokenList[2]); // DRAGON
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [isAutoCalculating, setIsAutoCalculating] = useState(false);
@@ -46,6 +50,14 @@ export default function Liquidity() {
   
   // Remove Liquidity state
   const [removePercent, setRemovePercent] = useState(25);
+
+  // Reset selection when the active network changes.
+  useEffect(() => {
+    setTokenA(tokenList[1] ?? null);
+    setTokenB(tokenList[2] ?? null);
+    setAmountA('');
+    setAmountB('');
+  }, [chainId, tokenList]);
 
   // Slippage & deadline controls (shared by Add / Remove)
   const [slippage, setSlippage] = useState(0.5); // percent
@@ -91,12 +103,12 @@ export default function Liquidity() {
   const { data: allowanceA, refetch: refetchAllowanceA } = useTokenAllowance(
     tokenA && !tokenA.isNative ? (tokenA.address as `0x${string}`) : undefined,
     address,
-    CONTRACTS.ROUTER as `0x${string}`
+    C.ROUTER
   );
   const { data: allowanceB, refetch: refetchAllowanceB } = useTokenAllowance(
     tokenB && !tokenB.isNative ? (tokenB.address as `0x${string}`) : undefined,
     address,
-    CONTRACTS.ROUTER as `0x${string}`
+    C.ROUTER
   );
   
   // Get pair info
@@ -358,13 +370,13 @@ export default function Liquidity() {
   const handleApproveA = () => {
     if (!tokenA || tokenA.isNative) return;
     toast.loading(`Approving ${tokenA.symbol}...`, { id: 'approve-a' });
-    approveTokenA(tokenA.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, getSafeApprovalAmount(amountABigInt));
+    approveTokenA(tokenA.address as `0x${string}`, C.ROUTER, getSafeApprovalAmount(amountABigInt));
   };
 
   const handleApproveB = () => {
     if (!tokenB || tokenB.isNative) return;
     toast.loading(`Approving ${tokenB.symbol}...`, { id: 'approve-b' });
-    approveTokenB(tokenB.address as `0x${string}`, CONTRACTS.ROUTER as `0x${string}`, getSafeApprovalAmount(amountBBigInt));
+    approveTokenB(tokenB.address as `0x${string}`, C.ROUTER, getSafeApprovalAmount(amountBBigInt));
   };
 
   const handleAddLiquidity = () => {

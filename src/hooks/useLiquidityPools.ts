@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useReadContract, useReadContracts, useWatchContractEvent } from 'wagmi';
-import { CONTRACTS, getTokenByAddress, TokenInfo } from '@/config/contracts';
+import { useReadContract, useReadContracts, useWatchContractEvent, useChainId } from 'wagmi';
+import { getContracts, getTokenByAddress, getWrappedNative, TokenInfo } from '@/config/contracts';
+import { AER_CHAIN_ID } from '@/config/chains';
 import { FACTORY_ABI, PAIR_ABI, ERC20_ABI } from '@/config/abis';
 import { formatUnits } from 'viem';
 
@@ -22,10 +23,21 @@ export function useLiquidityPools() {
   const [pools, setPools] = useState<LiquidityPool[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const wrapped = getWrappedNative(chainId).toLowerCase();
+  const wrappedSymbol = chainId === AER_CHAIN_ID ? 'WAER' : 'WOPN';
+  const wrappedName = chainId === AER_CHAIN_ID ? 'Wrapped AER' : 'Wrapped OPN';
+
+  // Clear stale pools immediately when the user switches network.
+  useEffect(() => {
+    setPools([]);
+    setIsLoading(true);
+  }, [chainId]);
 
   // Get total number of pairs (cheap call, can refresh more often)
   const { data: pairsLength, refetch: refetchLength } = useReadContract({
-    address: CONTRACTS.FACTORY as `0x${string}`,
+    address: C.FACTORY,
     abi: FACTORY_ABI,
     functionName: 'allPairsLength',
     query: {
@@ -39,7 +51,7 @@ export function useLiquidityPools() {
   // Auto-index new pairs: when Factory emits PairCreated, refetch length
   // so Pools/Analytics surface the new pair without a hard reload.
   useWatchContractEvent({
-    address: CONTRACTS.FACTORY as `0x${string}`,
+    address: C.FACTORY,
     abi: FACTORY_ABI,
     eventName: 'PairCreated',
     onLogs: () => {
@@ -53,7 +65,7 @@ export function useLiquidityPools() {
 
   const pairAddressesResult = useReadContracts({
     contracts: pairIndices.map(index => ({
-      address: CONTRACTS.FACTORY as `0x${string}`,
+      address: C.FACTORY,
       abi: FACTORY_ABI,
       functionName: 'allPairs',
       args: [BigInt(index)],
@@ -116,11 +128,12 @@ export function useLiquidityPools() {
       if (symbol) {
         // On-chain WOPN contract is a WETH9 fork and reports "WETH"/"Wrapped Ether".
         // Normalize to OPN-native branding everywhere it surfaces.
-        const normalizedSymbol = symbol === 'WETH' ? 'WOPN' : symbol;
-        const normalizedName = (name === 'Wrapped Ether' || !name) ? 'Wrapped OPN' : name;
+        const isWrapped = addresses[i].toLowerCase() === wrapped || symbol === 'WETH';
+        const normalizedSymbol = isWrapped ? wrappedSymbol : symbol;
+        const normalizedName = (name === 'Wrapped Ether' || !name) ? wrappedName : name;
         symbolMap.set(addresses[i].toLowerCase(), {
           symbol: normalizedSymbol,
-          name: symbol === 'WETH' ? normalizedName : (name || symbol),
+          name: isWrapped ? normalizedName : (name || symbol),
           decimals: decimals || 18,
         });
       }
@@ -144,14 +157,14 @@ export function useLiquidityPools() {
 
         if (!token0Address || !token1Address) continue;
 
-        const token0Info = getTokenByAddress(token0Address);
-        const token1Info = getTokenByAddress(token1Address);
+        const token0Info = getTokenByAddress(token0Address, chainId);
+        const token1Info = getTokenByAddress(token1Address, chainId);
 
         // Get symbol from map if not in TOKEN_LIST
         const token0Data = symbolMap.get(token0Address.toLowerCase());
         const token1Data = symbolMap.get(token1Address.toLowerCase());
 
-        const normalizeSym = (s?: string) => (s === 'WETH' ? 'WOPN' : s || 'Unknown');
+        const normalizeSym = (s?: string) => (s === 'WETH' ? wrappedSymbol : s || 'Unknown');
 
         poolsData.push({
           pairAddress,
@@ -174,7 +187,7 @@ export function useLiquidityPools() {
       setError(err as Error);
       setIsLoading(false);
     }
-  }, [tokenCallsResult.data, tokenCallsResult.isLoading, pairAddresses.length, symbolMap.size]);
+  }, [tokenCallsResult.data, tokenCallsResult.isLoading, pairAddresses.length, symbolMap.size, chainId]);
 
   const refetch = () => {
     refetchLength();

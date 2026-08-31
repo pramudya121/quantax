@@ -1,17 +1,18 @@
 import { useMemo } from 'react';
-import { useReadContracts, useReadContract } from 'wagmi';
-import { CONTRACTS, TOKEN_LIST } from '@/config/contracts';
+import { useReadContracts, useReadContract, useChainId } from 'wagmi';
+import { getContracts, getTokenList } from '@/config/contracts';
 import { FACTORY_ABI, ROUTER_ABI } from '@/config/abis';
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
 
-// Common intermediate tokens for multi-hop routing
-const BRIDGE_TOKENS: `0x${string}`[] = [
-  CONTRACTS.WETH as `0x${string}`,   // WOPN - most liquid
-  CONTRACTS.DRAGON as `0x${string}`, // DRAGON
-  CONTRACTS.BNB as `0x${string}`,    // BNB
-  CONTRACTS.ETH as `0x${string}`,    // ETH
-];
+// Common intermediate tokens for multi-hop routing (per active chain)
+function getBridgeTokens(chainId?: number): `0x${string}`[] {
+  const wrapped = getContracts(chainId).WETH;
+  const list = getTokenList(chainId);
+  const pick = (sym: string) =>
+    list.find((t) => t.symbol === sym && !t.isNative)?.address as `0x${string}` | undefined;
+  return [wrapped, pick('DRAGON'), pick('BNB'), pick('ETH')].filter(Boolean) as `0x${string}`[];
+}
 
 export interface SwapRoute {
   path: `0x${string}`[];
@@ -27,6 +28,10 @@ export function useFindRoutes(
   fromAddr: `0x${string}` | undefined,
   toAddr: `0x${string}` | undefined
 ) {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const BRIDGE_TOKENS = useMemo(() => getBridgeTokens(chainId), [chainId]);
+
   // Build list of candidate pairs to check
   const candidatePairs = useMemo(() => {
     if (!fromAddr || !toAddr) return [];
@@ -43,12 +48,12 @@ export function useFindRoutes(
     }
 
     return pairs;
-  }, [fromAddr, toAddr]);
+  }, [fromAddr, toAddr, BRIDGE_TOKENS]);
 
   // Batch getPair calls
   const { data: pairResults, isLoading } = useReadContracts({
     contracts: candidatePairs.map(p => ({
-      address: CONTRACTS.FACTORY as `0x${string}`,
+      address: C.FACTORY,
       abi: FACTORY_ABI,
       functionName: 'getPair',
       args: [p.tokenA, p.tokenB],
@@ -61,8 +66,8 @@ export function useFindRoutes(
 
     const found: SwapRoute[] = [];
     const getSymbol = (addr: string) => {
-      const t = TOKEN_LIST.find(t => {
-        const tAddr = t.isNative ? CONTRACTS.WETH : t.address;
+      const t = getTokenList(chainId).find(t => {
+        const tAddr = t.isNative ? C.WETH : t.address;
         return tAddr.toLowerCase() === addr.toLowerCase();
       });
       return t?.symbol || addr.slice(0, 6);
@@ -100,7 +105,7 @@ export function useFindRoutes(
     }
 
     return found;
-  }, [fromAddr, toAddr, pairResults]);
+  }, [fromAddr, toAddr, pairResults, chainId, C, BRIDGE_TOKENS]);
 
   return { routes, isLoading };
 }
@@ -114,12 +119,14 @@ export function useBestRoute(
   toAddr: `0x${string}` | undefined,
   amountIn: bigint | undefined
 ) {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const { routes, isLoading: isRoutesLoading } = useFindRoutes(fromAddr, toAddr);
 
   // Get quotes for all routes
   const { data: quoteResults, isLoading: isQuoting } = useReadContracts({
     contracts: routes.map(route => ({
-      address: CONTRACTS.ROUTER as `0x${string}`,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'getAmountsOut',
       args: [amountIn!, route.path],
