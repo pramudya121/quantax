@@ -6,12 +6,15 @@
 import { useMemo } from 'react';
 import { useReadContracts } from 'wagmi';
 import { ERC20_ABI } from '@/config/abis';
-import { TOKEN_LIST, CONTRACTS } from '@/config/contracts';
+import { TOKEN_LIST_BY_CHAIN } from '@/config/contracts';
+
+// All built-in tokens across every supported network
+const ALL_TOKENS = Object.values(TOKEN_LIST_BY_CHAIN).flat();
 import { formatUnits } from 'viem';
 
 // Whitelisted tokens (built-in tokens are always safe)
 const WHITELISTED_ADDRESSES = new Set(
-  TOKEN_LIST.map(t => t.address.toLowerCase())
+  ALL_TOKENS.map(t => t.address.toLowerCase())
 );
 
 export type SafetyLevel = 'verified' | 'warning' | 'danger' | 'unknown';
@@ -53,7 +56,7 @@ export function useTokenSafety(address: `0x${string}` | undefined): TokenSafetyR
     }
 
     if (isWhitelisted) {
-      const token = TOKEN_LIST.find(t => t.address.toLowerCase() === address!.toLowerCase());
+      const token = ALL_TOKENS.find(t => t.address.toLowerCase() === address!.toLowerCase());
       return {
         level: 'verified',
         isWhitelisted: true,
@@ -90,7 +93,7 @@ export function useTokenSafety(address: `0x${string}` | undefined): TokenSafetyR
     // Suspicious name/symbol patterns
     if (symbol && name) {
       // Check for impersonation of known tokens
-      const knownSymbols = TOKEN_LIST.map(t => t.symbol.toLowerCase());
+      const knownSymbols = ALL_TOKENS.map(t => t.symbol.toLowerCase());
       if (knownSymbols.includes(symbol.toLowerCase())) {
         warnings.push(`Symbol "${symbol}" matches a known token — possible impersonation`);
       }
