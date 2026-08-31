@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { useReadContracts } from 'wagmi';
-import { CONTRACTS, TOKEN_LIST, TokenInfo } from '@/config/contracts';
+import { useReadContracts, useChainId } from 'wagmi';
+import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
 import { PAIR_ABI, FACTORY_ABI } from '@/config/abis';
 import { formatUnits } from 'viem';
 
@@ -8,6 +8,10 @@ import { formatUnits } from 'viem';
 export const BASE_PRICES: Record<string, number> = {
   OPN: 1.0,
   WOPN: 1.0,
+  AER: 1.0,
+  WAER: 1.0,
+  UNI: 8.0,
+  XRP: 2.2,
   DRAGON: 0.25,
   BNB: 580.0,
   ETH: 3200.0,
@@ -19,15 +23,24 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 // Hook to get token prices based on pool reserves
 export function useTokenPrices() {
-  // Get WOPN pairs to derive prices
-  const wopnPairs = TOKEN_LIST.filter((t) => !t.isNative && t.symbol !== 'WOPN');
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const wrapped = C.WETH;
+  // Pairs against the wrapped native token are used to derive prices
+  const wopnPairs = useMemo(
+    () =>
+      getTokenList(chainId).filter(
+        (t) => !t.isNative && t.address.toLowerCase() !== wrapped.toLowerCase(),
+      ),
+    [chainId, wrapped],
+  );
 
   const pairQueries = useReadContracts({
     contracts: wopnPairs.map((token) => ({
-      address: CONTRACTS.FACTORY as `0x${string}`,
+      address: C.FACTORY,
       abi: FACTORY_ABI,
       functionName: 'getPair',
-      args: [CONTRACTS.WETH as `0x${string}`, token.address as `0x${string}`],
+      args: [wrapped, token.address as `0x${string}`],
     })),
     // Pair addresses are immutable once created — cache aggressively.
     query: { staleTime: 5 * 60_000, gcTime: 30 * 60_000 },
@@ -72,7 +85,7 @@ export function useTokenPrices() {
       if (!reserves || !token0Addr || reserves[0] === 0n || reserves[1] === 0n) continue;
 
       const { token } = pairTargets[i];
-      const isToken0Wopn = token0Addr.toLowerCase() === CONTRACTS.WETH.toLowerCase();
+      const isToken0Wopn = token0Addr.toLowerCase() === wrapped.toLowerCase();
 
       const wopnReserve = parseFloat(formatUnits(isToken0Wopn ? reserves[0] : reserves[1], 18));
       const tokenReserve = parseFloat(formatUnits(isToken0Wopn ? reserves[1] : reserves[0], token.decimals));
@@ -84,7 +97,7 @@ export function useTokenPrices() {
     }
 
     return priceMap;
-  }, [reserveQueries.data, pairTargets]);
+  }, [reserveQueries.data, pairTargets, wrapped]);
 
   return {
     prices,
@@ -105,6 +118,8 @@ export function usePriceImpact(
   reserves?: [bigint, bigint],
   token0Address?: string
 ) {
+  const chainId = useChainId();
+  const wrappedNative = getContracts(chainId).WETH;
   return useMemo(() => {
     const severityOf = (impact: number) =>
       impact > 10 ? ('high' as const) : impact > 3 ? ('medium' as const) : ('low' as const);
@@ -122,7 +137,7 @@ export function usePriceImpact(
     // where midOut = amountIn * reserveOut / reserveIn (no fee, no slippage)
     // and amountOut* = amountIn*997 * reserveOut / (reserveIn*1000 + amountIn*997)
     if (reserves && reserves[0] > 0n && reserves[1] > 0n && token0Address) {
-      const fromAddr = (fromToken.isNative ? CONTRACTS.WETH : fromToken.address).toLowerCase();
+      const fromAddr = (fromToken.isNative ? wrappedNative : fromToken.address).toLowerCase();
       const isFromToken0 = token0Address.toLowerCase() === fromAddr;
 
       const reserveIn = parseFloat(formatUnits(
@@ -154,7 +169,7 @@ export function usePriceImpact(
     // Multi-hop / unknown reserves fallback: conservative size-based estimate.
     const estimatedImpact = Math.min(inputAmount * 0.05, 10);
     return { priceImpact: estimatedImpact, severity: severityOf(estimatedImpact) };
-  }, [fromToken, toToken, fromAmount, reserves, token0Address]);
+  }, [fromToken, toToken, fromAmount, reserves, token0Address, wrappedNative]);
 }
 
 // Hook to calculate TVL for a pool
