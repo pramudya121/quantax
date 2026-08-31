@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useReadContracts, useAccount } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useReadContracts, useAccount, useChainId } from 'wagmi';
 import { parseEther, formatEther, parseUnits, formatUnits, encodeFunctionData } from 'viem';
-import { CONTRACTS } from '@/config/contracts';
+import { getContracts } from '@/config/contracts';
 import { ROUTER_ABI, FACTORY_ABI, WETH_ABI, ERC20_ABI, PAIR_ABI, MULTICALL_ABI } from '@/config/abis';
 
 // ============= ROUTER HOOKS =============
 export function useRouter() {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -17,7 +19,7 @@ export function useRouter() {
     value: bigint
   ) => {
     (writeContract as any)({
-      address: CONTRACTS.ROUTER,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'swapExactETHForTokens',
       args: [amountOutMin, [...path], to, deadline],
@@ -34,7 +36,7 @@ export function useRouter() {
     deadline: bigint
   ) => {
     (writeContract as any)({
-      address: CONTRACTS.ROUTER,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'swapExactTokensForETH',
       args: [amountIn, amountOutMin, [...path], to, deadline],
@@ -50,7 +52,7 @@ export function useRouter() {
     deadline: bigint
   ) => {
     (writeContract as any)({
-      address: CONTRACTS.ROUTER,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'swapExactTokensForTokens',
       args: [amountIn, amountOutMin, [...path], to, deadline],
@@ -68,7 +70,7 @@ export function useRouter() {
     deadline: bigint
   ) => {
     (writeContract as any)({
-      address: CONTRACTS.ROUTER,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'addLiquidity',
       args: [tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin, to, deadline],
@@ -85,7 +87,7 @@ export function useRouter() {
     value: bigint
   ) => {
     (writeContract as any)({
-      address: CONTRACTS.ROUTER,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'addLiquidityETH',
       args: [token, amountTokenDesired, amountTokenMin, amountETHMin, to, deadline],
@@ -104,7 +106,7 @@ export function useRouter() {
     deadline: bigint
   ) => {
     (writeContract as any)({
-      address: CONTRACTS.ROUTER,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'removeLiquidity',
       args: [tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline],
@@ -120,7 +122,7 @@ export function useRouter() {
     deadline: bigint
   ) => {
     (writeContract as any)({
-      address: CONTRACTS.ROUTER,
+      address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'removeLiquidityETH',
       args: [token, liquidity, amountTokenMin, amountETHMin, to, deadline],
@@ -146,12 +148,14 @@ export function useRouter() {
 
 // ============= FACTORY HOOKS =============
 export function useFactory() {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const createPair = (tokenA: `0x${string}`, tokenB: `0x${string}`) => {
     (writeContract as any)({
-      address: CONTRACTS.FACTORY,
+      address: C.FACTORY,
       abi: FACTORY_ABI,
       functionName: 'createPair',
       args: [tokenA, tokenB],
@@ -162,8 +166,10 @@ export function useFactory() {
 }
 
 export function useGetPair(tokenA: `0x${string}` | undefined, tokenB: `0x${string}` | undefined) {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const result = useReadContract({
-    address: CONTRACTS.FACTORY as `0x${string}`,
+    address: C.FACTORY as `0x${string}`,
     abi: FACTORY_ABI as any,
     functionName: 'getPair',
     args: tokenA && tokenB ? [tokenA, tokenB] : undefined,
@@ -173,8 +179,10 @@ export function useGetPair(tokenA: `0x${string}` | undefined, tokenB: `0x${strin
 }
 
 export function useAllPairs(index: number | undefined) {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const result = useReadContract({
-    address: CONTRACTS.FACTORY as `0x${string}`,
+    address: C.FACTORY as `0x${string}`,
     abi: FACTORY_ABI as any,
     functionName: 'allPairs',
     args: index !== undefined ? [BigInt(index)] : undefined,
@@ -184,8 +192,10 @@ export function useAllPairs(index: number | undefined) {
 }
 
 export function useAllPairsLength() {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const result = useReadContract({ 
-    address: CONTRACTS.FACTORY as `0x${string}`, 
+    address: C.FACTORY as `0x${string}`, 
     abi: FACTORY_ABI as any, 
     functionName: 'allPairsLength' 
   });
@@ -249,6 +259,8 @@ export function usePairBalance(pairAddress: `0x${string}` | undefined, userAddre
 }
 
 export function usePairAllowance(
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   pairAddress: `0x${string}` | undefined, 
   ownerAddress: `0x${string}` | undefined
 ) {
@@ -256,13 +268,15 @@ export function usePairAllowance(
     address: pairAddress,
     abi: PAIR_ABI as any,
     functionName: 'allowance',
-    args: ownerAddress ? [ownerAddress, CONTRACTS.ROUTER as `0x${string}`] : undefined,
+    args: ownerAddress ? [ownerAddress, C.ROUTER as `0x${string}`] : undefined,
     query: { enabled: !!pairAddress && !!ownerAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
   });
   return { ...result, data: result.data as bigint | undefined };
 }
 
 export function useApprovePair() {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
@@ -271,7 +285,7 @@ export function useApprovePair() {
       address: pairAddress,
       abi: PAIR_ABI,
       functionName: 'approve',
-      args: [CONTRACTS.ROUTER as `0x${string}`, amount],
+      args: [C.ROUTER as `0x${string}`, amount],
     });
   };
 
@@ -281,8 +295,10 @@ export function useApprovePair() {
 
 // ============= ROUTER READ HOOKS =============
 export function useRouterWETH() {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const result = useReadContract({
-    address: CONTRACTS.ROUTER as `0x${string}`,
+    address: C.ROUTER as `0x${string}`,
     abi: ROUTER_ABI as any,
     functionName: 'WETH',
   });
@@ -290,8 +306,10 @@ export function useRouterWETH() {
 }
 
 export function useGetAmountsOut(amountIn: bigint | undefined, path: `0x${string}`[]) {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const result = useReadContract({
-    address: CONTRACTS.ROUTER as `0x${string}`,
+    address: C.ROUTER as `0x${string}`,
     abi: ROUTER_ABI as any,
     functionName: 'getAmountsOut',
     args: amountIn && amountIn > 0n ? [amountIn, path] : undefined,
@@ -301,8 +319,10 @@ export function useGetAmountsOut(amountIn: bigint | undefined, path: `0x${string
 }
 
 export function useGetAmountsIn(amountOut: bigint | undefined, path: `0x${string}`[]) {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const result = useReadContract({
-    address: CONTRACTS.ROUTER as `0x${string}`,
+    address: C.ROUTER as `0x${string}`,
     abi: ROUTER_ABI as any,
     functionName: 'getAmountsIn',
     args: amountOut && amountOut > 0n ? [amountOut, path] : undefined,
@@ -313,12 +333,14 @@ export function useGetAmountsIn(amountOut: bigint | undefined, path: `0x${string
 
 // ============= WETH HOOKS =============
 export function useWETH() {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   
   const deposit = (value: bigint) => {
     (writeContract as any)({ 
-      address: CONTRACTS.WETH, 
+      address: C.WETH, 
       abi: WETH_ABI, 
       functionName: 'deposit', 
       value 
@@ -327,7 +349,7 @@ export function useWETH() {
   
   const withdraw = (amount: bigint) => {
     (writeContract as any)({ 
-      address: CONTRACTS.WETH, 
+      address: C.WETH, 
       abi: WETH_ABI, 
       functionName: 'withdraw', 
       args: [amount] 
@@ -392,12 +414,14 @@ export function useTokenSymbol(tokenAddress: `0x${string}` | undefined) {
 
 // ============= MULTICALL HOOKS =============
 export function useMulticall() {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const { writeContract, data: hash, isPending, error } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const aggregate = (calls: { target: `0x${string}`; callData: `0x${string}` }[]) => {
     (writeContract as any)({
-      address: CONTRACTS.MULTICALL,
+      address: C.MULTICALL,
       abi: MULTICALL_ABI,
       functionName: 'aggregate',
       args: [calls],
