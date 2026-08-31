@@ -20,6 +20,9 @@ const NATIVE_GAS_RESERVE = 0.01;
 
 export default function CreatePool() {
   const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const tokenList = getTokenList(chainId);
   const [tokenA, setTokenA] = useState<TokenInfo | null>(null);
   const [tokenB, setTokenB] = useState<TokenInfo | null>(null);
   const [amountA, setAmountA] = useState('');

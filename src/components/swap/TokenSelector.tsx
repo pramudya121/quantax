@@ -4,7 +4,7 @@ import { ChevronDown, Search, X, Loader2, AlertCircle, Check, Plus, Download, Sh
 import { getTokenList, TokenInfo } from '@/config/contracts';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAccount, useBalance } from 'wagmi';
+import { useAccount, useBalance, useChainId } from 'wagmi';
 import { useTokenBalance } from '@/hooks/useContract';
 import { useValidateToken } from '@/hooks/useLiquidityPools';
 import { useTokenSafety, SafetyLevel } from '@/hooks/useTokenSafety';
