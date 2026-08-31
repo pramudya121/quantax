@@ -2,10 +2,10 @@ import { SEO } from '@/components/seo/SEO';
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, TrendingUp, TrendingDown, Coins, ExternalLink, RefreshCw, PieChart, Activity, Zap, Crown, Shield, Droplets, ArrowUpRight, ArrowDownRight, Filter, Send, Download } from 'lucide-react';
-import { useAccount, useBalance, useReadContracts } from 'wagmi';
+import { useAccount, useBalance, useReadContracts, useChainId } from 'wagmi';
 import { formatEther, formatUnits } from 'viem';
 import { useTokenBalance } from '@/hooks/useContract';
-import { CONTRACTS, TOKEN_LIST } from '@/config/contracts';
+import { getTokenList, getContracts } from '@/config/contracts';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { BorderBeam } from '@/components/ui/magic/BorderBeam';
@@ -19,7 +19,7 @@ import { AssetCardSkeleton, StatCardSkeleton } from '@/components/ui/loading/Ske
 import { TransactionHistory, useTransactionHistory, Transaction } from '@/components/history/TransactionHistory';
 import { SendTokenModal } from '@/components/portfolio/SendTokenModal';
 import { PortfolioAllocationChart } from '@/components/portfolio/AllocationChart';
-import { PAIR_ABI } from '@/config/abis';
+import { PAIR_ABI, ERC20_ABI } from '@/config/abis';
 import { cn } from '@/lib/utils';
 
 type PortfolioTab = 'overview' | 'assets' | 'lp' | 'history';
@@ -34,12 +34,22 @@ const TABS: { id: PortfolioTab; label: string; icon: React.ReactNode }[] = [
 export default function Portfolio() {
   const { address, isConnected } = useAccount();
   const { data: opnBalance, refetch: refetchOpn, isLoading } = useBalance({ address });
-  const { data: wopnBalance } = useTokenBalance(CONTRACTS.WETH as `0x${string}`, address);
-  const { data: dragonBalance } = useTokenBalance(CONTRACTS.DRAGON as `0x${string}`, address);
-  const { data: bnbBalance } = useTokenBalance(CONTRACTS.BNB as `0x${string}`, address);
-  const { data: ethBalance } = useTokenBalance(CONTRACTS.ETH as `0x${string}`, address);
-  const { data: monBalance } = useTokenBalance(CONTRACTS.MON as `0x${string}`, address);
-  const { data: hypeBalance } = useTokenBalance(CONTRACTS.HYPE as `0x${string}`, address);
+  const chainId = useChainId();
+  const C = getContracts(chainId);
+  const chainTokens = useMemo(() => getTokenList(chainId), [chainId]);
+  const erc20Tokens = useMemo(() => chainTokens.filter((t) => !t.isNative), [chainTokens]);
+  const nativeToken = chainTokens.find((t) => t.isNative);
+
+  // Batch every ERC20 balance for the active network in a single multicall.
+  const tokenBalances = useReadContracts({
+    contracts: erc20Tokens.map((t) => ({
+      address: t.address as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: 'balanceOf',
+      args: address ? [address] : undefined,
+    })),
+    query: { enabled: !!address && erc20Tokens.length > 0, refetchInterval: 30_000 },
+  });
 
   const { transactions } = useTransactionHistory();
   const { pools, isLoading: poolsLoading } = useLiquidityPools();
@@ -82,15 +92,38 @@ export default function Portfolio() {
       .filter(Boolean) as any[];
   }, [pools, lpBalanceResults.data, prices]);
 
-  const tokens = [
-    { symbol: 'OPN', name: 'OPN', balance: opnBalance ? formatEther(opnBalance.value) : '0', logo: '/tokens/opn.jpg', price: prices['OPN'] || 1.00 },
-    { symbol: 'WOPN', name: 'Wrapped OPN', balance: wopnBalance ? formatEther(wopnBalance) : '0', logo: '/tokens/opn.jpg', price: prices['WOPN'] || 1.00 },
-    { symbol: 'DRAGON', name: 'Dragon Token', balance: dragonBalance ? formatEther(dragonBalance) : '0', logo: '/tokens/dragon.png', price: prices['DRAGON'] || 0.25 },
-    { symbol: 'BNB', name: 'Binance Coin', balance: bnbBalance ? formatEther(bnbBalance) : '0', logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png', price: prices['BNB'] || 580 },
-    { symbol: 'ETH', name: 'Ethereum', balance: ethBalance ? formatEther(ethBalance) : '0', logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png', price: prices['ETH'] || 3200 },
-    { symbol: 'MON', name: 'Monad', balance: monBalance ? formatEther(monBalance) : '0', logo: '/tokens/mon.jpg', price: prices['MON'] || 2.50 },
-    { symbol: 'HYPE', name: 'Hyperliquid', balance: hypeBalance ? formatEther(hypeBalance) : '0', logo: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32196.png', price: prices['HYPE'] || 15 },
-  ];
+  const tokens = useMemo(() => {
+    const list = [] as {
+      symbol: string; name: string; balance: string; logo: string; price: number;
+      address: string; isNative: boolean; decimals: number;
+    }[];
+    if (nativeToken) {
+      list.push({
+        symbol: nativeToken.symbol,
+        name: nativeToken.name,
+        balance: opnBalance ? formatEther(opnBalance.value) : '0',
+        logo: nativeToken.logoURI,
+        price: prices[nativeToken.symbol] || 1,
+        address: 'native',
+        isNative: true,
+        decimals: nativeToken.decimals,
+      });
+    }
+    erc20Tokens.forEach((t, i) => {
+      const raw = tokenBalances.data?.[i]?.result as bigint | undefined;
+      list.push({
+        symbol: t.symbol,
+        name: t.name,
+        balance: raw ? formatUnits(raw, t.decimals) : '0',
+        logo: t.logoURI,
+        price: prices[t.symbol] || 0,
+        address: t.address,
+        isNative: false,
+        decimals: t.decimals,
+      });
+    });
+    return list;
+  }, [nativeToken, erc20Tokens, tokenBalances.data, opnBalance, prices]);
 
   const totalTokenValue = tokens.reduce((acc, token) => acc + parseFloat(token.balance) * token.price, 0);
   const totalLPValue = lpPositions.reduce((acc: number, lp: any) => acc + lp.value, 0);
@@ -504,8 +537,8 @@ export default function Portfolio() {
           name: t.name,
           balance: t.balance,
           logo: t.logo,
-          address: t.symbol === 'OPN' ? 'native' : (t.symbol === 'WOPN' ? CONTRACTS.WETH : (CONTRACTS as any)[t.symbol] || ''),
-          isNative: t.symbol === 'OPN',
+          address: t.address,
+          isNative: t.isNative,
         }))}
       />
     </div>
