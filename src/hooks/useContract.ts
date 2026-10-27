@@ -259,11 +259,11 @@ export function usePairBalance(pairAddress: `0x${string}` | undefined, userAddre
 }
 
 export function usePairAllowance(
-  const chainId = useChainId();
-  const C = getContracts(chainId);
   pairAddress: `0x${string}` | undefined, 
   ownerAddress: `0x${string}` | undefined
 ) {
+  const chainId = useChainId();
+  const C = getContracts(chainId);
   const result = useReadContract({
     address: pairAddress,
     abi: PAIR_ABI as any,
