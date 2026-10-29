@@ -1,5 +1,5 @@
 /**
- * Input validation utilities for DragonDEX
+ * Input validation utilities for QuantaX
  * Centralizes all user input validation with strict bounds
  */
 import { z } from 'zod';
@@ -160,7 +160,7 @@ export function validatePreTx(params: {
           return {
             ok: false,
             title: 'Insufficient Balance',
-            error: `Keep at least ${gasReserve} OPN for gas. Available: ${(Math.max(bal - gasReserve, 0)).toFixed(4)}.`,
+            error: `Keep at least ${gasReserve} QMS for gas. Available: ${(Math.max(bal - gasReserve, 0)).toFixed(4)}.`,
           };
         }
       } else if (num > bal) {

@@ -12,7 +12,7 @@ import { Flame, Shield, Zap, TrendingUp } from 'lucide-react';
 export default function Swap() {
   return (
     <div className="relative min-h-[calc(100vh-80px)] pb-24 lg:pb-0 flex flex-col items-center justify-center overflow-hidden">
-    <SEO title="Swap Tokens — DRAGONDEX on OPN Testnet" description="Instantly swap tokens on OPN Testnet with AMM pricing, multi-hop routing, and real-time price impact." path="/swap" />
+    <SEO title="Swap Tokens — QUANTAX on QMS Testnet" description="Instantly swap tokens on QMS Testnet with AMM pricing, multi-hop routing, and real-time price impact." path="/swap" />
       {/* Background Effects */}
       <Spotlight className="hidden md:block" />
       <GlowingStarsBackground starCount={20} className="opacity-10" />
@@ -41,7 +41,7 @@ export default function Swap() {
             Trade Instantly
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto">
-            Swap tokens with the best rates on OPN Testnet
+            Swap tokens with the best rates on QMS Testnet
           </p>
 
           {/* Trust Badges */}

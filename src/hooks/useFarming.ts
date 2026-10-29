@@ -401,7 +401,7 @@ export function formatTokenAmount(amount: bigint, decimals: number, precision = 
   return dec ? `${int}.${dec.slice(0, precision)}` : int;
 }
 
-// OPN Testnet block time (approx). Used to estimate APR.
+// QMS Testnet block time (approx). Used to estimate APR.
 const BLOCKS_PER_YEAR = (365 * 24 * 60 * 60) / 2; // assuming ~2s blocks
 
 /**

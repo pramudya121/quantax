@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useReadContract, useReadContracts, useWatchContractEvent, useChainId } from 'wagmi';
 import { getContracts, getTokenByAddress, getWrappedNative, TokenInfo } from '@/config/contracts';
-import { AER_CHAIN_ID } from '@/config/chains';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { FACTORY_ABI, PAIR_ABI, ERC20_ABI } from '@/config/abis';
 import { formatUnits } from 'viem';
 
@@ -26,8 +26,8 @@ export function useLiquidityPools() {
   const chainId = useChainId();
   const C = getContracts(chainId);
   const wrapped = getWrappedNative(chainId).toLowerCase();
-  const wrappedSymbol = chainId === AER_CHAIN_ID ? 'WAER' : 'WOPN';
-  const wrappedName = chainId === AER_CHAIN_ID ? 'Wrapped AER' : 'Wrapped OPN';
+  const wrappedSymbol = 'WQMS';
+  const wrappedName = 'Wrapped QMS';
 
   // Clear stale pools immediately when the user switches network.
   useEffect(() => {
@@ -126,8 +126,8 @@ export function useLiquidityPools() {
       const name = symbolCallsResult.data[i * 3 + 1]?.result as string | undefined;
       const decimals = symbolCallsResult.data[i * 3 + 2]?.result as number | undefined;
       if (symbol) {
-        // On-chain WOPN contract is a WETH9 fork and reports "WETH"/"Wrapped Ether".
-        // Normalize to OPN-native branding everywhere it surfaces.
+        // On-chain WQMS contract is a WETH9 fork and reports "WETH"/"Wrapped Ether".
+        // Normalize to QMS-native branding everywhere it surfaces.
         const isWrapped = addresses[i].toLowerCase() === wrapped || symbol === 'WETH';
         const normalizedSymbol = isWrapped ? wrappedSymbol : symbol;
         const normalizedName = (name === 'Wrapped Ether' || !name) ? wrappedName : name;

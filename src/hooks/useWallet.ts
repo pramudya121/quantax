@@ -1,5 +1,5 @@
 import { useAccount, useBalance, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { opnTestnet } from '@/config/wagmi';
+import { qmsTestnet } from '@/config/wagmi';
 import { SUPPORTED_CHAINS } from '@/config/chains';
 
 export function useWallet() {
@@ -13,13 +13,13 @@ export function useWallet() {
     address: address,
   });
 
-  // Any supported network (OPN Testnet / AEREDIUM Testnet) is valid.
+  // Any supported network (QMS Testnet) is valid.
   const isCorrectNetwork = SUPPORTED_CHAINS.some((c) => c.id === chainId);
-  const activeChain = SUPPORTED_CHAINS.find((c) => c.id === chainId) ?? opnTestnet;
+  const activeChain = SUPPORTED_CHAINS.find((c) => c.id === chainId) ?? qmsTestnet;
 
-  const switchToOPN = () => {
+  const switchToQMS = () => {
     if (switchChain) {
-      switchChain({ chainId: opnTestnet.id });
+      switchChain({ chainId: qmsTestnet.id });
     }
   };
 
@@ -40,7 +40,7 @@ export function useWallet() {
     chainId,
     isCorrectNetwork,
     activeChain,
-    switchToOPN,
+    switchToQMS,
     formatAddress,
   };
 }

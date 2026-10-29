@@ -13,9 +13,9 @@ interface Props {
   isLoading?: boolean;
 }
 
-const EXPLORER = 'https://testnet.iopn.tech';
-// Only show user-facing assets (skip duplicate WOPN entry — it's the bridge).
-const FEATURED = ['DRAGON', 'BNB', 'ETH', 'MON', 'HYPE'];
+const EXPLORER = 'https://testnet.qmsscan.io';
+// Only show user-facing assets (skip duplicate WQMS entry — it's the bridge).
+const FEATURED = ['QTX', 'BNB', 'ETH', 'MON', 'HYPE'];
 
 function TokenDetailRowSkeleton() {
   return (
@@ -87,7 +87,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
         });
       }
 
-      // Prefer the WOPN pair as price source (WOPN anchors $1), else the deepest pool.
+      // Prefer the WQMS pair as price source (WQMS anchors $1), else the deepest pool.
       const wopnPair = tokenPools.find(
         p =>
           p.quoteAddress.toLowerCase() === CONTRACTS.WETH.toLowerCase() &&
@@ -162,7 +162,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
                   symbol={t.symbol}
                   alt={t.symbol}
                   size={40}
-                  fallbackSrc="/tokens/opn.jpg"
+                  fallbackSrc="/tokens/qms.svg"
                   className="border border-border"
                 />
                 <div className="flex-1 min-w-0">

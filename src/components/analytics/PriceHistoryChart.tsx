@@ -13,7 +13,7 @@ interface Props {
   isLoading?: boolean;
 }
 
-// OPN Testnet ~2s block time.
+// QMS Testnet ~2s block time.
 const BLOCK_SECONDS = 2;
 
 export function PriceHistoryChart({ pools, logs, latestBlock, isLoading }: Props) {

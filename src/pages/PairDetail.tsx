@@ -50,11 +50,11 @@ export default function PairDetail() {
   const pairPath = `/pool/${address ?? ''}`;
   const pairLabel = pool ? `${pool.token0Symbol}/${pool.token1Symbol}` : 'Liquidity';
   const seoTitle = pool
-    ? `${pairLabel} Pool — DRAGONDEX on OPN Testnet`
-    : 'Pool Details — DRAGONDEX';
+    ? `${pairLabel} Pool — QUANTAX on QMS Testnet`
+    : 'Pool Details — QUANTAX';
   const seoDescription = pool
-    ? `View reserves, price chart, TVL, and recent swaps for the ${pairLabel} liquidity pool on DRAGONDEX (OPN Testnet).`
-    : 'Detailed view of a DRAGONDEX liquidity pool with reserves, price chart, and recent swaps.';
+    ? `View reserves, price chart, TVL, and recent swaps for the ${pairLabel} liquidity pool on QUANTAX (QMS Testnet).`
+    : 'Detailed view of a QUANTAX liquidity pool with reserves, price chart, and recent swaps.';
 
   if (isLoading) {
     return (
@@ -80,8 +80,8 @@ export default function PairDetail() {
     );
   }
 
-  const logo0 = pool.token0?.logoURI || '/tokens/opn.jpg';
-  const logo1 = pool.token1?.logoURI || '/tokens/opn.jpg';
+  const logo0 = pool.token0?.logoURI || '/tokens/qms.svg';
+  const logo1 = pool.token1?.logoURI || '/tokens/qms.svg';
 
   return (
     <div className="relative min-h-[calc(100vh-80px)] pb-24 lg:pb-12 overflow-hidden">
@@ -103,10 +103,10 @@ export default function PairDetail() {
           <div className="flex items-center gap-4">
             <div className="flex -space-x-3">
               <TokenIcon src={logo0} symbol={pool.token0Symbol} size={48}
-                fallbackSrc="/tokens/opn.jpg"
+                fallbackSrc="/tokens/qms.svg"
                 className="border-2 border-background ring-1 ring-primary/30" />
               <TokenIcon src={logo1} symbol={pool.token1Symbol} size={48}
-                fallbackSrc="/tokens/opn.jpg"
+                fallbackSrc="/tokens/qms.svg"
                 className="border-2 border-background ring-1 ring-primary/30" />
             </div>
             <div>
@@ -117,7 +117,7 @@ export default function PairDetail() {
             </div>
           </div>
           <div className="flex gap-2">
-            <a href={`https://testnet.iopn.tech/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer">
+            <a href={`https://testnet.qmsscan.io/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">
                 <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Explorer
               </Button>
@@ -201,12 +201,12 @@ export default function PairDetail() {
             <Card key={t.addr} className="p-5 bg-card/60 backdrop-blur-xl border-border/40">
               <div className="flex items-center gap-3 mb-3">
                 <TokenIcon src={t.logo} symbol={t.sym} size={40}
-                  fallbackSrc="/tokens/opn.jpg"
+                  fallbackSrc="/tokens/qms.svg"
                   className="ring-1 ring-border/50" />
                 <div className="flex-1">
                   <div className="font-display font-bold">{t.sym}</div>
                   <a
-                    href={`https://testnet.iopn.tech/address/${t.addr}`}
+                    href={`https://testnet.qmsscan.io/address/${t.addr}`}
                     target="_blank" rel="noopener noreferrer"
                     className="text-[10px] text-muted-foreground hover:text-primary font-mono break-all inline-flex items-center gap-1"
                   >

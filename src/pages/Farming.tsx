@@ -45,7 +45,7 @@ function TokenLogo({ address, symbol, size = 32 }: { address: string; symbol: st
         alt={symbol}
         className="rounded-full border-2 border-background object-cover bg-card"
         style={{ width: size, height: size }}
-        onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }}
+        onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }}
       />
     );
   }
@@ -417,7 +417,7 @@ export default function Farming() {
   return (
     <div className="relative min-h-[calc(100vh-80px)] pb-24 lg:pb-12 overflow-hidden">
 
-    <SEO title="Yield Farming — DRAGONDEX" description="Stake LP tokens in DRAGONDEX farms to earn DRAGON rewards on OPN Testnet." path="/farming" />
+    <SEO title="Yield Farming — QUANTAX" description="Stake LP tokens in QUANTAX farms to earn QTX rewards on QMS Testnet." path="/farming" />
       <Spotlight className="hidden md:block" />
       <ParticleField particleCount={14} colorScheme="dragon" className="opacity-10" />
       <Meteors number={6} className="opacity-15" />
@@ -437,7 +437,7 @@ export default function Farming() {
               Stake. Earn. Forge.
             </h1>
             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-              Lock tokens in DragonDEX farms and earn rewards every block on OPN Testnet.
+              Lock tokens in QuantaX farms and earn rewards every block on QMS Testnet.
             </p>
             <div className="flex items-center justify-center gap-2 mt-4">
               <Button variant="outline" size="sm" onClick={refresh}>

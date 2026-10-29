@@ -30,7 +30,7 @@ const NATIVE_GAS_RESERVE = 0.01;
 
 export default function Liquidity() {
   const { address, isConnected } = useAccount();
-  const { isCorrectNetwork, switchToOPN } = useWallet();
+  const { isCorrectNetwork, switchToQMS } = useWallet();
   const { addTransaction } = useTransactionHistory();
   const { data: routerWETH } = useRouterWETH();
   const chainId = useChainId();
@@ -42,7 +42,7 @@ export default function Liquidity() {
   
   // Add Liquidity state
   const [tokenA, setTokenA] = useState<TokenInfo | null>(tokenList[1]); // wrapped native
-  const [tokenB, setTokenB] = useState<TokenInfo | null>(tokenList[2]); // DRAGON
+  const [tokenB, setTokenB] = useState<TokenInfo | null>(tokenList[2]); // QTX
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [isAutoCalculating, setIsAutoCalculating] = useState(false);
@@ -75,7 +75,7 @@ export default function Liquidity() {
     address
   );
   
-  // Native balance for OPN
+  // Native balance for QMS
   const { data: nativeOPNBalance } = useBalance({ address });
   
   const getSpendableNativeBalance = () => {
@@ -215,7 +215,7 @@ export default function Liquidity() {
         description: `${tokenA?.symbol} has been approved for liquidity`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${approveAHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${approveAHash}`, '_blank'),
         },
       });
       setTimeout(() => refetchAllowanceA(), 1000);
@@ -230,7 +230,7 @@ export default function Liquidity() {
         description: `${tokenB?.symbol} has been approved for liquidity`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${approveBHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${approveBHash}`, '_blank'),
         },
       });
       setTimeout(() => refetchAllowanceB(), 1000);
@@ -245,7 +245,7 @@ export default function Liquidity() {
         description: 'LP tokens approved for removal',
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${pairApproveHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${pairApproveHash}`, '_blank'),
         },
       });
       setTimeout(() => refetchLpAllowance(), 1000);
@@ -260,7 +260,7 @@ export default function Liquidity() {
         description: `Transaction confirmed on-chain`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${router.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${router.hash}`, '_blank'),
         },
       });
       addTransaction({
@@ -384,7 +384,7 @@ export default function Liquidity() {
 
     if (isSameUnderlyingPair) {
       toast.error('Pair tidak valid untuk liquidity', {
-        description: 'OPN dan WOPN memiliki underlying yang sama. Gunakan menu Swap untuk Wrap/Unwrap.',
+        description: 'QMS dan WQMS memiliki underlying yang sama. Gunakan menu Swap untuk Wrap/Unwrap.',
       });
       return;
     }
@@ -487,7 +487,7 @@ export default function Liquidity() {
       aria-label="Liquidity Management"
     >
 
-    <SEO title="Provide Liquidity — DRAGONDEX" description="Add or remove liquidity on DRAGONDEX pools and earn 0.3% trading fees from every swap." path="/liquidity" />
+    <SEO title="Provide Liquidity — QUANTAX" description="Add or remove liquidity on QUANTAX pools and earn 0.3% trading fees from every swap." path="/liquidity" />
       <Spotlight className="hidden md:block" />
       <GlowingStarsBackground starCount={30} className="opacity-20" />
       <ParticleField particleCount={30} colorScheme="dragon" className="opacity-30" />
@@ -625,9 +625,9 @@ export default function Liquidity() {
                         animate={{ opacity: 1, y: 0 }}
                         className="bg-warning/10 border border-warning/30 rounded-xl p-4"
                       >
-                        <p className="text-sm font-medium text-warning mb-1">Pair OPN/WOPN tidak bisa jadi liquidity pair</p>
+                        <p className="text-sm font-medium text-warning mb-1">Pair QMS/WQMS tidak bisa jadi liquidity pair</p>
                         <p className="text-xs text-muted-foreground">
-                          OPN dan WOPN menggunakan underlying address yang sama. Gunakan fitur Swap untuk Wrap/Unwrap.
+                          QMS dan WQMS menggunakan underlying address yang sama. Gunakan fitur Swap untuk Wrap/Unwrap.
                         </p>
                       </motion.div>
                     )}
@@ -805,8 +805,8 @@ export default function Liquidity() {
                         Connect Wallet
                       </Button>
                     ) : !isCorrectNetwork ? (
-                      <Button onClick={switchToOPN} className="w-full h-12 text-base" variant="destructive">
-                        Switch to OPN Network
+                      <Button onClick={switchToQMS} className="w-full h-12 text-base" variant="destructive">
+                        Switch to QMS Network
                       </Button>
                     ) : (
                       <Button 
@@ -972,8 +972,8 @@ export default function Liquidity() {
                         Connect Wallet
                       </Button>
                     ) : !isCorrectNetwork ? (
-                      <Button onClick={switchToOPN} className="w-full h-12 text-base" variant="destructive">
-                        Switch to OPN Network
+                      <Button onClick={switchToQMS} className="w-full h-12 text-base" variant="destructive">
+                        Switch to QMS Network
                       </Button>
                     ) : (
                       <Button 
@@ -1002,7 +1002,7 @@ export default function Liquidity() {
         {router.hash && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
             <a 
-              href={`https://testnet.iopn.tech/tx/${router.hash}`} 
+              href={`https://testnet.qmsscan.io/tx/${router.hash}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 text-sm text-success bg-success/10 py-3 px-4 rounded-xl"

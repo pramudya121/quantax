@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 
 export function SwapCard() {
   const { address, isConnected } = useAccount();
-  const { isCorrectNetwork, switchToOPN } = useWallet();
+  const { isCorrectNetwork, switchToQMS } = useWallet();
 
   const chainId = useChainId();
   const C = getContracts(chainId);
@@ -62,7 +62,7 @@ export function SwapCard() {
   const { approve, isPending: isApproving, isSuccess: approveSuccess, hash: approveHash, error: approveError } = useApprove();
   const { addTransaction, updateTransaction } = useTransactionHistory();
 
-  // Detect if this is a wrap/unwrap (OPN <-> WOPN)
+  // Detect if this is a wrap/unwrap (QMS <-> WQMS)
   const isWrapUnwrap = useMemo(() => {
     if (!fromToken || !toToken) return false;
     const fromIsNative = fromToken.isNative;
@@ -194,7 +194,7 @@ export function SwapCard() {
         description: `${fromToken?.symbol} approved — you can now swap`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${approveHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${approveHash}`, '_blank'),
         },
       });
       addTransaction({
@@ -233,7 +233,7 @@ export function SwapCard() {
         description: `Swapped ${savedFrom} ${fromToken?.symbol} → ${savedTo} ${toToken?.symbol}`,
         action: {
           label: 'View',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${router.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${router.hash}`, '_blank'),
         },
       });
       addTransaction({
@@ -259,7 +259,7 @@ export function SwapCard() {
         description: `${action} ${savedFrom} ${fromToken?.symbol} → ${savedTo} ${toToken?.symbol}`,
         action: {
           label: 'View',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${weth.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${weth.hash}`, '_blank'),
         },
       });
       addTransaction({
@@ -399,7 +399,7 @@ export function SwapCard() {
     
     // Handle wrap/unwrap
     if (isWrapUnwrap) {
-      toast.loading(isWrapping ? 'Wrapping OPN...' : 'Unwrapping WOPN...', { id: 'swap' });
+      toast.loading(isWrapping ? 'Wrapping QMS...' : 'Unwrapping WQMS...', { id: 'swap' });
       if (isWrapping) {
         weth.deposit(parseEther(fromAmount));
       } else {
@@ -793,7 +793,7 @@ export function SwapCard() {
                             } 
                           />
                         )}
-                        <DetailRow label="Network Fee" value="~0.001 OPN" />
+                        <DetailRow label="Network Fee" value="~0.001 QMS" />
                       </div>
                     </motion.div>
                   )}
@@ -832,8 +832,8 @@ export function SwapCard() {
                   Connect Wallet
                 </Button>
               ) : !isCorrectNetwork ? (
-                <Button onClick={switchToOPN} className="w-full h-11 sm:h-12 rounded-xl text-sm" variant="destructive">
-                  Switch to OPN Network
+                <Button onClick={switchToQMS} className="w-full h-11 sm:h-12 rounded-xl text-sm" variant="destructive">
+                  Switch to QMS Network
                 </Button>
               ) : needsApproval ? (
                 <>
@@ -894,9 +894,9 @@ export function SwapCard() {
                   ) : !isWrapUnwrap && !hasLiquidity && !isPoolDataLoading && fromToken && toToken ? (
                     'No Route Found'
                   ) : parseFloat(fromAmount) > parseFloat(maxSpendableFromBalance) ? (
-                    <>{fromToken?.isNative ? 'Insufficient OPN' : `Insufficient ${fromToken?.symbol}`}</>
+                    <>{fromToken?.isNative ? 'Insufficient QMS' : `Insufficient ${fromToken?.symbol}`}</>
                   ) : isWrapUnwrap ? (
-                    <>{isWrapping ? '🔥 Wrap OPN → WOPN' : '🔥 Unwrap WOPN → OPN'}</>
+                    <>{isWrapping ? '🔥 Wrap QMS → WQMS' : '🔥 Unwrap WQMS → QMS'}</>
                   ) : isHighImpact ? (
                     '⚠️ Swap Anyway (High Impact)'
                   ) : (
@@ -913,7 +913,7 @@ export function SwapCard() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <a 
-                  href={`https://testnet.iopn.tech/tx/${router.hash || weth.hash}`} 
+                  href={`https://testnet.qmsscan.io/tx/${router.hash || weth.hash}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center gap-2 text-xs sm:text-sm text-success justify-center hover:underline py-1"

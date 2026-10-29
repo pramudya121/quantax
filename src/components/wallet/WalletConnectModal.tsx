@@ -291,7 +291,7 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
                     <QrCode className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground truncate">DragonDEX Mobile</p>
+                    <p className="text-sm font-bold text-foreground truncate">QuantaX Mobile</p>
                     <p className="text-[11px] text-muted-foreground truncate">Scan a QR code to connect</p>
                   </div>
                   <span className="shrink-0 text-[9px] tracking-wider font-bold px-2 py-1 rounded-md bg-white/5 text-muted-foreground border border-white/10">
@@ -349,7 +349,7 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
               {/* Footer */}
               <div className="px-5 py-3 border-t border-white/5 text-center shrink-0">
                 <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-                  By connecting a wallet, you agree to DragonDEX{' '}
+                  By connecting a wallet, you agree to QuantaX{' '}
                   <a href="#" className="text-foreground hover:text-primary transition-colors">Terms of Service</a>
                   {' '}and acknowledge the{' '}
                   <a href="#" className="text-foreground hover:text-primary transition-colors">Privacy Policy</a>.

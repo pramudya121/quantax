@@ -1,5 +1,5 @@
 /**
- * Security utilities for DragonDEX
+ * Security utilities for QuantaX
  * Best practices for web3 and general security
  */
 

@@ -7,7 +7,7 @@ import {
   CONTRACTS_BY_CHAIN,
   TOKEN_LIST_BY_CHAIN,
 } from '@/config/contracts';
-import { SUPPORTED_CHAINS, OPN_CHAIN_ID, AER_CHAIN_ID, getChainMeta } from '@/config/chains';
+import { SUPPORTED_CHAINS, QMS_CHAIN_ID, getChainMeta } from '@/config/chains';
 import { FARMING_BY_CHAIN } from '@/config/farming';
 import { toast } from 'sonner';
 
@@ -22,7 +22,7 @@ interface Row {
 function buildCore(chainId: number): Row[] {
   const c = CONTRACTS_BY_CHAIN[chainId];
   const farm = FARMING_BY_CHAIN[chainId];
-  const wrappedLabel = chainId === AER_CHAIN_ID ? 'WAER' : 'WOPN';
+  const wrappedLabel = 'WQMS';
   const rows: Row[] = [
     { name: 'UniswapV2Factory', address: c.FACTORY, status: 'done', hooks: ['useLiquidityPools', 'CreatePool'] },
     { name: 'UniswapV2Router02', address: c.ROUTER, status: 'done', hooks: ['useSwapRouter', 'Liquidity', 'Swap'] },
@@ -128,8 +128,8 @@ export default function ContractStatus() {
   return (
     <div className="container mx-auto px-4 py-10 max-w-5xl">
       <SEO
-        title="Contract Status — DRAGONDEX"
-        description="Status implementasi smart contract DragonDEX di OPN Testnet & AEREDIUM Testnet"
+        title="Contract Status — QUANTAX"
+        description="Status implementasi smart contract QuantaX di QMS Testnet & QMS Testnet"
         path="/status"
       />
 
@@ -141,7 +141,7 @@ export default function ContractStatus() {
           <h1 className="font-display text-3xl font-extrabold gradient-text">Contract Status</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          DragonDEX kini multi-chain — aktif di{' '}
+          QuantaX kini multi-chain — aktif di{' '}
           {SUPPORTED_CHAINS.map((c, i) => (
             <span key={c.id}>
               <span className="text-primary font-semibold">{c.name}</span>
@@ -152,8 +152,7 @@ export default function ContractStatus() {
         </p>
       </div>
 
-      <ChainSection chainId={OPN_CHAIN_ID} />
-      <ChainSection chainId={AER_CHAIN_ID} />
+      <ChainSection chainId={QMS_CHAIN_ID} />
     </div>
   );
 }

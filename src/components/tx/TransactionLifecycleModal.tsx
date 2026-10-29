@@ -9,7 +9,7 @@ interface TransactionLifecycleModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  /** e.g. "Add Liquidity", "Swap 1.0 OPN → DRAGON" */
+  /** e.g. "Add Liquidity", "Swap 1.0 QMS → QTX" */
   description?: string;
   stage: TxStage;
   txHash?: string;
@@ -31,7 +31,7 @@ export function TransactionLifecycleModal({
   stage,
   txHash,
   errorMessage,
-  explorerBase = 'https://testnet.iopn.tech/tx/',
+  explorerBase = 'https://testnet.qmsscan.io/tx/',
 }: TransactionLifecycleModalProps) {
   const stageIndex = stage === 'failed' ? -1 : STAGES.findIndex(s => s.key === stage);
   const isDone = stage === 'mined' || stage === 'failed';

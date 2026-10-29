@@ -138,7 +138,7 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
               </p>
               {txHash && (
                 <a
-                  href={`https://testnet.iopn.tech/tx/${txHash}`}
+                  href={`https://testnet.qmsscan.io/tx/${txHash}`}
                   target="_blank" rel="noopener noreferrer"
                   className="text-xs text-primary hover:underline"
                 >
@@ -159,7 +159,7 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
                   >
                     {selectedToken && (
                       <>
-                        <img src={selectedToken.logo} alt="" className="w-7 h-7 rounded-full" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                        <img src={selectedToken.logo} alt="" className="w-7 h-7 rounded-full" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                         <div className="flex-1 text-left">
                           <p className="font-medium text-sm">{selectedToken.symbol}</p>
                           <p className="text-[10px] text-muted-foreground">Balance: {parseFloat(selectedToken.balance).toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
@@ -184,7 +184,7 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
                             selectedToken?.symbol === token.symbol && "bg-primary/10"
                           )}
                         >
-                          <img src={token.logo} alt="" className="w-6 h-6 rounded-full" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                          <img src={token.logo} alt="" className="w-6 h-6 rounded-full" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                           <div className="flex-1 text-left">
                             <p className="font-medium text-xs">{token.symbol}</p>
                           </div>

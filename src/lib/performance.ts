@@ -1,5 +1,5 @@
 /**
- * Performance utilities for DragonDEX
+ * Performance utilities for QuantaX
  * Optimizations and monitoring
  */
 

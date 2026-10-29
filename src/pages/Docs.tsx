@@ -61,19 +61,19 @@ const allNavItems = sidebarSections.flatMap(s => s.items);
 
 // Content sections data
 const contracts = [
-  { name: 'Factory', address: '0x887AE7FfCB54f5811d957f3EA8095b15Bd99e538', description: 'Creates new trading pairs' },
-  { name: 'Router', address: '0x048A65f2f52F1c1A0a1fC59E67Ac95daA361AA89', description: 'Handles swap routing' },
-  { name: 'WOPN', address: '0xd38b2Cd5D8d68E6EA75f9aD9bC01F9e168d4b5E1', description: 'Wrapped OPN token' },
-  { name: 'Library', address: '0x2C9bd07a8885Fdd93f5426DB6C250a9adfcEe2C7', description: 'Helper functions' },
-  { name: 'Multicall', address: '0xb27c21B35d6fF3Fc55e826ef6714AF76a82c5E71', description: 'Batch contract calls' },
-  { name: 'Farming', address: '0xfc911Ef8F6372786cd671bdC99dc4f9255b85596', description: 'MultiPool farming/staking' },
-  { name: 'DRAGON', address: '0x76c8BF103D0548dC171EC9675bCc327f20f35A42', description: 'Native DEX token' },
+  { name: 'Factory', address: '0x97C305119f5D98aFd11bCD19a1ba8c27d68F3546', description: 'Creates new trading pairs' },
+  { name: 'Router', address: '0x3A153e8BcDe02F4Cf6C5eeECD9c83bC0296FFbD3', description: 'Handles swap routing' },
+  { name: 'WQMS', address: '0x9AA510295aC664A3d5A3182a3eFe959DE2B12c34', description: 'Wrapped QMS token' },
+  { name: 'Library', address: '0x03D2D542100fa926de135a08B609c8538E45F6ee', description: 'Helper functions' },
+  { name: 'Multicall', address: '0x8705875084c72C0cDC01c1Ac36A807808c8E5850', description: 'Batch contract calls' },
+  { name: 'Farming', address: '0xA5A90E43Df65AD62E45Edc526A1FD147cdDea6c8', description: 'MultiPool farming/staking' },
+  { name: 'QTX', address: '0x66E5cbb0325Ab93B42c16592Be91456cc195E427', description: 'Native DEX token' },
 ];
 
 const tokens = [
-  { symbol: 'OPN', name: 'OPN (Native)', type: 'Native Gas Token' },
-  { symbol: 'WOPN', name: 'Wrapped OPN', type: 'Wrapped Native' },
-  { symbol: 'DRAGON', name: 'Dragon Token', type: 'DEX Governance' },
+  { symbol: 'QMS', name: 'QMS (Native)', type: 'Native Gas Token' },
+  { symbol: 'WQMS', name: 'Wrapped QMS', type: 'Wrapped Native' },
+  { symbol: 'QTX', name: 'QuantaX Token', type: 'DEX Governance' },
   { symbol: 'BNB', name: 'Binance Coin', type: 'Wrapped' },
   { symbol: 'ETH', name: 'Ethereum', type: 'Wrapped' },
   { symbol: 'MON', name: 'Monad', type: 'Wrapped' },
@@ -92,10 +92,10 @@ const roadmapItems = [
 ];
 
 const faqs = [
-  { q: 'What is DRAGONDEX?', a: 'DRAGONDEX is a decentralized exchange (DEX) built on OPN Testnet using the automated market maker (AMM) model. It allows users to swap tokens and provide liquidity to earn trading fees.' },
-  { q: 'How do I get started?', a: 'Connect a Web3 wallet (MetaMask, OKX, Rabby, or Bitget), get some testnet OPN, and you\'re ready to start trading!' },
-  { q: 'What are the trading fees?', a: 'DRAGONDEX charges a 0.3% fee on all trades. This fee is distributed to liquidity providers proportional to their share of the pool.' },
-  { q: 'Is DRAGONDEX safe?', a: 'DRAGONDEX uses battle-tested UniswapV2 smart contracts with reentrancy guards and comprehensive validation. However, as with any DeFi protocol, there are inherent smart contract risks.' },
+  { q: 'What is QUANTAX?', a: 'QUANTAX is a decentralized exchange (DEX) built on QMS Testnet using the automated market maker (AMM) model. It allows users to swap tokens and provide liquidity to earn trading fees.' },
+  { q: 'How do I get started?', a: 'Connect a Web3 wallet (MetaMask, OKX, Rabby, or Bitget), get some testnet QMS, and you\'re ready to start trading!' },
+  { q: 'What are the trading fees?', a: 'QUANTAX charges a 0.3% fee on all trades. This fee is distributed to liquidity providers proportional to their share of the pool.' },
+  { q: 'Is QUANTAX safe?', a: 'QUANTAX uses battle-tested UniswapV2 smart contracts with reentrancy guards and comprehensive validation. However, as with any DeFi protocol, there are inherent smart contract risks.' },
   { q: 'What wallets are supported?', a: 'MetaMask, OKX Wallet, Rabby Wallet, and Bitget Wallet are all supported. Any EVM-compatible wallet should work.' },
   { q: 'What is impermanent loss?', a: 'Impermanent loss occurs when the price ratio of tokens in a liquidity pool changes compared to when you deposited. The bigger the change, the more impermanent loss you experience.' },
 ];
@@ -105,16 +105,16 @@ const faqs = [
 function SectionIntroduction() {
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl md:text-4xl font-bold">Welcome to DRAGONDEX</h1>
+      <h1 className="text-3xl md:text-4xl font-bold">Welcome to QUANTAX</h1>
       <p className="text-muted-foreground leading-relaxed">
-        DRAGONDEX is a decentralized exchange built on <strong className="text-foreground">OPN Testnet</strong>, powered by the battle-tested <strong className="text-foreground">UniswapV2</strong> protocol. Trade, provide liquidity, and earn — all without intermediaries.
+        QUANTAX is a decentralized exchange built on <strong className="text-foreground">QMS Testnet</strong>, powered by the battle-tested <strong className="text-foreground">UniswapV2</strong> protocol. Trade, provide liquidity, and earn — all without intermediaries.
       </p>
 
       {/* Feature highlights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { icon: Shield, title: 'Non-Custodial', desc: 'You always maintain full control over your assets' },
-          { icon: Zap, title: 'Fast & Cheap', desc: 'Low gas fees on OPN Testnet' },
+          { icon: Zap, title: 'Fast & Cheap', desc: 'Low gas fees on QMS Testnet' },
           { icon: Code, title: 'Open Source', desc: 'Verified and transparent smart contracts' },
         ].map((f, i) => (
           <div key={i} className="p-4 rounded-xl bg-primary/5 border border-primary/20">
@@ -166,7 +166,7 @@ function SectionConnectWallet() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Connect Wallet</h1>
-      <p className="text-muted-foreground">To use DRAGONDEX, you need a Web3 wallet connected to the OPN Testnet.</p>
+      <p className="text-muted-foreground">To use QUANTAX, you need a Web3 wallet connected to the QMS Testnet.</p>
 
       <h2 className="text-xl font-bold">Supported Wallets</h2>
       <div className="grid grid-cols-2 gap-3">
@@ -181,11 +181,11 @@ function SectionConnectWallet() {
       <h2 className="text-xl font-bold">Network Configuration</h2>
       <div className="bg-card border border-border rounded-xl p-4 space-y-2">
         {[
-          ['Network Name', 'OPN Testnet'],
-          ['Chain ID', '984'],
-          ['RPC URL', 'https://testnet-rpc.iopn.tech'],
-          ['Currency Symbol', 'OPN'],
-          ['Block Explorer', 'https://testnet.iopn.tech'],
+          ['Network Name', 'QMS Testnet'],
+          ['Chain ID', '19480'],
+          ['RPC URL', 'https://rpc.testnet.qms.finance'],
+          ['Currency Symbol', 'QMS'],
+          ['Block Explorer', 'https://testnet.qmsscan.io'],
         ].map(([label, value]) => (
           <div key={label} className="flex justify-between text-sm">
             <span className="text-muted-foreground">{label}</span>
@@ -250,7 +250,7 @@ function SectionProvideLiquidity() {
       <ol className="space-y-3 text-sm">
         {[
           'Navigate to the Liquidity page',
-          'Select a token pair (e.g., OPN / DRAGON)',
+          'Select a token pair (e.g., QMS / QTX)',
           'Enter the amount for one token — the other auto-calculates',
           'Approve both tokens if needed',
           'Click "Add Liquidity" and confirm in your wallet',
@@ -320,19 +320,19 @@ function SectionAMMPricing() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">AMM & Pricing</h1>
-      <p className="text-muted-foreground">Understanding the Automated Market Maker model used by DRAGONDEX.</p>
+      <p className="text-muted-foreground">Understanding the Automated Market Maker model used by QUANTAX.</p>
 
       <h2 className="text-xl font-bold">Constant Product Formula</h2>
       <div className="p-4 rounded-xl bg-card border border-border text-center">
         <code className="text-lg font-bold text-primary">x × y = k</code>
       </div>
       <p className="text-sm text-muted-foreground">
-        DRAGONDEX uses the constant product formula where <code className="text-foreground">x</code> and <code className="text-foreground">y</code> are the reserves of each token in the pool, and <code className="text-foreground">k</code> is a constant. When someone buys token X, the amount of X in the pool decreases while Y increases, maintaining the constant <code className="text-foreground">k</code>.
+        QUANTAX uses the constant product formula where <code className="text-foreground">x</code> and <code className="text-foreground">y</code> are the reserves of each token in the pool, and <code className="text-foreground">k</code> is a constant. When someone buys token X, the amount of X in the pool decreases while Y increases, maintaining the constant <code className="text-foreground">k</code>.
       </p>
 
       <h2 className="text-xl font-bold">How Price is Determined</h2>
       <p className="text-sm text-muted-foreground">
-        The price of a token is simply the ratio of the two reserves in a pool. For example, if a pool has 1,000 OPN and 10,000 DRAGON, the price is 10 DRAGON per OPN. Larger trades cause more price movement (price impact).
+        The price of a token is simply the ratio of the two reserves in a pool. For example, if a pool has 1,000 QMS and 10,000 QTX, the price is 10 QTX per QMS. Larger trades cause more price movement (price impact).
       </p>
     </div>
   );
@@ -350,8 +350,8 @@ function SectionImpermanentLoss() {
 
       <h2 className="text-xl font-bold">Example</h2>
       <div className="bg-card border border-border rounded-xl p-4 text-sm text-muted-foreground space-y-2">
-        <p>You deposit 1 OPN ($1) + 100 DRAGON ($0.01 each) = $2 total</p>
-        <p>If DRAGON price 2x to $0.02 → holding would be $3, but LP value ≈ $2.83</p>
+        <p>You deposit 1 QMS ($1) + 100 QTX ($0.01 each) = $2 total</p>
+        <p>If QTX price 2x to $0.02 → holding would be $3, but LP value ≈ $2.83</p>
         <p className="text-destructive font-medium">Impermanent loss ≈ 5.7%</p>
       </div>
       <p className="text-sm text-muted-foreground">
@@ -373,7 +373,7 @@ function SectionSlippagePriceImpact() {
 
       <h2 className="text-xl font-bold">Price Impact</h2>
       <p className="text-sm text-muted-foreground">
-        Price impact is how much your trade moves the market price. Larger trades relative to pool size cause more price impact. DRAGONDEX shows a warning when price impact exceeds 5%.
+        Price impact is how much your trade moves the market price. Larger trades relative to pool size cause more price impact. QUANTAX shows a warning when price impact exceeds 5%.
       </p>
 
       <div className="bg-card border border-border rounded-xl p-4 space-y-2 text-sm">
@@ -459,7 +459,7 @@ function SectionSmartContracts() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Smart Contracts</h1>
-      <p className="text-muted-foreground">All contracts deployed on OPN Testnet (Chain ID: 984).</p>
+      <p className="text-muted-foreground">All contracts deployed on QMS Testnet (Chain ID: 19480).</p>
 
       <div className="space-y-3">
         {contracts.map((c, i) => (
@@ -475,7 +475,7 @@ function SectionSmartContracts() {
             </div>
             <div className="flex items-center gap-2">
               <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{c.address.slice(0, 10)}...{c.address.slice(-8)}</code>
-              <a href={`https://testnet.iopn.tech/address/${c.address}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+              <a href={`https://testnet.qmsscan.io/address/${c.address}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>
@@ -490,7 +490,7 @@ function SectionSupportedTokens() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Supported Tokens</h1>
-      <p className="text-muted-foreground">Tokens available for trading on DRAGONDEX.</p>
+      <p className="text-muted-foreground">Tokens available for trading on QUANTAX.</p>
 
       <div className="space-y-2">
         {tokens.map((t, i) => (
@@ -514,7 +514,7 @@ function SectionRoadmap() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Development Roadmap</h1>
-      <p className="text-muted-foreground">Our journey to build the ultimate DEX on OPN Network.</p>
+      <p className="text-muted-foreground">Our journey to build the ultimate DEX on QMS Network.</p>
 
       <div className="space-y-4">
         {roadmapItems.map((r, i) => (
@@ -608,8 +608,8 @@ export default function Docs() {
   return (
     <div className="flex min-h-screen relative">
       <SEO
-        title="Documentation — DRAGONDEX"
-        description="DRAGONDEX docs: getting started, swap and liquidity guides, AMM concepts, smart contracts, and FAQ for OPN Testnet."
+        title="Documentation — QUANTAX"
+        description="QUANTAX docs: getting started, swap and liquidity guides, AMM concepts, smart contracts, and FAQ for QMS Testnet."
         path="/docs"
         jsonLd={faqJsonLd}
       />
@@ -695,7 +695,7 @@ export default function Docs() {
 
           {/* Footer */}
           <div className="mt-16 pt-6 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-            <span>DRAGONDEX — Decentralized Trading on OPN Testnet</span>
+            <span>QUANTAX — Decentralized Trading on QMS Testnet</span>
             <WalletButton />
           </div>
         </div>

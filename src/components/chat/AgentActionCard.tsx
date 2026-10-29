@@ -12,7 +12,7 @@ interface Props {
 }
 
 function tokenLogo(sym: string) {
-  return getTokenBySymbol(sym)?.logoURI || '/tokens/opn.jpg';
+  return getTokenBySymbol(sym)?.logoURI || '/tokens/qms.svg';
 }
 
 function ActionVisual({ action }: { action: AgentAction }) {
@@ -37,9 +37,9 @@ function ActionVisual({ action }: { action: AgentAction }) {
   if (action.type === 'wrap' || action.type === 'unwrap') {
     return (
       <div className="flex items-center gap-2">
-        <img src={tokenLogo(action.type === 'wrap' ? 'OPN' : 'WOPN')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
+        <img src={tokenLogo(action.type === 'wrap' ? 'QMS' : 'WQMS')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
         <div className="text-xs text-muted-foreground">→</div>
-        <img src={tokenLogo(action.type === 'wrap' ? 'WOPN' : 'OPN')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
+        <img src={tokenLogo(action.type === 'wrap' ? 'WQMS' : 'QMS')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
       </div>
     );
   }
@@ -168,7 +168,7 @@ export function AgentActionCard({ action, onResult }: Props) {
           <span className="text-xs text-foreground flex-1 font-medium">Transaction confirmed</span>
           {state.txHash && (
             <a
-              href={`https://testnet.iopn.tech/tx/${state.txHash}`}
+              href={`https://testnet.qmsscan.io/tx/${state.txHash}`}
               target="_blank" rel="noopener noreferrer"
               className="text-[11px] text-primary font-semibold hover:underline inline-flex items-center gap-1"
             >

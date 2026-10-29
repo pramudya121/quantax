@@ -155,7 +155,7 @@ export default function Portfolio() {
   if (!isConnected) {
     return (
       <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
-      <SEO title="Portfolio — DRAGONDEX" description="Track your token holdings, LP positions, allocation chart, and transaction history on DRAGONDEX." path="/portfolio" />
+      <SEO title="Portfolio — QUANTAX" description="Track your token holdings, LP positions, allocation chart, and transaction history on QUANTAX." path="/portfolio" />
         <Spotlight className="hidden md:block" />
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
           <GlowingStarsCard className="bg-card border border-border">
@@ -192,7 +192,7 @@ export default function Portfolio() {
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-4 font-mono">
             <Shield className="w-3 h-3 text-primary" />
             <span>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
-            <a href={`https://testnet.iopn.tech/address/${address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            <a href={`https://testnet.qmsscan.io/address/${address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
@@ -349,7 +349,7 @@ export default function Portfolio() {
                         const value = balance * token.price;
                         return (
                           <div key={token.symbol} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                            <img src={token.logo} alt={`${token.symbol} token logo`} className="w-8 h-8 rounded-full border border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                            <img src={token.logo} alt={`${token.symbol} token logo`} className="w-8 h-8 rounded-full border border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm">{token.symbol}</p>
                               <p className="text-xs text-muted-foreground">{balance.toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
@@ -382,8 +382,8 @@ export default function Portfolio() {
                       {lpPositions.slice(0, 4).map((lp: any) => (
                         <div key={lp.pairAddress} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
                           <div className="flex -space-x-1">
-                            <img src={lp.token0?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token0Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
-                            <img src={lp.token1?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token1Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                            <img src={lp.token0?.logoURI || '/tokens/qms.svg'} alt={`${lp.token0Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
+                            <img src={lp.token1?.logoURI || '/tokens/qms.svg'} alt={`${lp.token1Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                           </div>
                           <span className="text-xs font-medium flex-1">{lp.token0Symbol}/{lp.token1Symbol}</span>
                           <span className="text-xs font-bold text-success">${lp.value.toFixed(2)}</span>
@@ -418,7 +418,7 @@ export default function Portfolio() {
                           "glass-card p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:border-primary/50 transition-all group",
                           !hasBalance && "opacity-50"
                         )}>
-                          <img src={token.logo} alt={`${token.symbol} token logo`} className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                          <img src={token.logo} alt={`${token.symbol} token logo`} className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-bold text-sm md:text-base">{token.symbol}</p>
@@ -468,8 +468,8 @@ export default function Portfolio() {
                     <div key={lp.pairAddress} className="glass-card p-4 hover:border-primary/50 transition-all">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="flex -space-x-1">
-                          <img src={lp.token0?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token0Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
-                          <img src={lp.token1?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token1Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                          <img src={lp.token0?.logoURI || '/tokens/qms.svg'} alt={`${lp.token0Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
+                          <img src={lp.token1?.logoURI || '/tokens/qms.svg'} alt={`${lp.token1Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                         </div>
                         <span className="font-medium text-sm">{lp.token0Symbol}/{lp.token1Symbol}</span>
                         <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-success/20 text-success">On-Chain</span>
@@ -481,7 +481,7 @@ export default function Portfolio() {
                         <div className="flex justify-between"><span>{lp.token0Symbol}</span><span className="font-medium text-foreground">{lp.myToken0.toFixed(4)}</span></div>
                         <div className="flex justify-between"><span>{lp.token1Symbol}</span><span className="font-medium text-foreground">{lp.myToken1.toFixed(4)}</span></div>
                       </div>
-                      <a href={`https://testnet.iopn.tech/address/${lp.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline mt-2 inline-flex items-center gap-1">
+                      <a href={`https://testnet.qmsscan.io/address/${lp.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline mt-2 inline-flex items-center gap-1">
                         View Contract <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     </div>

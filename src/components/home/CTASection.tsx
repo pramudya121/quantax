@@ -30,7 +30,7 @@ export function CTASection() {
                 
                 <h3 className="text-2xl md:text-3xl font-bold mb-4">Ready to breathe fire?</h3>
                 <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                  Join thousands of traders on the most powerful DEX on OPN Testnet
+                  Join thousands of traders on the most powerful DEX on QMS Testnet
                 </p>
                 
                 <div className="flex flex-wrap items-center justify-center gap-4">

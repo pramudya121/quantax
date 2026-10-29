@@ -5,7 +5,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useTransactionHistory, Transaction } from '@/components/history/TransactionHistory';
 import { cn } from '@/lib/utils';
 
-const EXPLORER = 'https://testnet.iopn.tech/tx/';
+const EXPLORER = 'https://testnet.qmsscan.io/tx/';
 
 function StatusDot({ status }: { status: Transaction['status'] }) {
   if (status === 'pending') return <Loader2 className="w-3 h-3 animate-spin text-warning" />;

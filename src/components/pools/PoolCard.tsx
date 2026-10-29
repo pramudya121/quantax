@@ -17,8 +17,8 @@ interface PoolCardProps {
 }
 
 export function PoolCard({ pool, index, prices, volume24h = 0, isHot = false }: PoolCardProps) {
-  const token0Logo = pool.token0?.logoURI || '/tokens/opn.jpg';
-  const token1Logo = pool.token1?.logoURI || '/tokens/opn.jpg';
+  const token0Logo = pool.token0?.logoURI || '/tokens/qms.svg';
+  const token1Logo = pool.token1?.logoURI || '/tokens/qms.svg';
 
   const reserve0Formatted = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18));
   const reserve1Formatted = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18));
@@ -56,10 +56,10 @@ export function PoolCard({ pool, index, prices, volume24h = 0, isHot = false }: 
           <div className="flex items-center gap-3">
             <div className="flex -space-x-2">
               <TokenIcon src={token0Logo} symbol={pool.token0Symbol} size={36}
-                fallbackSrc="/tokens/opn.jpg"
+                fallbackSrc="/tokens/qms.svg"
                 className="border-2 border-background ring-1 ring-border/50" />
               <TokenIcon src={token1Logo} symbol={pool.token1Symbol} size={36}
-                fallbackSrc="/tokens/opn.jpg"
+                fallbackSrc="/tokens/qms.svg"
                 className="border-2 border-background ring-1 ring-border/50" />
             </div>
             <div>
@@ -108,14 +108,14 @@ export function PoolCard({ pool, index, prices, volume24h = 0, isHot = false }: 
         <div className="bg-muted/30 rounded-xl p-3 space-y-2 mb-3">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <TokenIcon src={token0Logo} symbol={pool.token0Symbol} size={16} fallbackSrc="/tokens/opn.jpg" />
+              <TokenIcon src={token0Logo} symbol={pool.token0Symbol} size={16} fallbackSrc="/tokens/qms.svg" />
               <span className="text-muted-foreground">{pool.token0Symbol}</span>
             </div>
             <span className="font-medium">{reserve0Formatted.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <TokenIcon src={token1Logo} symbol={pool.token1Symbol} size={16} fallbackSrc="/tokens/opn.jpg" />
+              <TokenIcon src={token1Logo} symbol={pool.token1Symbol} size={16} fallbackSrc="/tokens/qms.svg" />
               <span className="text-muted-foreground">{pool.token1Symbol}</span>
             </div>
             <span className="font-medium">{reserve1Formatted.toLocaleString(undefined, { maximumFractionDigits: 4 })}</span>

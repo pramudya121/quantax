@@ -48,7 +48,7 @@ export function actionLabel(a: AgentAction): string {
     case 'farm_unstake': return `Unstake ${a.amount} from Farm #${a.pid}`;
     case 'farm_harvest': return `Harvest rewards from Farm #${a.pid}`;
     case 'farm_emergency': return `Emergency withdraw from Farm #${a.pid}`;
-    case 'wrap': return `Wrap ${a.amount} OPN → WOPN`;
-    case 'unwrap': return `Unwrap ${a.amount} WOPN → OPN`;
+    case 'wrap': return `Wrap ${a.amount} QMS → WQMS`;
+    case 'unwrap': return `Unwrap ${a.amount} WQMS → QMS`;
   }
 }

@@ -18,7 +18,7 @@ const QUICK_PROMPTS = [
   { emoji: "🔄", text: "How do I swap tokens?" },
   { emoji: "💧", text: "How to add liquidity?" },
   { emoji: "📊", text: "Show me token prices" },
-  { emoji: "🐉", text: "What is DRAGON token?" },
+  { emoji: "🐉", text: "What is QTX token?" },
   { emoji: "🏊", text: "How do pools work?" },
   { emoji: "💰", text: "Check my portfolio" },
 ];
@@ -136,7 +136,7 @@ function useTextToSpeech() {
   return { isSpeaking, ttsEnabled, speak, stop, toggle };
 }
 
-export function DragonBot() {
+export function QuantaBot() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -227,13 +227,13 @@ export function DragonBot() {
       },
       onError: (err) => {
         if (retryCount < 1 && err.includes('Connection lost')) {
-          console.log('[DragonBot] Auto-retrying...');
+          console.log('[QuantaBot] Auto-retrying...');
           setTimeout(() => send(text, retryCount + 1), 1000);
           return;
         }
         setIsLoading(false);
         toast({
-          title: 'DragonBot Error',
+          title: 'QuantaBot Error',
           description: err,
           variant: 'destructive',
           action: (
@@ -369,7 +369,7 @@ export function DragonBot() {
 
               <div className="flex-1 min-w-0 relative">
                 <h3 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-                  DragonBot
+                  QuantaBot
                   <Sparkles className="w-3.5 h-3.5 text-accent" />
                   <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/15 text-primary font-medium ml-1">AI</span>
                 </h3>
@@ -651,7 +651,7 @@ export function DragonBot() {
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={voice.isListening ? "Listening..." : "Ask DragonBot anything..."}
+                  placeholder={voice.isListening ? "Listening..." : "Ask QuantaBot anything..."}
                   disabled={isLoading}
                   className={cn(
                     "flex-1 bg-card/60 border border-border/40 rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60",
@@ -672,7 +672,7 @@ export function DragonBot() {
               </form>
               <p className="text-[10px] text-muted-foreground/40 text-center mt-2 flex items-center justify-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" />
-                Powered by DragonDEX AI • {messageCount} messages
+                Powered by QuantaX AI • {messageCount} messages
               </p>
             </div>
           </motion.div>

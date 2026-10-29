@@ -72,7 +72,7 @@ export function useLiveSwapNotifications() {
               label: 'View',
               onClick: () =>
                 window.open(
-                  `https://testnet.iopn.tech/tx/${log.transactionHash}`,
+                  `https://testnet.qmsscan.io/tx/${log.transactionHash}`,
                   '_blank',
                   'noopener,noreferrer'
                 ),

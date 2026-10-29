@@ -1,5 +1,5 @@
 /**
- * Token safety analysis hooks for DragonDEX
+ * Token safety analysis hooks for QuantaX
  * Basic honeypot detection, whitelist checks, and metadata validation
  */
 

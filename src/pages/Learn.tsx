@@ -45,7 +45,7 @@ const GUIDES: Guide[] = [
         heading: 'The AMM Model',
         body: (
           <>
-            DRAGONDEX uses the constant-product AMM formula <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-xs">x·y = k</code>.
+            QUANTAX uses the constant-product AMM formula <code className="px-1.5 py-0.5 rounded bg-muted text-primary text-xs">x·y = k</code>.
             Every pool holds two tokens; the product of their reserves stays constant, so every trade shifts price
             along a curve. Bigger trades relative to pool size = bigger price impact.
           </>
@@ -70,7 +70,7 @@ const GUIDES: Guide[] = [
     sections: [
       {
         heading: '1. Connect your wallet',
-        body: <>Click <b>Connect Wallet</b> in the header. DRAGONDEX supports MetaMask, Rabby, OKX, Bitget, WalletConnect and more. Make sure you are on <b>OPN Testnet</b> — the UI will prompt you to switch if not.</>,
+        body: <>Click <b>Connect Wallet</b> in the header. QUANTAX supports MetaMask, Rabby, OKX, Bitget, WalletConnect and more. Make sure you are on <b>QMS Testnet</b> — the UI will prompt you to switch if not.</>,
       },
       {
         heading: '2. Choose tokens & amount',
@@ -100,7 +100,7 @@ const GUIDES: Guide[] = [
       },
       {
         heading: 'Ratio matters',
-        body: <>For existing pools you must match the current reserve ratio. DRAGONDEX auto-calculates the second amount when you type the first. New pools you can seed at any ratio — that ratio becomes the initial price.</>,
+        body: <>For existing pools you must match the current reserve ratio. QUANTAX auto-calculates the second amount when you type the first. New pools you can seed at any ratio — that ratio becomes the initial price.</>,
       },
       {
         heading: 'Removing liquidity',
@@ -151,7 +151,7 @@ const GUIDES: Guide[] = [
     sections: [
       {
         heading: 'What farming is',
-        body: <>You stake your LP tokens into a farm contract. The farm emits a reward token (usually DRAGON) block-by-block, proportional to your share. You earn the LP fees AND the farm rewards simultaneously.</>,
+        body: <>You stake your LP tokens into a farm contract. The farm emits a reward token (usually QTX) block-by-block, proportional to your share. You earn the LP fees AND the farm rewards simultaneously.</>,
       },
       {
         heading: 'Layered risks',
@@ -177,10 +177,10 @@ const jsonLdArticle = (g: Guide) => ({
   '@type': 'Article',
   headline: g.title,
   description: g.short,
-  author: { '@type': 'Organization', name: 'DragonDEX' },
+  author: { '@type': 'Organization', name: 'QuantaX' },
   publisher: {
     '@type': 'Organization',
-    name: 'DragonDEX',
+    name: 'QuantaX',
     logo: { '@type': 'ImageObject', url: 'https://dragondex.lovable.app/tokens/dragon.png' },
   },
   mainEntityOfPage: `https://dragondex.lovable.app/learn?guide=${g.id}`,
@@ -215,11 +215,11 @@ export default function Learn() {
 
   const current = active;
   const title = current
-    ? `${current.title} — DRAGONDEX Learn`
-    : 'Learn DeFi & DragonDEX — Guides for Swaps, Liquidity & Farming';
+    ? `${current.title} — QUANTAX Learn`
+    : 'Learn DeFi & QuantaX — Guides for Swaps, Liquidity & Farming';
   const description = current
     ? current.short
-    : 'Short, plain-English guides on DEXs, swapping, providing liquidity, impermanent loss, and yield farming on DragonDEX.';
+    : 'Short, plain-English guides on DEXs, swapping, providing liquidity, impermanent loss, and yield farming on QuantaX.';
   const path = current ? `/learn?guide=${current.id}` : '/learn';
 
   return (
@@ -256,7 +256,7 @@ export default function Learn() {
         <header className="text-center mb-8 md:mb-12">
           <span className="ember-pill inline-flex items-center gap-2 text-xs mb-4">
             <GraduationCap className="w-3.5 h-3.5" />
-            <span className="uppercase tracking-[0.18em]">DragonDEX Learn</span>
+            <span className="uppercase tracking-[0.18em]">QuantaX Learn</span>
           </span>
           <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-bold gradient-text mb-3 tracking-tight">
             {current ? current.title : 'Learn DeFi, the Dragon Way'}
@@ -313,7 +313,7 @@ export default function Learn() {
               <current.icon className="w-4 h-4 text-primary" />
               {current.minutes} min read
               <span className="opacity-40">•</span>
-              <span>DragonDEX Learn</span>
+              <span>QuantaX Learn</span>
             </div>
 
             <div className="prose prose-invert max-w-none space-y-6">
@@ -366,7 +366,7 @@ export default function Learn() {
           <div className="mt-10 flex items-start gap-3 p-4 rounded-xl border border-warning/30 bg-warning/5">
             <ShieldCheck className="w-5 h-5 text-warning shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground">
-              DragonDEX is deployed on <b>OPN Testnet</b>. All tokens on this network are for testing only and carry no monetary value. Never share your seed phrase; the DragonDEX team will never DM you first.
+              QuantaX is deployed on <b>QMS Testnet</b>. All tokens on this network are for testing only and carry no monetary value. Never share your seed phrase; the QuantaX team will never DM you first.
             </p>
           </div>
         )}

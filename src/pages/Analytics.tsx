@@ -120,13 +120,13 @@ export default function Analytics() {
       const val1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
       
       if (!tokenMap[pool.token0Symbol]) {
-        tokenMap[pool.token0Symbol] = { symbol: pool.token0Symbol, logo: pool.token0?.logoURI || '/tokens/opn.jpg', totalLiquidity: 0, poolCount: 0, price: price0 };
+        tokenMap[pool.token0Symbol] = { symbol: pool.token0Symbol, logo: pool.token0?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price0 };
       }
       tokenMap[pool.token0Symbol].totalLiquidity += val0;
       if (pool.reserve0 > 0n) tokenMap[pool.token0Symbol].poolCount++;
 
       if (!tokenMap[pool.token1Symbol]) {
-        tokenMap[pool.token1Symbol] = { symbol: pool.token1Symbol, logo: pool.token1?.logoURI || '/tokens/opn.jpg', totalLiquidity: 0, poolCount: 0, price: price1 };
+        tokenMap[pool.token1Symbol] = { symbol: pool.token1Symbol, logo: pool.token1?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price1 };
       }
       tokenMap[pool.token1Symbol].totalLiquidity += val1;
       if (pool.reserve1 > 0n) tokenMap[pool.token1Symbol].poolCount++;
@@ -160,7 +160,7 @@ export default function Analytics() {
   return (
     <div className="container mx-auto px-4 py-6 md:py-8 pb-24 lg:pb-8 relative">
 
-    <SEO title="Analytics — DRAGONDEX" description="On-chain analytics for DRAGONDEX: total value locked, trading volume, top pools and tokens on OPN Testnet." path="/analytics" />
+    <SEO title="Analytics — QUANTAX" description="On-chain analytics for QUANTAX: total value locked, trading volume, top pools and tokens on QMS Testnet." path="/analytics" />
       <Spotlight className="hidden md:block" />
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-6xl mx-auto">
@@ -176,7 +176,7 @@ export default function Analytics() {
             <span className="text-[10px] md:text-xs font-semibold tracking-[0.18em] uppercase">Protocol Analytics</span>
           </motion.div>
           <h1 className="font-display text-4xl md:text-5xl font-bold gradient-text mb-2 tracking-tight">Analytics</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Real-time on-chain protocol statistics from OPN Testnet</p>
+          <p className="text-sm md:text-base text-muted-foreground">Real-time on-chain protocol statistics from QMS Testnet</p>
         </div>
         
         {/* Stats Grid */}
@@ -277,8 +277,8 @@ export default function Analytics() {
                         className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex -space-x-1">
-                          <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
-                          <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
+                          <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
+                          <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
                         </div>
                         <span className="text-xs font-medium flex-1">{pool.token0Symbol}/{pool.token1Symbol}</span>
                         <span className="text-xs font-bold text-success">${pool.tvl.toFixed(2)}</span>
@@ -310,7 +310,7 @@ export default function Analytics() {
                         transition={{ delay: 0.2 + i * 0.05 }}
                         className="flex flex-col items-center p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                       >
-                        <TokenIcon src={token.logoURI} symbol={token.symbol} size={32} fallbackSrc="/tokens/opn.jpg" className="border border-border mb-2" />
+                        <TokenIcon src={token.logoURI} symbol={token.symbol} size={32} fallbackSrc="/tokens/qms.svg" className="border border-border mb-2" />
                         <span className="text-xs font-bold">{token.symbol}</span>
                         <span className="text-[10px] text-muted-foreground">
                           ${(prices[token.symbol] || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -355,8 +355,8 @@ export default function Analytics() {
                               <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-2">
                                   <div className="flex -space-x-1 shrink-0">
-                                    <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
-                                    <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
+                                    <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
+                                    <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
                                   </div>
                                   <span className="font-medium text-xs">{pool.token0Symbol}/{pool.token1Symbol}</span>
                                 </div>
@@ -379,7 +379,7 @@ export default function Analytics() {
                                 </span>
                               </td>
                               <td className="py-2.5 px-3 text-right">
-                                <a href={`https://testnet.iopn.tech/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                <a href={`https://testnet.qmsscan.io/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                   <ExternalLink className="w-3 h-3 inline" />
                                 </a>
                               </td>
@@ -413,7 +413,7 @@ export default function Analytics() {
                       transition={{ delay: i * 0.04 }}
                       className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <TokenIcon src={token.logo} symbol={token.symbol} size={36} fallbackSrc="/tokens/opn.jpg" className="border border-border shrink-0" />
+                      <TokenIcon src={token.logo} symbol={token.symbol} size={36} fallbackSrc="/tokens/qms.svg" className="border border-border shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm">{token.symbol}</p>
                         <p className="text-[10px] text-muted-foreground">
@@ -499,7 +499,7 @@ export default function Analytics() {
                             </td>
                             <td className="py-2.5 px-3 text-right hidden sm:table-cell">
                               <a
-                                href={`https://testnet.iopn.tech/address/${log.sender}`}
+                                href={`https://testnet.qmsscan.io/address/${log.sender}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[10px] font-mono text-muted-foreground hover:text-primary"
@@ -509,7 +509,7 @@ export default function Analytics() {
                             </td>
                             <td className="py-2.5 px-3 text-right">
                               <a
-                                href={`https://testnet.iopn.tech/tx/${log.txHash}`}
+                                href={`https://testnet.qmsscan.io/tx/${log.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline inline-flex"

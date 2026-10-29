@@ -1,4 +1,4 @@
-// DRAGONDEX ABI Configurations
+// QUANTAX ABI Configurations
 
 export const FACTORY_ABI = [
   {
@@ -631,7 +631,7 @@ export const MULTICALL_ABI = [
   },
 ] as const;
 
-// -------------------- Faucet (AEREDIUM) --------------------
+// -------------------- Faucet (QMS) --------------------
 export const FAUCET_ABI = [
   { inputs: [{ internalType: 'uint8', name: 'tokenIndex', type: 'uint8' }], name: 'claim', outputs: [], stateMutability: 'nonpayable', type: 'function' },
   { inputs: [], name: 'claimAll', outputs: [], stateMutability: 'nonpayable', type: 'function' },

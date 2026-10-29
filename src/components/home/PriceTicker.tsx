@@ -35,7 +35,7 @@ function PriceTickerItem({ symbol, price, basePrice }: { symbol: string; price: 
 export function PriceTicker() {
   const { prices } = useTokenPrices();
 
-  const tokenList = ['OPN', 'DRAGON', 'BNB', 'ETH', 'MON', 'HYPE'];
+  const tokenList = ['QMS', 'QTX', 'BNB', 'ETH', 'MON', 'HYPE'];
 
   return (
     <div className="border-b border-border/50 bg-background/50 backdrop-blur-sm py-2 overflow-hidden">

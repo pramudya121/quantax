@@ -100,7 +100,7 @@ export default function CreatePool() {
         description: 'Now add initial liquidity to activate the pool.',
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${factory.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${factory.hash}`, '_blank'),
         },
       });
       // Refetch pair after creation
@@ -140,7 +140,7 @@ export default function CreatePool() {
         description: 'Your pool is now active and ready for trading.',
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${router.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${router.hash}`, '_blank'),
         },
       });
       setStep('done');
@@ -192,7 +192,7 @@ export default function CreatePool() {
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 1800);
 
     if (tokenA.isNative || tokenB.isNative) {
-      // One token is native OPN → use addLiquidityETH
+      // One token is native QMS → use addLiquidityETH
       const token = tokenA.isNative ? tokenB : tokenA;
       const tokenAmount = tokenA.isNative ? amountBBigInt : amountABigInt;
       const ethAmount = tokenA.isNative ? amountABigInt : amountBBigInt;
@@ -228,7 +228,7 @@ export default function CreatePool() {
   return (
     <div className="container mx-auto px-4 py-8 pb-24 lg:pb-8 max-w-2xl relative">
 
-    <SEO title="Create Pool — DRAGONDEX" description="Launch a new liquidity pool on DRAGONDEX. Set the initial price and bootstrap trading on OPN Testnet." path="/create-pool" />
+    <SEO title="Create Pool — QUANTAX" description="Launch a new liquidity pool on QUANTAX. Set the initial price and bootstrap trading on QMS Testnet." path="/create-pool" />
       <Spotlight className="hidden md:block" />
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -311,7 +311,7 @@ export default function CreatePool() {
                     <p className="font-semibold">{tokenA.symbol}/{tokenB.symbol}</p>
                     {isSameUnderlyingPair ? (
                       <p className="text-sm text-warning flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" /> OPN/WOPN adalah underlying yang sama. Gunakan fitur Swap untuk Wrap/Unwrap.
+                        <AlertCircle className="w-3 h-3" /> QMS/WQMS adalah underlying yang sama. Gunakan fitur Swap untuk Wrap/Unwrap.
                       </p>
                     ) : pairExists && step === 'select' ? (
                       <p className="text-sm text-success flex items-center gap-1">
@@ -411,7 +411,7 @@ export default function CreatePool() {
                 </div>
                 {router.hash && (
                   <a 
-                    href={`https://testnet.iopn.tech/tx/${router.hash}`} 
+                    href={`https://testnet.qmsscan.io/tx/${router.hash}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 text-sm text-primary hover:underline"
@@ -470,7 +470,7 @@ export default function CreatePool() {
             {factory.hash && step !== 'done' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <a 
-                  href={`https://testnet.iopn.tech/tx/${factory.hash}`} 
+                  href={`https://testnet.qmsscan.io/tx/${factory.hash}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 text-sm text-success"

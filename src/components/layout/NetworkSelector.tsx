@@ -2,13 +2,11 @@ import { useAccount, useSwitchChain, useChainId } from 'wagmi';
 import { ChevronDown, Check } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SUPPORTED_CHAINS, OPN_CHAIN_ID, AER_CHAIN_ID } from '@/config/chains';
-import aerLogo from '@/assets/aer.jpg.asset.json';
+import { SUPPORTED_CHAINS, QMS_CHAIN_ID } from '@/config/chains';
 import { toast } from 'sonner';
 
 const CHAIN_LOGO: Record<number, string> = {
-  [OPN_CHAIN_ID]: '/tokens/opn.jpg',
-  [AER_CHAIN_ID]: aerLogo.url,
+  [QMS_CHAIN_ID]: '/tokens/qms.svg',
 };
 
 export function NetworkSelector() {

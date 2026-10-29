@@ -66,9 +66,9 @@ export function useAgentExecutor() {
           // attacks from AI-emitted values like 100% (which would yield minOut = 0).
           const slippage = Math.min(Math.max(action.slippage ?? 0.5, 0.01), 50);
 
-          // OPN <-> WOPN: route to wrap/unwrap
-          if (from.isNative && to.symbol === 'WOPN') return execute({ type: 'wrap', amount: action.amount });
-          if (from.symbol === 'WOPN' && to.isNative) return execute({ type: 'unwrap', amount: action.amount });
+          // QMS <-> WQMS: route to wrap/unwrap
+          if (from.isNative && to.symbol === 'WQMS') return execute({ type: 'wrap', amount: action.amount });
+          if (from.symbol === 'WQMS' && to.isNative) return execute({ type: 'unwrap', amount: action.amount });
 
           const fromAddr = (from.isNative ? CONTRACTS.WETH : from.address) as Address;
           const toAddr = (to.isNative ? CONTRACTS.WETH : to.address) as Address;

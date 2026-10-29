@@ -147,7 +147,7 @@ function ImportConfirmation({
         <div className="bg-warning/5 border border-warning/20 rounded-lg p-3">
           <p className="text-xs text-warning font-medium mb-1">⚠️ Import at your own risk</p>
           <p className="text-[11px] text-muted-foreground">
-            This token is not part of the DragonDEX default list. Anyone can create a token, including fake versions of existing tokens. Always verify the contract address.
+            This token is not part of the QuantaX default list. Anyone can create a token, including fake versions of existing tokens. Always verify the contract address.
           </p>
         </div>
 
@@ -235,7 +235,7 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
       symbol: symbol,
       name: name || symbol,
       decimals: decimals || 18,
-      logoURI: '/tokens/opn.jpg',
+      logoURI: '/tokens/qms.svg',
     };
 
     saveImportedToken(newToken);
@@ -284,7 +284,7 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
               symbol={selectedToken.symbol}
               alt={selectedToken.symbol}
               size={24}
-              fallbackSrc="/tokens/opn.jpg"
+              fallbackSrc="/tokens/qms.svg"
             />
             <span className="font-semibold">{selectedToken.symbol}</span>
           </>
@@ -458,7 +458,7 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
                                   symbol={token.symbol}
                                   alt={token.symbol}
                                   size={40}
-                                  fallbackSrc="/tokens/opn.jpg"
+                                  fallbackSrc="/tokens/qms.svg"
                                 />
 
                                 {isImported && (
