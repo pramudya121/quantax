@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useReadContract, useReadContracts, useWatchContractEvent, useChainId } from 'wagmi';
 import { getContracts, getTokenByAddress, getWrappedNative, TokenInfo } from '@/config/contracts';
-import { AER_CHAIN_ID } from '@/config/chains';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { FACTORY_ABI, PAIR_ABI, ERC20_ABI } from '@/config/abis';
 import { formatUnits } from 'viem';
 
@@ -26,8 +26,8 @@ export function useLiquidityPools() {
   const chainId = useChainId();
   const C = getContracts(chainId);
   const wrapped = getWrappedNative(chainId).toLowerCase();
-  const wrappedSymbol = chainId === AER_CHAIN_ID ? 'WQMS' : 'WQMS';
-  const wrappedName = chainId === AER_CHAIN_ID ? 'Wrapped AER' : 'Wrapped QMS';
+  const wrappedSymbol = 'WQMS';
+  const wrappedName = 'Wrapped QMS';
 
   // Clear stale pools immediately when the user switches network.
   useEffect(() => {

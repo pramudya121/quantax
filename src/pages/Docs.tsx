@@ -185,7 +185,7 @@ function SectionConnectWallet() {
           ['Chain ID', '19480'],
           ['RPC URL', 'https://testnet-rpc.iopn.tech'],
           ['Currency Symbol', 'QMS'],
-          ['Block Explorer', 'https://testnet.iopn.tech'],
+          ['Block Explorer', 'https://testnet.qmsscan.io'],
         ].map(([label, value]) => (
           <div key={label} className="flex justify-between text-sm">
             <span className="text-muted-foreground">{label}</span>
@@ -475,7 +475,7 @@ function SectionSmartContracts() {
             </div>
             <div className="flex items-center gap-2">
               <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{c.address.slice(0, 10)}...{c.address.slice(-8)}</code>
-              <a href={`https://testnet.iopn.tech/address/${c.address}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
+              <a href={`https://testnet.qmsscan.io/address/${c.address}`} target="_blank" rel="noopener noreferrer" className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-colors">
                 <ExternalLink className="w-3.5 h-3.5" />
               </a>
             </div>

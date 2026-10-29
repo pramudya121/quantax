@@ -100,7 +100,7 @@ export default function CreatePool() {
         description: 'Now add initial liquidity to activate the pool.',
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${factory.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${factory.hash}`, '_blank'),
         },
       });
       // Refetch pair after creation
@@ -140,7 +140,7 @@ export default function CreatePool() {
         description: 'Your pool is now active and ready for trading.',
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${router.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${router.hash}`, '_blank'),
         },
       });
       setStep('done');
@@ -411,7 +411,7 @@ export default function CreatePool() {
                 </div>
                 {router.hash && (
                   <a 
-                    href={`https://testnet.iopn.tech/tx/${router.hash}`} 
+                    href={`https://testnet.qmsscan.io/tx/${router.hash}`} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 text-sm text-primary hover:underline"
@@ -470,7 +470,7 @@ export default function CreatePool() {
             {factory.hash && step !== 'done' && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 <a 
-                  href={`https://testnet.iopn.tech/tx/${factory.hash}`} 
+                  href={`https://testnet.qmsscan.io/tx/${factory.hash}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 text-sm text-success"

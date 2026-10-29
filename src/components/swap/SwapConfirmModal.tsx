@@ -180,7 +180,7 @@ export function SwapConfirmModal({
                   </div>
                   {txHash && (
                     <a
-                      href={`https://testnet.iopn.tech/tx/${txHash}`}
+                      href={`https://testnet.qmsscan.io/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] text-primary inline-flex items-center gap-1 hover:underline"
@@ -204,7 +204,7 @@ export function SwapConfirmModal({
                   <p className="text-sm font-semibold text-success">Swap Successful</p>
                   {txHash && (
                     <a
-                      href={`https://testnet.iopn.tech/tx/${txHash}`}
+                      href={`https://testnet.qmsscan.io/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] text-success inline-flex items-center gap-1 hover:underline"
@@ -231,7 +231,7 @@ export function SwapConfirmModal({
                   )}
                   {txHash && (
                     <a
-                      href={`https://testnet.iopn.tech/tx/${txHash}`}
+                      href={`https://testnet.qmsscan.io/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[11px] text-destructive inline-flex items-center gap-1 hover:underline"

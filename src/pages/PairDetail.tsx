@@ -117,7 +117,7 @@ export default function PairDetail() {
             </div>
           </div>
           <div className="flex gap-2">
-            <a href={`https://testnet.iopn.tech/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer">
+            <a href={`https://testnet.qmsscan.io/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">
                 <ExternalLink className="w-3.5 h-3.5 mr-1.5" /> Explorer
               </Button>
@@ -206,7 +206,7 @@ export default function PairDetail() {
                 <div className="flex-1">
                   <div className="font-display font-bold">{t.sym}</div>
                   <a
-                    href={`https://testnet.iopn.tech/address/${t.addr}`}
+                    href={`https://testnet.qmsscan.io/address/${t.addr}`}
                     target="_blank" rel="noopener noreferrer"
                     className="text-[10px] text-muted-foreground hover:text-primary font-mono break-all inline-flex items-center gap-1"
                   >

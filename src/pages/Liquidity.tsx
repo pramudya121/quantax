@@ -215,7 +215,7 @@ export default function Liquidity() {
         description: `${tokenA?.symbol} has been approved for liquidity`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${approveAHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${approveAHash}`, '_blank'),
         },
       });
       setTimeout(() => refetchAllowanceA(), 1000);
@@ -230,7 +230,7 @@ export default function Liquidity() {
         description: `${tokenB?.symbol} has been approved for liquidity`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${approveBHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${approveBHash}`, '_blank'),
         },
       });
       setTimeout(() => refetchAllowanceB(), 1000);
@@ -245,7 +245,7 @@ export default function Liquidity() {
         description: 'LP tokens approved for removal',
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${pairApproveHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${pairApproveHash}`, '_blank'),
         },
       });
       setTimeout(() => refetchLpAllowance(), 1000);
@@ -260,7 +260,7 @@ export default function Liquidity() {
         description: `Transaction confirmed on-chain`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${router.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${router.hash}`, '_blank'),
         },
       });
       addTransaction({
@@ -1002,7 +1002,7 @@ export default function Liquidity() {
         {router.hash && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
             <a 
-              href={`https://testnet.iopn.tech/tx/${router.hash}`} 
+              href={`https://testnet.qmsscan.io/tx/${router.hash}`} 
               target="_blank" 
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 text-sm text-success bg-success/10 py-3 px-4 rounded-xl"

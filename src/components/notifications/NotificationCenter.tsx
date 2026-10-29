@@ -6,7 +6,7 @@ import { useTransactionHistory, type Transaction } from '@/components/history/Tr
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const EXPLORER = 'https://testnet.iopn.tech';
+const EXPLORER = 'https://testnet.qmsscan.io';
 
 const typeIcon = (t: Transaction['type']) => {
   switch (t) {

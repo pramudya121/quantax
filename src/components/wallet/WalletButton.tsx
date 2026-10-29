@@ -107,7 +107,7 @@ export function WalletButton() {
                       )}
                     </button>
                     <a
-                      href={`https://testnet.iopn.tech/address/${address}`}
+                      href={`https://testnet.qmsscan.io/address/${address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 rounded-lg hover:bg-muted transition-colors"

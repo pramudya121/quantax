@@ -379,7 +379,7 @@ export default function Analytics() {
                                 </span>
                               </td>
                               <td className="py-2.5 px-3 text-right">
-                                <a href={`https://testnet.iopn.tech/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                                <a href={`https://testnet.qmsscan.io/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
                                   <ExternalLink className="w-3 h-3 inline" />
                                 </a>
                               </td>
@@ -499,7 +499,7 @@ export default function Analytics() {
                             </td>
                             <td className="py-2.5 px-3 text-right hidden sm:table-cell">
                               <a
-                                href={`https://testnet.iopn.tech/address/${log.sender}`}
+                                href={`https://testnet.qmsscan.io/address/${log.sender}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[10px] font-mono text-muted-foreground hover:text-primary"
@@ -509,7 +509,7 @@ export default function Analytics() {
                             </td>
                             <td className="py-2.5 px-3 text-right">
                               <a
-                                href={`https://testnet.iopn.tech/tx/${log.txHash}`}
+                                href={`https://testnet.qmsscan.io/tx/${log.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-primary hover:underline inline-flex"

@@ -14,7 +14,7 @@ const footerLinks = {
     { name: 'Documentation', path: '/docs' },
     { name: 'Learn DeFi', path: '/learn' },
     { name: 'Portfolio', path: '/portfolio' },
-    { name: 'QMS Explorer', path: 'https://testnet.iopn.tech', external: true },
+    { name: 'QMS Explorer', path: 'https://testnet.qmsscan.io', external: true },
   ],
   Community: [
     { name: 'Discord', path: '#', external: true },

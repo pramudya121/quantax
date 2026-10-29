@@ -138,7 +138,7 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
               </p>
               {txHash && (
                 <a
-                  href={`https://testnet.iopn.tech/tx/${txHash}`}
+                  href={`https://testnet.qmsscan.io/tx/${txHash}`}
                   target="_blank" rel="noopener noreferrer"
                   className="text-xs text-primary hover:underline"
                 >

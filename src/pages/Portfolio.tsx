@@ -192,7 +192,7 @@ export default function Portfolio() {
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-4 font-mono">
             <Shield className="w-3 h-3 text-primary" />
             <span>{address?.slice(0, 6)}...{address?.slice(-4)}</span>
-            <a href={`https://testnet.iopn.tech/address/${address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            <a href={`https://testnet.qmsscan.io/address/${address}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               <ExternalLink className="w-3 h-3" />
             </a>
           </div>
@@ -481,7 +481,7 @@ export default function Portfolio() {
                         <div className="flex justify-between"><span>{lp.token0Symbol}</span><span className="font-medium text-foreground">{lp.myToken0.toFixed(4)}</span></div>
                         <div className="flex justify-between"><span>{lp.token1Symbol}</span><span className="font-medium text-foreground">{lp.myToken1.toFixed(4)}</span></div>
                       </div>
-                      <a href={`https://testnet.iopn.tech/address/${lp.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline mt-2 inline-flex items-center gap-1">
+                      <a href={`https://testnet.qmsscan.io/address/${lp.pairAddress}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline mt-2 inline-flex items-center gap-1">
                         View Contract <ExternalLink className="w-2.5 h-2.5" />
                       </a>
                     </div>

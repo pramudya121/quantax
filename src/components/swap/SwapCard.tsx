@@ -194,7 +194,7 @@ export function SwapCard() {
         description: `${fromToken?.symbol} approved — you can now swap`,
         action: {
           label: 'View TX',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${approveHash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${approveHash}`, '_blank'),
         },
       });
       addTransaction({
@@ -233,7 +233,7 @@ export function SwapCard() {
         description: `Swapped ${savedFrom} ${fromToken?.symbol} → ${savedTo} ${toToken?.symbol}`,
         action: {
           label: 'View',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${router.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${router.hash}`, '_blank'),
         },
       });
       addTransaction({
@@ -259,7 +259,7 @@ export function SwapCard() {
         description: `${action} ${savedFrom} ${fromToken?.symbol} → ${savedTo} ${toToken?.symbol}`,
         action: {
           label: 'View',
-          onClick: () => window.open(`https://testnet.iopn.tech/tx/${weth.hash}`, '_blank'),
+          onClick: () => window.open(`https://testnet.qmsscan.io/tx/${weth.hash}`, '_blank'),
         },
       });
       addTransaction({
@@ -913,7 +913,7 @@ export function SwapCard() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <a 
-                  href={`https://testnet.iopn.tech/tx/${router.hash || weth.hash}`} 
+                  href={`https://testnet.qmsscan.io/tx/${router.hash || weth.hash}`} 
                   target="_blank" 
                   rel="noopener noreferrer" 
                   className="flex items-center gap-2 text-xs sm:text-sm text-success justify-center hover:underline py-1"

@@ -175,7 +175,7 @@ export function TransactionHistory({
 
                   {/* Explorer Link */}
                   <a
-                    href={`https://testnet.iopn.tech/tx/${tx.hash}`}
+                    href={`https://testnet.qmsscan.io/tx/${tx.hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-2 rounded-lg hover:bg-muted transition-colors"

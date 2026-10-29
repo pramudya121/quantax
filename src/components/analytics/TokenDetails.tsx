@@ -13,7 +13,7 @@ interface Props {
   isLoading?: boolean;
 }
 
-const EXPLORER = 'https://testnet.iopn.tech';
+const EXPLORER = 'https://testnet.qmsscan.io';
 // Only show user-facing assets (skip duplicate WQMS entry — it's the bridge).
 const FEATURED = ['QTX', 'BNB', 'ETH', 'MON', 'HYPE'];
 

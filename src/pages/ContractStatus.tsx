@@ -7,7 +7,7 @@ import {
   CONTRACTS_BY_CHAIN,
   TOKEN_LIST_BY_CHAIN,
 } from '@/config/contracts';
-import { SUPPORTED_CHAINS, OPN_CHAIN_ID, AER_CHAIN_ID, getChainMeta } from '@/config/chains';
+import { SUPPORTED_CHAINS, QMS_CHAIN_ID, getChainMeta } from '@/config/chains';
 import { FARMING_BY_CHAIN } from '@/config/farming';
 import { toast } from 'sonner';
 
@@ -22,7 +22,7 @@ interface Row {
 function buildCore(chainId: number): Row[] {
   const c = CONTRACTS_BY_CHAIN[chainId];
   const farm = FARMING_BY_CHAIN[chainId];
-  const wrappedLabel = chainId === AER_CHAIN_ID ? 'WQMS' : 'WQMS';
+  const wrappedLabel = 'WQMS';
   const rows: Row[] = [
     { name: 'UniswapV2Factory', address: c.FACTORY, status: 'done', hooks: ['useLiquidityPools', 'CreatePool'] },
     { name: 'UniswapV2Router02', address: c.ROUTER, status: 'done', hooks: ['useSwapRouter', 'Liquidity', 'Swap'] },
@@ -152,8 +152,7 @@ export default function ContractStatus() {
         </p>
       </div>
 
-      <ChainSection chainId={OPN_CHAIN_ID} />
-      <ChainSection chainId={AER_CHAIN_ID} />
+      <ChainSection chainId={QMS_CHAIN_ID} />
     </div>
   );
 }

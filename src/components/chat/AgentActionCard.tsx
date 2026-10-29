@@ -168,7 +168,7 @@ export function AgentActionCard({ action, onResult }: Props) {
           <span className="text-xs text-foreground flex-1 font-medium">Transaction confirmed</span>
           {state.txHash && (
             <a
-              href={`https://testnet.iopn.tech/tx/${state.txHash}`}
+              href={`https://testnet.qmsscan.io/tx/${state.txHash}`}
               target="_blank" rel="noopener noreferrer"
               className="text-[11px] text-primary font-semibold hover:underline inline-flex items-center gap-1"
             >
