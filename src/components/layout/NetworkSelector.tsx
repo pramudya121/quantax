@@ -3,6 +3,7 @@ import { ChevronDown, Check } from 'lucide-react';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SUPPORTED_CHAINS, QMS_CHAIN_ID } from '@/config/chains';
+import { toast } from 'sonner';
 
 const CHAIN_LOGO: Record<number, string> = {
   [QMS_CHAIN_ID]: '/tokens/qms.svg',
