@@ -44,7 +44,7 @@ const txSummary = (tx: Transaction) => {
     return `${d.tokenA}/${d.tokenB}`;
   }
   if ((tx.type === 'wrap' || tx.type === 'unwrap') && d.fromAmount) {
-    return `${d.fromAmount} ${tx.type === 'wrap' ? 'OPN → WOPN' : 'WOPN → OPN'}`;
+    return `${d.fromAmount} ${tx.type === 'wrap' ? 'QMS → WQMS' : 'WQMS → QMS'}`;
   }
   return tx.hash.slice(0, 10) + '…' + tx.hash.slice(-6);
 };

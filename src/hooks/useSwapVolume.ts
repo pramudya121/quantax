@@ -7,7 +7,7 @@ const SWAP_EVENT = parseAbiItem(
   'event Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)'
 );
 
-// OPN Testnet ~2s block time → 24h ≈ 43200 blocks.
+// QMS Testnet ~2s block time → 24h ≈ 43200 blocks.
 // Public RPCs often cap getLogs ranges, so we scan a tighter recent window in chunks.
 const BLOCK_WINDOW = 20000n;
 const CHUNK = 2000n;

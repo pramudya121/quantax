@@ -60,7 +60,7 @@ export function SwapConfirmModal({
   };
 
   const actionLabel = isWrapUnwrap
-    ? isWrapping ? 'Wrap OPN → WOPN' : 'Unwrap WOPN → OPN'
+    ? isWrapping ? 'Wrap QMS → WQMS' : 'Unwrap WQMS → QMS'
     : 'Confirm Swap';
 
   return (
@@ -148,7 +148,7 @@ export function SwapConfirmModal({
                       />
                     </>
                   )}
-                  <Row label="Network Fee" value="~0.001 OPN" />
+                  <Row label="Network Fee" value="~0.001 QMS" />
                 </div>
               )}
 

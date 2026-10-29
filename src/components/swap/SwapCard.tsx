@@ -26,7 +26,7 @@ import { cn } from '@/lib/utils';
 
 export function SwapCard() {
   const { address, isConnected } = useAccount();
-  const { isCorrectNetwork, switchToOPN } = useWallet();
+  const { isCorrectNetwork, switchToQMS } = useWallet();
 
   const chainId = useChainId();
   const C = getContracts(chainId);
@@ -62,7 +62,7 @@ export function SwapCard() {
   const { approve, isPending: isApproving, isSuccess: approveSuccess, hash: approveHash, error: approveError } = useApprove();
   const { addTransaction, updateTransaction } = useTransactionHistory();
 
-  // Detect if this is a wrap/unwrap (OPN <-> WOPN)
+  // Detect if this is a wrap/unwrap (QMS <-> WQMS)
   const isWrapUnwrap = useMemo(() => {
     if (!fromToken || !toToken) return false;
     const fromIsNative = fromToken.isNative;
@@ -399,7 +399,7 @@ export function SwapCard() {
     
     // Handle wrap/unwrap
     if (isWrapUnwrap) {
-      toast.loading(isWrapping ? 'Wrapping OPN...' : 'Unwrapping WOPN...', { id: 'swap' });
+      toast.loading(isWrapping ? 'Wrapping QMS...' : 'Unwrapping WQMS...', { id: 'swap' });
       if (isWrapping) {
         weth.deposit(parseEther(fromAmount));
       } else {
@@ -793,7 +793,7 @@ export function SwapCard() {
                             } 
                           />
                         )}
-                        <DetailRow label="Network Fee" value="~0.001 OPN" />
+                        <DetailRow label="Network Fee" value="~0.001 QMS" />
                       </div>
                     </motion.div>
                   )}
@@ -832,8 +832,8 @@ export function SwapCard() {
                   Connect Wallet
                 </Button>
               ) : !isCorrectNetwork ? (
-                <Button onClick={switchToOPN} className="w-full h-11 sm:h-12 rounded-xl text-sm" variant="destructive">
-                  Switch to OPN Network
+                <Button onClick={switchToQMS} className="w-full h-11 sm:h-12 rounded-xl text-sm" variant="destructive">
+                  Switch to QMS Network
                 </Button>
               ) : needsApproval ? (
                 <>
@@ -894,9 +894,9 @@ export function SwapCard() {
                   ) : !isWrapUnwrap && !hasLiquidity && !isPoolDataLoading && fromToken && toToken ? (
                     'No Route Found'
                   ) : parseFloat(fromAmount) > parseFloat(maxSpendableFromBalance) ? (
-                    <>{fromToken?.isNative ? 'Insufficient OPN' : `Insufficient ${fromToken?.symbol}`}</>
+                    <>{fromToken?.isNative ? 'Insufficient QMS' : `Insufficient ${fromToken?.symbol}`}</>
                   ) : isWrapUnwrap ? (
-                    <>{isWrapping ? '🔥 Wrap OPN → WOPN' : '🔥 Unwrap WOPN → OPN'}</>
+                    <>{isWrapping ? '🔥 Wrap QMS → WQMS' : '🔥 Unwrap WQMS → QMS'}</>
                   ) : isHighImpact ? (
                     '⚠️ Swap Anyway (High Impact)'
                   ) : (

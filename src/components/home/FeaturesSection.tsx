@@ -6,7 +6,7 @@
    { 
      icon: <Zap className="w-6 h-6" />, 
      title: 'Instant Swaps', 
-     description: 'Lightning-fast trades powered by automated market makers on OPN Testnet' 
+     description: 'Lightning-fast trades powered by automated market makers on QMS Testnet' 
    },
    { 
      icon: <Shield className="w-6 h-6" />, 
@@ -31,7 +31,7 @@
    { 
      icon: <Flame className="w-6 h-6" />, 
      title: 'Dragon Power', 
-     description: 'Unleash the power of decentralized finance on OPN Testnet' 
+     description: 'Unleash the power of decentralized finance on QMS Testnet' 
    },
  ];
  
@@ -60,7 +60,7 @@
              transition={{ delay: 0.1 }}
              className="text-3xl md:text-4xl font-bold mb-4"
            >
-             Why DRAGONDEX?
+             Why QUANTAX?
            </motion.h2>
            <motion.p
              initial={{ opacity: 0, y: 20 }}

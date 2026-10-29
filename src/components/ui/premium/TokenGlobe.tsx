@@ -20,7 +20,7 @@ interface OrbitToken {
 
 const orbitTokens: OrbitToken[] = [
   {
-    symbol: 'OPN', logoURI: '/tokens/opn.jpg',
+    symbol: 'QMS', logoURI: '/tokens/opn.jpg',
     orbitRadiusX: 130, orbitRadiusY: 110,
     tiltX: 65, tiltY: 0, tiltZ: -15,
     duration: 12, size: 46, delay: 0,

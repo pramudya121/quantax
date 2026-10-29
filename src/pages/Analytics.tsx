@@ -160,7 +160,7 @@ export default function Analytics() {
   return (
     <div className="container mx-auto px-4 py-6 md:py-8 pb-24 lg:pb-8 relative">
 
-    <SEO title="Analytics — DRAGONDEX" description="On-chain analytics for DRAGONDEX: total value locked, trading volume, top pools and tokens on OPN Testnet." path="/analytics" />
+    <SEO title="Analytics — QUANTAX" description="On-chain analytics for QUANTAX: total value locked, trading volume, top pools and tokens on QMS Testnet." path="/analytics" />
       <Spotlight className="hidden md:block" />
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-6xl mx-auto">
@@ -176,7 +176,7 @@ export default function Analytics() {
             <span className="text-[10px] md:text-xs font-semibold tracking-[0.18em] uppercase">Protocol Analytics</span>
           </motion.div>
           <h1 className="font-display text-4xl md:text-5xl font-bold gradient-text mb-2 tracking-tight">Analytics</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Real-time on-chain protocol statistics from OPN Testnet</p>
+          <p className="text-sm md:text-base text-muted-foreground">Real-time on-chain protocol statistics from QMS Testnet</p>
         </div>
         
         {/* Stats Grid */}

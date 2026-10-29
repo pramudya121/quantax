@@ -147,7 +147,7 @@ function ImportConfirmation({
         <div className="bg-warning/5 border border-warning/20 rounded-lg p-3">
           <p className="text-xs text-warning font-medium mb-1">⚠️ Import at your own risk</p>
           <p className="text-[11px] text-muted-foreground">
-            This token is not part of the DragonDEX default list. Anyone can create a token, including fake versions of existing tokens. Always verify the contract address.
+            This token is not part of the QuantaX default list. Anyone can create a token, including fake versions of existing tokens. Always verify the contract address.
           </p>
         </div>
 

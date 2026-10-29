@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 
 type Tab = 'add' | 'edit' | 'mass';
 
-// ERC20 tokens available as staking/reward (exclude native OPN)
+// ERC20 tokens available as staking/reward (exclude native QMS)
 const FARM_TOKENS: TokenInfo[] = TOKEN_LIST.filter((t) => !t.isNative);
 
 function TokenChips({
@@ -96,7 +96,7 @@ export default function AdminFarming() {
   if (!isConnected) {
     return (
       <div className="container mx-auto px-4 py-20 text-center">
-      <SEO title="Farming Admin — DRAGONDEX" description="Administer DRAGONDEX yield farming pools — create farms, adjust allocations, manage rewards." path="/admin/farming" />
+      <SEO title="Farming Admin — QUANTAX" description="Administer QUANTAX yield farming pools — create farms, adjust allocations, manage rewards." path="/admin/farming" />
         <Shield className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
         <h1 className="text-2xl font-bold mb-2">Connect Wallet</h1>
         <p className="text-muted-foreground">Connect your wallet to access the admin panel.</p>

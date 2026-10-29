@@ -18,7 +18,7 @@ export function WalletButton() {
     disconnect,
     balance,
     isCorrectNetwork,
-    switchToOPN,
+    switchToQMS,
     formatAddress,
   } = useWallet();
 
@@ -53,8 +53,8 @@ export function WalletButton() {
 
   if (!isCorrectNetwork) {
     return (
-      <Button onClick={switchToOPN} variant="destructive" className="animate-pulse">
-        Switch to OPN
+      <Button onClick={switchToQMS} variant="destructive" className="animate-pulse">
+        Switch to QMS
       </Button>
     );
   }
@@ -87,7 +87,7 @@ export function WalletButton() {
                 <span className="text-sm text-muted-foreground">Connected</span>
                 <div className="flex items-center gap-1.5 text-success text-xs font-medium">
                   <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                  OPN Testnet
+                  QMS Testnet
                 </div>
               </div>
 
@@ -118,7 +118,7 @@ export function WalletButton() {
                   </div>
                 </div>
                 <div className="mt-3 text-2xl font-bold">
-                  {balance ? parseFloat(formatEther(balance.value)).toFixed(4) : '0'} OPN
+                  {balance ? parseFloat(formatEther(balance.value)).toFixed(4) : '0'} QMS
                 </div>
               </div>
 

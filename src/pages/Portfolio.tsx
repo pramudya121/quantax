@@ -155,7 +155,7 @@ export default function Portfolio() {
   if (!isConnected) {
     return (
       <div className="container mx-auto px-4 py-8 min-h-screen flex items-center justify-center">
-      <SEO title="Portfolio — DRAGONDEX" description="Track your token holdings, LP positions, allocation chart, and transaction history on DRAGONDEX." path="/portfolio" />
+      <SEO title="Portfolio — QUANTAX" description="Track your token holdings, LP positions, allocation chart, and transaction history on QUANTAX." path="/portfolio" />
         <Spotlight className="hidden md:block" />
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
           <GlowingStarsCard className="bg-card border border-border">

@@ -50,11 +50,11 @@ export default function PairDetail() {
   const pairPath = `/pool/${address ?? ''}`;
   const pairLabel = pool ? `${pool.token0Symbol}/${pool.token1Symbol}` : 'Liquidity';
   const seoTitle = pool
-    ? `${pairLabel} Pool — DRAGONDEX on OPN Testnet`
-    : 'Pool Details — DRAGONDEX';
+    ? `${pairLabel} Pool — QUANTAX on QMS Testnet`
+    : 'Pool Details — QUANTAX';
   const seoDescription = pool
-    ? `View reserves, price chart, TVL, and recent swaps for the ${pairLabel} liquidity pool on DRAGONDEX (OPN Testnet).`
-    : 'Detailed view of a DRAGONDEX liquidity pool with reserves, price chart, and recent swaps.';
+    ? `View reserves, price chart, TVL, and recent swaps for the ${pairLabel} liquidity pool on QUANTAX (QMS Testnet).`
+    : 'Detailed view of a QUANTAX liquidity pool with reserves, price chart, and recent swaps.';
 
   if (isLoading) {
     return (

@@ -55,7 +55,7 @@ export function HeroSection() {
             >
               <img
                 src={dragonLogo}
-                alt="DragonDEX Logo"
+                alt="QuantaX Logo"
                 className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_0_30px_hsl(var(--primary)/0.55)]"
               />
               <div className="leading-tight">
@@ -63,7 +63,7 @@ export function HeroSection() {
                   DRAGON<span className="text-primary">DEX</span>
                 </div>
                 <div className="text-[10px] sm:text-xs tracking-[0.25em] text-muted-foreground uppercase">
-                  OPN Testnet
+                  QMS Testnet
                 </div>
               </div>
             </motion.div>
@@ -75,8 +75,8 @@ export function HeroSection() {
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background/70 backdrop-blur border border-primary/30 text-primary text-xs sm:text-sm mb-6"
             >
               <Flame className="w-3.5 h-3.5" />
-              <span>Live on OPN Testnet</span>
-              <span className="text-muted-foreground">· Chain 984</span>
+              <span>Live on QMS Testnet</span>
+              <span className="text-muted-foreground">· Chain 19480</span>
             </motion.div>
 
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black mb-5 tracking-tight leading-[1.05]">
@@ -85,11 +85,11 @@ export function HeroSection() {
                 on-chain
               </AnimatedGradientText>{' '}
               tokens.
-              <span className="sr-only"> — DragonDEX, Decentralized Exchange on OPN Testnet</span>
+              <span className="sr-only"> — QuantaX, Decentralized Exchange on QMS Testnet</span>
             </h1>
 
             <TextGenerateEffect
-              words="DragonDEX is a fully on-chain AMM built on OPN. Swap, provide liquidity, and earn fees with transparent routing, real-time pool analytics, and a sleek pitch-black UI."
+              words="QuantaX is a fully on-chain AMM built on QMS. Swap, provide liquidity, and earn fees with transparent routing, real-time pool analytics, and a sleek pitch-black UI."
               className="text-base md:text-lg text-muted-foreground font-normal mb-7 max-w-lg"
             />
 

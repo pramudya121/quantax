@@ -1,5 +1,5 @@
 /**
- * Transaction error decoder and retry utilities for DragonDEX
+ * Transaction error decoder and retry utilities for QuantaX
  * Parses revert reasons from blockchain errors and provides user-friendly messages
  */
 
@@ -125,7 +125,7 @@ export function parseTransactionError(error: Error | unknown): ParsedTransaction
     return {
       type: 'network',
       title: 'Network Error',
-      description: 'Could not connect to the OPN Testnet.',
+      description: 'Could not connect to the QMS Testnet.',
       suggestion: 'Check your internet connection and try again.',
       canRetry: true,
       originalMessage: message,
@@ -187,8 +187,8 @@ export function parseTransactionError(error: Error | unknown): ParsedTransaction
     return {
       type: 'gas',
       title: 'Insufficient Gas',
-      description: 'You don\'t have enough OPN to pay for gas fees.',
-      suggestion: 'Get more OPN from a faucet to cover gas.',
+      description: 'You don\'t have enough QMS to pay for gas fees.',
+      suggestion: 'Get more QMS from a faucet to cover gas.',
       canRetry: false,
       originalMessage: message,
     };

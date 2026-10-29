@@ -37,9 +37,9 @@ function ActionVisual({ action }: { action: AgentAction }) {
   if (action.type === 'wrap' || action.type === 'unwrap') {
     return (
       <div className="flex items-center gap-2">
-        <img src={tokenLogo(action.type === 'wrap' ? 'OPN' : 'WOPN')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
+        <img src={tokenLogo(action.type === 'wrap' ? 'QMS' : 'WQMS')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
         <div className="text-xs text-muted-foreground">→</div>
-        <img src={tokenLogo(action.type === 'wrap' ? 'WOPN' : 'OPN')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
+        <img src={tokenLogo(action.type === 'wrap' ? 'WQMS' : 'QMS')} className="w-8 h-8 rounded-full border-2 border-card" alt="" />
       </div>
     );
   }

@@ -14,7 +14,7 @@ const footerLinks = {
     { name: 'Documentation', path: '/docs' },
     { name: 'Learn DeFi', path: '/learn' },
     { name: 'Portfolio', path: '/portfolio' },
-    { name: 'OPN Explorer', path: 'https://testnet.iopn.tech', external: true },
+    { name: 'QMS Explorer', path: 'https://testnet.iopn.tech', external: true },
   ],
   Community: [
     { name: 'Discord', path: '#', external: true },
@@ -34,11 +34,11 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3 mb-4">
-              <img src={dragonLogo} alt="DragonDEX" className="h-10 w-10 rounded-xl" />
-              <span className="text-xl font-bold gradient-text">DRAGONDEX</span>
+              <img src={dragonLogo} alt="QuantaX" className="h-10 w-10 rounded-xl" />
+              <span className="text-xl font-bold gradient-text">QUANTAX</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs mb-6">
-              The premier decentralized exchange on OPN Testnet. Swap, provide liquidity, and earn with the power of the dragon.
+              The premier decentralized exchange on QMS Testnet. Swap, provide liquidity, and earn with the power of the dragon.
             </p>
             <div className="flex items-center gap-3">
               {[
@@ -97,7 +97,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t border-border/50 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} DragonDEX. Built on OPN Testnet.
+            © {new Date().getFullYear()} QuantaX. Built on QMS Testnet.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Flame className="w-3 h-3 text-primary" />

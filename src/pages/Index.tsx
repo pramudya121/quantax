@@ -13,7 +13,7 @@ import { CTASection } from '@/components/home/CTASection';
 export default function Index() {
   return (
     <div className="relative min-h-screen overflow-hidden">
-    <SEO title="DRAGONDEX — Decentralized Exchange on OPN Testnet" description="DRAGONDEX is a UniswapV2-style AMM on OPN Testnet (Chain 984). Swap tokens, provide liquidity, and earn trading fees on-chain." path="/" />
+    <SEO title="QUANTAX — Decentralized Exchange on QMS Testnet" description="QUANTAX is a UniswapV2-style AMM on QMS Testnet (Chain 19480). Swap tokens, provide liquidity, and earn trading fees on-chain." path="/" />
       {/* Premium Background Effects - seamless, no boundaries */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <Spotlight className="hidden md:block" />

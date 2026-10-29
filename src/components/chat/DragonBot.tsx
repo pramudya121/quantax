@@ -672,7 +672,7 @@ export function DragonBot() {
               </form>
               <p className="text-[10px] text-muted-foreground/40 text-center mt-2 flex items-center justify-center gap-1">
                 <Sparkles className="w-2.5 h-2.5" />
-                Powered by DragonDEX AI • {messageCount} messages
+                Powered by QuantaX AI • {messageCount} messages
               </p>
             </div>
           </motion.div>

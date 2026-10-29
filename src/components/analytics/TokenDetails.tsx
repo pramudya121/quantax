@@ -14,7 +14,7 @@ interface Props {
 }
 
 const EXPLORER = 'https://testnet.iopn.tech';
-// Only show user-facing assets (skip duplicate WOPN entry — it's the bridge).
+// Only show user-facing assets (skip duplicate WQMS entry — it's the bridge).
 const FEATURED = ['DRAGON', 'BNB', 'ETH', 'MON', 'HYPE'];
 
 function TokenDetailRowSkeleton() {
@@ -87,7 +87,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
         });
       }
 
-      // Prefer the WOPN pair as price source (WOPN anchors $1), else the deepest pool.
+      // Prefer the WQMS pair as price source (WQMS anchors $1), else the deepest pool.
       const wopnPair = tokenPools.find(
         p =>
           p.quoteAddress.toLowerCase() === CONTRACTS.WETH.toLowerCase() &&

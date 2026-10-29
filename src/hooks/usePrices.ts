@@ -4,12 +4,12 @@ import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
 import { PAIR_ABI, FACTORY_ABI } from '@/config/abis';
 import { formatUnits } from 'viem';
 
-// Default prices for OPN Testnet tokens (simulated - would use oracles in production)
+// Default prices for QMS Testnet tokens (simulated - would use oracles in production)
 export const BASE_PRICES: Record<string, number> = {
-  OPN: 1.0,
-  WOPN: 1.0,
+  QMS: 1.0,
+  WQMS: 1.0,
   AER: 1.0,
-  WAER: 1.0,
+  WQMS: 1.0,
   UNI: 8.0,
   XRP: 2.2,
   DRAGON: 0.25,
@@ -91,7 +91,7 @@ export function useTokenPrices() {
       const tokenReserve = parseFloat(formatUnits(isToken0Wopn ? reserves[1] : reserves[0], token.decimals));
 
       if (tokenReserve > 0) {
-        // Price in WOPN terms (WOPN = $1)
+        // Price in WQMS terms (WQMS = $1)
         priceMap[token.symbol] = wopnReserve / tokenReserve;
       }
     }
