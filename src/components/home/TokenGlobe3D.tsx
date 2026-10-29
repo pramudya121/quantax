@@ -21,7 +21,7 @@ interface OrbitDef {
 }
 
 const ORBITS: OrbitDef[] = [
-  { radius: 2.2, tilt: [0, 0, 0],                        color: '#ff3b3b', speed: 0.45, phase: 0,       symbols: ['QMS', 'DRAGON'] },
+  { radius: 2.2, tilt: [0, 0, 0],                        color: '#ff3b3b', speed: 0.45, phase: 0,       symbols: ['QMS', 'QTX'] },
   { radius: 2.6, tilt: [Math.PI / 3, 0, Math.PI / 6],    color: '#ff7a45', speed: 0.32, phase: 1.1,     symbols: ['ETH'] },
   { radius: 3.0, tilt: [-Math.PI / 4, Math.PI / 5, 0],   color: '#a855f7', speed: 0.28, phase: 2.3,     symbols: ['BNB', 'MON'] },
   { radius: 3.4, tilt: [Math.PI / 2.2, Math.PI / 3, 0],  color: '#22d3ee', speed: 0.22, phase: 0.6,     symbols: ['HYPE'] },

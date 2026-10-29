@@ -61,19 +61,19 @@ const allNavItems = sidebarSections.flatMap(s => s.items);
 
 // Content sections data
 const contracts = [
-  { name: 'Factory', address: '0x887AE7FfCB54f5811d957f3EA8095b15Bd99e538', description: 'Creates new trading pairs' },
-  { name: 'Router', address: '0x048A65f2f52F1c1A0a1fC59E67Ac95daA361AA89', description: 'Handles swap routing' },
-  { name: 'WQMS', address: '0xd38b2Cd5D8d68E6EA75f9aD9bC01F9e168d4b5E1', description: 'Wrapped QMS token' },
-  { name: 'Library', address: '0x2C9bd07a8885Fdd93f5426DB6C250a9adfcEe2C7', description: 'Helper functions' },
-  { name: 'Multicall', address: '0xb27c21B35d6fF3Fc55e826ef6714AF76a82c5E71', description: 'Batch contract calls' },
-  { name: 'Farming', address: '0xfc911Ef8F6372786cd671bdC99dc4f9255b85596', description: 'MultiPool farming/staking' },
-  { name: 'DRAGON', address: '0x76c8BF103D0548dC171EC9675bCc327f20f35A42', description: 'Native DEX token' },
+  { name: 'Factory', address: '0x97C305119f5D98aFd11bCD19a1ba8c27d68F3546', description: 'Creates new trading pairs' },
+  { name: 'Router', address: '0x3A153e8BcDe02F4Cf6C5eeECD9c83bC0296FFbD3', description: 'Handles swap routing' },
+  { name: 'WQMS', address: '0x9AA510295aC664A3d5A3182a3eFe959DE2B12c34', description: 'Wrapped QMS token' },
+  { name: 'Library', address: '0x03D2D542100fa926de135a08B609c8538E45F6ee', description: 'Helper functions' },
+  { name: 'Multicall', address: '0x8705875084c72C0cDC01c1Ac36A807808c8E5850', description: 'Batch contract calls' },
+  { name: 'Farming', address: '0xA5A90E43Df65AD62E45Edc526A1FD147cdDea6c8', description: 'MultiPool farming/staking' },
+  { name: 'QTX', address: '0x66E5cbb0325Ab93B42c16592Be91456cc195E427', description: 'Native DEX token' },
 ];
 
 const tokens = [
   { symbol: 'QMS', name: 'QMS (Native)', type: 'Native Gas Token' },
   { symbol: 'WQMS', name: 'Wrapped QMS', type: 'Wrapped Native' },
-  { symbol: 'DRAGON', name: 'Dragon Token', type: 'DEX Governance' },
+  { symbol: 'QTX', name: 'QuantaX Token', type: 'DEX Governance' },
   { symbol: 'BNB', name: 'Binance Coin', type: 'Wrapped' },
   { symbol: 'ETH', name: 'Ethereum', type: 'Wrapped' },
   { symbol: 'MON', name: 'Monad', type: 'Wrapped' },

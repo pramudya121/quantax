@@ -15,7 +15,7 @@ interface Props {
 
 const EXPLORER = 'https://testnet.iopn.tech';
 // Only show user-facing assets (skip duplicate WQMS entry — it's the bridge).
-const FEATURED = ['DRAGON', 'BNB', 'ETH', 'MON', 'HYPE'];
+const FEATURED = ['QTX', 'BNB', 'ETH', 'MON', 'HYPE'];
 
 function TokenDetailRowSkeleton() {
   return (

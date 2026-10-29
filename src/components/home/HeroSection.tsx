@@ -60,7 +60,7 @@ export function HeroSection() {
               />
               <div className="leading-tight">
                 <div className="font-display text-2xl sm:text-3xl font-black tracking-tight">
-                  DRAGON<span className="text-primary">DEX</span>
+                  QuantaX<span className="text-primary">DEX</span>
                 </div>
                 <div className="text-[10px] sm:text-xs tracking-[0.25em] text-muted-foreground uppercase">
                   QMS Testnet
