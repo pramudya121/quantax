@@ -182,7 +182,7 @@ function SectionConnectWallet() {
       <div className="bg-card border border-border rounded-xl p-4 space-y-2">
         {[
           ['Network Name', 'QMS Testnet'],
-          ['Chain ID', '984'],
+          ['Chain ID', '19480'],
           ['RPC URL', 'https://testnet-rpc.iopn.tech'],
           ['Currency Symbol', 'QMS'],
           ['Block Explorer', 'https://testnet.iopn.tech'],
