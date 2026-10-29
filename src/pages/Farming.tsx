@@ -417,7 +417,7 @@ export default function Farming() {
   return (
     <div className="relative min-h-[calc(100vh-80px)] pb-24 lg:pb-12 overflow-hidden">
 
-    <SEO title="Yield Farming — QUANTAX" description="Stake LP tokens in QUANTAX farms to earn DRAGON rewards on QMS Testnet." path="/farming" />
+    <SEO title="Yield Farming — QUANTAX" description="Stake LP tokens in QUANTAX farms to earn QTX rewards on QMS Testnet." path="/farming" />
       <Spotlight className="hidden md:block" />
       <ParticleField particleCount={14} colorScheme="dragon" className="opacity-10" />
       <Meteors number={6} className="opacity-15" />

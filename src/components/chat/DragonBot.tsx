@@ -18,7 +18,7 @@ const QUICK_PROMPTS = [
   { emoji: "🔄", text: "How do I swap tokens?" },
   { emoji: "💧", text: "How to add liquidity?" },
   { emoji: "📊", text: "Show me token prices" },
-  { emoji: "🐉", text: "What is DRAGON token?" },
+  { emoji: "🐉", text: "What is QTX token?" },
   { emoji: "🏊", text: "How do pools work?" },
   { emoji: "💰", text: "Check my portfolio" },
 ];

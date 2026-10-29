@@ -151,7 +151,7 @@ const GUIDES: Guide[] = [
     sections: [
       {
         heading: 'What farming is',
-        body: <>You stake your LP tokens into a farm contract. The farm emits a reward token (usually DRAGON) block-by-block, proportional to your share. You earn the LP fees AND the farm rewards simultaneously.</>,
+        body: <>You stake your LP tokens into a farm contract. The farm emits a reward token (usually QTX) block-by-block, proportional to your share. You earn the LP fees AND the farm rewards simultaneously.</>,
       },
       {
         heading: 'Layered risks',

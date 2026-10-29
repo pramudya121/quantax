@@ -8,11 +8,7 @@ import { formatUnits } from 'viem';
 export const BASE_PRICES: Record<string, number> = {
   QMS: 1.0,
   WQMS: 1.0,
-  AER: 1.0,
-  WQMS: 1.0,
-  UNI: 8.0,
-  XRP: 2.2,
-  DRAGON: 0.25,
+  QTX: 0.25,
   BNB: 580.0,
   ETH: 3200.0,
   MON: 2.5,

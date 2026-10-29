@@ -13,7 +13,7 @@
  
  const defaultTokens: TokenData[] = [
    { symbol: 'QMS', color: 'from-blue-500 to-cyan-400', orbitRadius: 100, orbitDuration: 15, size: 40, delay: 0 },
-   { symbol: 'DRAGON', color: 'from-red-500 to-orange-400', orbitRadius: 140, orbitDuration: 20, size: 36, delay: 2 },
+   { symbol: 'QTX', color: 'from-red-500 to-orange-400', orbitRadius: 140, orbitDuration: 20, size: 36, delay: 2 },
    { symbol: 'ETH', color: 'from-purple-500 to-blue-400', orbitRadius: 180, orbitDuration: 25, size: 32, delay: 4 },
    { symbol: 'BNB', color: 'from-yellow-500 to-orange-400', orbitRadius: 220, orbitDuration: 30, size: 28, delay: 1 },
    { symbol: 'MON', color: 'from-violet-500 to-purple-400', orbitRadius: 260, orbitDuration: 35, size: 26, delay: 3 },
@@ -160,7 +160,7 @@
  export function TokenSolarSystem({ className }: { className?: string }) {
    const solarTokens: TokenData[] = [
      { symbol: 'QMS', color: 'from-blue-400 to-cyan-300', orbitRadius: 120, orbitDuration: 12, size: 48, delay: 0 },
-     { symbol: 'DRAGON', color: 'from-red-500 to-orange-400', orbitRadius: 170, orbitDuration: 18, size: 44, delay: 1 },
+     { symbol: 'QTX', color: 'from-red-500 to-orange-400', orbitRadius: 170, orbitDuration: 18, size: 44, delay: 1 },
      { symbol: 'ETH', color: 'from-indigo-500 to-purple-400', orbitRadius: 220, orbitDuration: 24, size: 40, delay: 2 },
      { symbol: 'BNB', color: 'from-yellow-400 to-amber-300', orbitRadius: 270, orbitDuration: 30, size: 36, delay: 3 },
      { symbol: 'MON', color: 'from-violet-400 to-fuchsia-400', orbitRadius: 320, orbitDuration: 36, size: 32, delay: 4 },

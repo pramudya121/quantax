@@ -11,7 +11,7 @@ function getBridgeTokens(chainId?: number): `0x${string}`[] {
   const list = getTokenList(chainId);
   const pick = (sym: string) =>
     list.find((t) => t.symbol === sym && !t.isNative)?.address as `0x${string}` | undefined;
-  return [wrapped, pick('DRAGON'), pick('BNB'), pick('ETH')].filter(Boolean) as `0x${string}`[];
+  return [wrapped, pick('QTX'), pick('BNB'), pick('ETH')].filter(Boolean) as `0x${string}`[];
 }
 
 export interface SwapRoute {
