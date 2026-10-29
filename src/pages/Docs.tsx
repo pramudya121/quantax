@@ -183,7 +183,7 @@ function SectionConnectWallet() {
         {[
           ['Network Name', 'QMS Testnet'],
           ['Chain ID', '19480'],
-          ['RPC URL', 'https://testnet-rpc.iopn.tech'],
+          ['RPC URL', 'https://rpc.testnet.qms.finance'],
           ['Currency Symbol', 'QMS'],
           ['Block Explorer', 'https://testnet.qmsscan.io'],
         ].map(([label, value]) => (
