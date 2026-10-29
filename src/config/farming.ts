@@ -1,13 +1,12 @@
-// DRAGONDEX Farming / Staking Contract Configuration (per chain)
-import { OPN_CHAIN_ID, AER_CHAIN_ID } from './chains';
+// QuantaX Farming / Staking Contract Configuration (per chain)
+import { QMS_CHAIN_ID } from './chains';
 
 export const FARMING_BY_CHAIN: Record<number, `0x${string}`> = {
-  [OPN_CHAIN_ID]: '0xfc911Ef8F6372786cd671bdC99dc4f9255b85596',
-  [AER_CHAIN_ID]: '0x31351646e2c5479A30f846dFa4297E9Dbe189a63',
+  [QMS_CHAIN_ID]: '0xA5A90E43Df65AD62E45Edc526A1FD147cdDea6c8',
 };
 
-// Legacy singleton (defaults to OPN) — kept for backwards compatibility.
-export const FARMING_CONTRACT = FARMING_BY_CHAIN[OPN_CHAIN_ID];
+// Legacy singleton — kept for backwards compatibility.
+export const FARMING_CONTRACT = FARMING_BY_CHAIN[QMS_CHAIN_ID];
 
 export function getFarmingContract(chainId?: number): `0x${string}` {
   return FARMING_BY_CHAIN[chainId ?? OPN_CHAIN_ID] ?? FARMING_BY_CHAIN[OPN_CHAIN_ID];
