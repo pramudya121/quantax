@@ -40,7 +40,7 @@ export function useWallet() {
     chainId,
     isCorrectNetwork,
     activeChain,
-    switchToOPN,
+    switchToQMS,
     formatAddress,
   };
 }
