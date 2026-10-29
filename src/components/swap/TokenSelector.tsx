@@ -235,7 +235,7 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
       symbol: symbol,
       name: name || symbol,
       decimals: decimals || 18,
-      logoURI: '/tokens/opn.jpg',
+      logoURI: '/tokens/qms.svg',
     };
 
     saveImportedToken(newToken);
@@ -284,7 +284,7 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
               symbol={selectedToken.symbol}
               alt={selectedToken.symbol}
               size={24}
-              fallbackSrc="/tokens/opn.jpg"
+              fallbackSrc="/tokens/qms.svg"
             />
             <span className="font-semibold">{selectedToken.symbol}</span>
           </>
@@ -458,7 +458,7 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
                                   symbol={token.symbol}
                                   alt={token.symbol}
                                   size={40}
-                                  fallbackSrc="/tokens/opn.jpg"
+                                  fallbackSrc="/tokens/qms.svg"
                                 />
 
                                 {isImported && (

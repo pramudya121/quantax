@@ -162,7 +162,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
                   symbol={t.symbol}
                   alt={t.symbol}
                   size={40}
-                  fallbackSrc="/tokens/opn.jpg"
+                  fallbackSrc="/tokens/qms.svg"
                   className="border border-border"
                 />
                 <div className="flex-1 min-w-0">

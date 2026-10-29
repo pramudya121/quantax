@@ -120,13 +120,13 @@ export default function Analytics() {
       const val1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
       
       if (!tokenMap[pool.token0Symbol]) {
-        tokenMap[pool.token0Symbol] = { symbol: pool.token0Symbol, logo: pool.token0?.logoURI || '/tokens/opn.jpg', totalLiquidity: 0, poolCount: 0, price: price0 };
+        tokenMap[pool.token0Symbol] = { symbol: pool.token0Symbol, logo: pool.token0?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price0 };
       }
       tokenMap[pool.token0Symbol].totalLiquidity += val0;
       if (pool.reserve0 > 0n) tokenMap[pool.token0Symbol].poolCount++;
 
       if (!tokenMap[pool.token1Symbol]) {
-        tokenMap[pool.token1Symbol] = { symbol: pool.token1Symbol, logo: pool.token1?.logoURI || '/tokens/opn.jpg', totalLiquidity: 0, poolCount: 0, price: price1 };
+        tokenMap[pool.token1Symbol] = { symbol: pool.token1Symbol, logo: pool.token1?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price1 };
       }
       tokenMap[pool.token1Symbol].totalLiquidity += val1;
       if (pool.reserve1 > 0n) tokenMap[pool.token1Symbol].poolCount++;
@@ -277,8 +277,8 @@ export default function Analytics() {
                         className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex -space-x-1">
-                          <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
-                          <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
+                          <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
+                          <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
                         </div>
                         <span className="text-xs font-medium flex-1">{pool.token0Symbol}/{pool.token1Symbol}</span>
                         <span className="text-xs font-bold text-success">${pool.tvl.toFixed(2)}</span>
@@ -310,7 +310,7 @@ export default function Analytics() {
                         transition={{ delay: 0.2 + i * 0.05 }}
                         className="flex flex-col items-center p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                       >
-                        <TokenIcon src={token.logoURI} symbol={token.symbol} size={32} fallbackSrc="/tokens/opn.jpg" className="border border-border mb-2" />
+                        <TokenIcon src={token.logoURI} symbol={token.symbol} size={32} fallbackSrc="/tokens/qms.svg" className="border border-border mb-2" />
                         <span className="text-xs font-bold">{token.symbol}</span>
                         <span className="text-[10px] text-muted-foreground">
                           ${(prices[token.symbol] || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -355,8 +355,8 @@ export default function Analytics() {
                               <td className="py-2.5 px-3">
                                 <div className="flex items-center gap-2">
                                   <div className="flex -space-x-1 shrink-0">
-                                    <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
-                                    <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/opn.jpg" className="border border-background" />
+                                    <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
+                                    <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
                                   </div>
                                   <span className="font-medium text-xs">{pool.token0Symbol}/{pool.token1Symbol}</span>
                                 </div>
@@ -413,7 +413,7 @@ export default function Analytics() {
                       transition={{ delay: i * 0.04 }}
                       className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
                     >
-                      <TokenIcon src={token.logo} symbol={token.symbol} size={36} fallbackSrc="/tokens/opn.jpg" className="border border-border shrink-0" />
+                      <TokenIcon src={token.logo} symbol={token.symbol} size={36} fallbackSrc="/tokens/qms.svg" className="border border-border shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-sm">{token.symbol}</p>
                         <p className="text-[10px] text-muted-foreground">

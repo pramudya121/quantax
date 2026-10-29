@@ -45,7 +45,7 @@ function TokenLogo({ address, symbol, size = 32 }: { address: string; symbol: st
         alt={symbol}
         className="rounded-full border-2 border-background object-cover bg-card"
         style={{ width: size, height: size }}
-        onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }}
+        onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }}
       />
     );
   }

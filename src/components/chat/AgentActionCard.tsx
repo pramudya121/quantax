@@ -12,7 +12,7 @@ interface Props {
 }
 
 function tokenLogo(sym: string) {
-  return getTokenBySymbol(sym)?.logoURI || '/tokens/opn.jpg';
+  return getTokenBySymbol(sym)?.logoURI || '/tokens/qms.svg';
 }
 
 function ActionVisual({ action }: { action: AgentAction }) {

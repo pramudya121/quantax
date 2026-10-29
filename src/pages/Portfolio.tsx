@@ -349,7 +349,7 @@ export default function Portfolio() {
                         const value = balance * token.price;
                         return (
                           <div key={token.symbol} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                            <img src={token.logo} alt={`${token.symbol} token logo`} className="w-8 h-8 rounded-full border border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                            <img src={token.logo} alt={`${token.symbol} token logo`} className="w-8 h-8 rounded-full border border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                             <div className="flex-1 min-w-0">
                               <p className="font-medium text-sm">{token.symbol}</p>
                               <p className="text-xs text-muted-foreground">{balance.toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
@@ -382,8 +382,8 @@ export default function Portfolio() {
                       {lpPositions.slice(0, 4).map((lp: any) => (
                         <div key={lp.pairAddress} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
                           <div className="flex -space-x-1">
-                            <img src={lp.token0?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token0Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
-                            <img src={lp.token1?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token1Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                            <img src={lp.token0?.logoURI || '/tokens/qms.svg'} alt={`${lp.token0Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
+                            <img src={lp.token1?.logoURI || '/tokens/qms.svg'} alt={`${lp.token1Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                           </div>
                           <span className="text-xs font-medium flex-1">{lp.token0Symbol}/{lp.token1Symbol}</span>
                           <span className="text-xs font-bold text-success">${lp.value.toFixed(2)}</span>
@@ -418,7 +418,7 @@ export default function Portfolio() {
                           "glass-card p-3 md:p-4 flex items-center gap-3 md:gap-4 hover:border-primary/50 transition-all group",
                           !hasBalance && "opacity-50"
                         )}>
-                          <img src={token.logo} alt={`${token.symbol} token logo`} className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                          <img src={token.logo} alt={`${token.symbol} token logo`} className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-border" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-bold text-sm md:text-base">{token.symbol}</p>
@@ -468,8 +468,8 @@ export default function Portfolio() {
                     <div key={lp.pairAddress} className="glass-card p-4 hover:border-primary/50 transition-all">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="flex -space-x-1">
-                          <img src={lp.token0?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token0Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
-                          <img src={lp.token1?.logoURI || '/tokens/opn.jpg'} alt={`${lp.token1Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/opn.jpg'; }} />
+                          <img src={lp.token0?.logoURI || '/tokens/qms.svg'} alt={`${lp.token0Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
+                          <img src={lp.token1?.logoURI || '/tokens/qms.svg'} alt={`${lp.token1Symbol} token logo`} className="w-7 h-7 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                         </div>
                         <span className="font-medium text-sm">{lp.token0Symbol}/{lp.token1Symbol}</span>
                         <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-success/20 text-success">On-Chain</span>
