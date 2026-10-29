@@ -250,7 +250,7 @@ function SectionProvideLiquidity() {
       <ol className="space-y-3 text-sm">
         {[
           'Navigate to the Liquidity page',
-          'Select a token pair (e.g., QMS / DRAGON)',
+          'Select a token pair (e.g., QMS / QTX)',
           'Enter the amount for one token — the other auto-calculates',
           'Approve both tokens if needed',
           'Click "Add Liquidity" and confirm in your wallet',
@@ -332,7 +332,7 @@ function SectionAMMPricing() {
 
       <h2 className="text-xl font-bold">How Price is Determined</h2>
       <p className="text-sm text-muted-foreground">
-        The price of a token is simply the ratio of the two reserves in a pool. For example, if a pool has 1,000 QMS and 10,000 DRAGON, the price is 10 DRAGON per QMS. Larger trades cause more price movement (price impact).
+        The price of a token is simply the ratio of the two reserves in a pool. For example, if a pool has 1,000 QMS and 10,000 QTX, the price is 10 QTX per QMS. Larger trades cause more price movement (price impact).
       </p>
     </div>
   );
@@ -350,8 +350,8 @@ function SectionImpermanentLoss() {
 
       <h2 className="text-xl font-bold">Example</h2>
       <div className="bg-card border border-border rounded-xl p-4 text-sm text-muted-foreground space-y-2">
-        <p>You deposit 1 QMS ($1) + 100 DRAGON ($0.01 each) = $2 total</p>
-        <p>If DRAGON price 2x to $0.02 → holding would be $3, but LP value ≈ $2.83</p>
+        <p>You deposit 1 QMS ($1) + 100 QTX ($0.01 each) = $2 total</p>
+        <p>If QTX price 2x to $0.02 → holding would be $3, but LP value ≈ $2.83</p>
         <p className="text-destructive font-medium">Impermanent loss ≈ 5.7%</p>
       </div>
       <p className="text-sm text-muted-foreground">

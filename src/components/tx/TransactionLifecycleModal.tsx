@@ -9,7 +9,7 @@ interface TransactionLifecycleModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  /** e.g. "Add Liquidity", "Swap 1.0 QMS → DRAGON" */
+  /** e.g. "Add Liquidity", "Swap 1.0 QMS → QTX" */
   description?: string;
   stage: TxStage;
   txHash?: string;

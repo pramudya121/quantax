@@ -42,7 +42,7 @@ export default function Liquidity() {
   
   // Add Liquidity state
   const [tokenA, setTokenA] = useState<TokenInfo | null>(tokenList[1]); // wrapped native
-  const [tokenB, setTokenB] = useState<TokenInfo | null>(tokenList[2]); // DRAGON
+  const [tokenB, setTokenB] = useState<TokenInfo | null>(tokenList[2]); // QTX
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [isAutoCalculating, setIsAutoCalculating] = useState(false);
