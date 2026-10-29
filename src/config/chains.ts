@@ -1,46 +1,30 @@
 import { defineChain } from 'viem';
 
-export const OPN_CHAIN_ID = 984;
-export const AER_CHAIN_ID = 1237;
+export const QMS_CHAIN_ID = 19480;
 
-export const opnTestnet = defineChain({
-  id: OPN_CHAIN_ID,
-  name: 'OPN Testnet',
-  nativeCurrency: { name: 'OPN', symbol: 'OPN', decimals: 18 },
+export const qmsTestnet = defineChain({
+  id: QMS_CHAIN_ID,
+  name: 'QMS Testnet',
+  nativeCurrency: { name: 'QMS', symbol: 'QMS', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://testnet-rpc.iopn.tech', 'https://testnet-rpc2.iopn.tech'] },
-    public: { http: ['https://testnet-rpc.iopn.tech', 'https://testnet-rpc2.iopn.tech'] },
+    default: { http: ['https://rpc.testnet.qms.finance'] },
+    public: { http: ['https://rpc.testnet.qms.finance'] },
   },
   blockExplorers: {
-    default: { name: 'OPN Explorer', url: 'https://testnet.iopn.tech' },
+    default: { name: 'QMS Explorer', url: 'https://testnet.qmsscan.io' },
   },
   testnet: true,
 });
 
-export const aerediumTestnet = defineChain({
-  id: AER_CHAIN_ID,
-  name: 'AEREDIUM Testnet',
-  nativeCurrency: { name: 'AER', symbol: 'AER', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://testnet.rpc.aeredium.io'] },
-    public: { http: ['https://testnet.rpc.aeredium.io'] },
-  },
-  blockExplorers: {
-    default: { name: 'AEREDIUM Explorer', url: 'https://testnet.explorer.aeredium.io' },
-  },
-  testnet: true,
-});
-
-export const SUPPORTED_CHAINS = [opnTestnet, aerediumTestnet] as const;
-export const SUPPORTED_CHAIN_IDS = [OPN_CHAIN_ID, AER_CHAIN_ID] as const;
+export const SUPPORTED_CHAINS = [qmsTestnet] as const;
+export const SUPPORTED_CHAIN_IDS = [QMS_CHAIN_ID] as const;
 
 export function isSupportedChain(id?: number): boolean {
   return !!id && (SUPPORTED_CHAIN_IDS as readonly number[]).includes(id);
 }
 
 export function getChainMeta(id?: number) {
-  if (id === AER_CHAIN_ID) return aerediumTestnet;
-  return opnTestnet;
+  return qmsTestnet;
 }
 
 export function getExplorerUrl(chainId: number | undefined, path: string): string {

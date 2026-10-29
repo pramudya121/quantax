@@ -1,50 +1,39 @@
-// DRAGONDEX Multi-Chain Smart Contract Configuration
-import { OPN_CHAIN_ID, AER_CHAIN_ID, opnTestnet, aerediumTestnet } from './chains';
-import aerLogoAsset from '@/assets/aer.jpg.asset.json';
+// QuantaX Smart Contract Configuration — QMS Testnet
+import { QMS_CHAIN_ID, qmsTestnet } from './chains';
 
-// Legacy re-export (some pages still reference this)
-export const OPN_TESTNET = opnTestnet;
+export const QMS_TESTNET = qmsTestnet;
 
 export interface ChainContracts {
   FACTORY: `0x${string}`;
   ROUTER: `0x${string}`;
-  WETH: `0x${string}`; // wrapped native (WOPN / WAER)
+  WETH: `0x${string}`; // wrapped native (WQMS)
   LIBRARY: `0x${string}`;
   MULTICALL: `0x${string}`;
   FAUCET?: `0x${string}`;
 }
 
 export const CONTRACTS_BY_CHAIN: Record<number, ChainContracts> = {
-  [OPN_CHAIN_ID]: {
-    FACTORY: '0x887AE7FfCB54f5811d957f3EA8095b15Bd99e538',
-    ROUTER: '0x048A65f2f52F1c1A0a1fC59E67Ac95daA361AA89',
-    WETH: '0xd38b2Cd5D8d68E6EA75f9aD9bC01F9e168d4b5E1', // WOPN
-    LIBRARY: '0x2C9bd07a8885Fdd93f5426DB6C250a9adfcEe2C7',
-    MULTICALL: '0xb27c21B35d6fF3Fc55e826ef6714AF76a82c5E71',
-  },
-  [AER_CHAIN_ID]: {
-    FACTORY: '0x5687FDA3BdE14d38057699c402606ab470EcA873',
-    ROUTER: '0xd28967D75750f477E450Df81C73f34E2713B86B4',
-    WETH: '0x4Fd3765cde8D1d2BE4EdbaA03940AfC56794c304', // WAER
-    LIBRARY: '0x084724341e07F50782E1c3923D9a6Fb7ce993816',
-    MULTICALL: '0xEc94943b75359f1ede3d639AD548e56239d754c2',
-    FAUCET: '0xa12C18847c41ECE267155ffAe112b8951AbbcA1C',
+  [QMS_CHAIN_ID]: {
+    FACTORY: '0x97C305119f5D98aFd11bCD19a1ba8c27d68F3546',
+    ROUTER: '0x3A153e8BcDe02F4Cf6C5eeECD9c83bC0296FFbD3',
+    WETH: '0x9AA510295aC664A3d5A3182a3eFe959DE2B12c34', // WQMS
+    LIBRARY: '0x03D2D542100fa926de135a08B609c8538E45F6ee',
+    MULTICALL: '0x8705875084c72C0cDC01c1Ac36A807808c8E5850',
   },
 };
 
-// Legacy singleton pointing at OPN (kept so existing hooks continue working).
 export const CONTRACTS = {
-  ...CONTRACTS_BY_CHAIN[OPN_CHAIN_ID],
-  // Legacy token address hints (used by a few pages)
-  DRAGON: '0x76c8BF103D0548dC171EC9675bCc327f20f35A42' as `0x${string}`,
-  BNB: '0x542ed1D0572428f6aCC16852bFd9a4AD8e90A7b6' as `0x${string}`,
-  ETH: '0x769511B4237AE00Af2bbF77a339eC71CACe0e08B' as `0x${string}`,
-  MON: '0xbC7aa080ECe100522E5d2b396d0C31b39cEEa87b' as `0x${string}`,
-  HYPE: '0x45B14877a0A640f94a09C1Ab4445DEb000f7Aff7' as `0x${string}`,
+  ...CONTRACTS_BY_CHAIN[QMS_CHAIN_ID],
+  // Token address hints (used by a few pages)
+  QTX: '0x66E5cbb0325Ab93B42c16592Be91456cc195E427' as `0x${string}`,
+  BNB: '0x7b277d0387ccDFC395Eae0EFe2321765afAb37c8' as `0x${string}`,
+  ETH: '0x0177E73214265D1d6f29a273155803Af5Bf47cFa' as `0x${string}`,
+  MON: '0x05466944d61662225ad19916725975230bb5b2B7' as `0x${string}`,
+  HYPE: '0x1C9FAFD0A5803d51EB2BEb9D54304cAe574734CF' as `0x${string}`,
 } as const;
 
 export function getContracts(chainId?: number): ChainContracts {
-  return CONTRACTS_BY_CHAIN[chainId ?? OPN_CHAIN_ID] ?? CONTRACTS_BY_CHAIN[OPN_CHAIN_ID];
+  return CONTRACTS_BY_CHAIN[chainId ?? QMS_CHAIN_ID] ?? CONTRACTS_BY_CHAIN[QMS_CHAIN_ID];
 }
 
 export function getWrappedNative(chainId?: number): `0x${string}` {
@@ -62,46 +51,33 @@ export interface TokenInfo {
   isNative?: boolean;
 }
 
-const OPN_TOKENS: TokenInfo[] = [
-  { address: 'native', symbol: 'OPN', name: 'OPN', decimals: 18, logoURI: '/tokens/opn.jpg', isNative: true },
-  { address: '0xd38b2Cd5D8d68E6EA75f9aD9bC01F9e168d4b5E1', symbol: 'WOPN', name: 'Wrapped OPN', decimals: 18, logoURI: '/tokens/opn.jpg' },
-  { address: '0x76c8BF103D0548dC171EC9675bCc327f20f35A42', symbol: 'DRAGON', name: 'Dragon Token', decimals: 18, logoURI: '/tokens/dragon.png' },
-  { address: '0x542ed1D0572428f6aCC16852bFd9a4AD8e90A7b6', symbol: 'BNB', name: 'Binance Coin', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png' },
-  { address: '0x769511B4237AE00Af2bbF77a339eC71CACe0e08B', symbol: 'ETH', name: 'Ethereum', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
-  { address: '0xbC7aa080ECe100522E5d2b396d0C31b39cEEa87b', symbol: 'MON', name: 'Monad', decimals: 18, logoURI: '/tokens/mon.jpg' },
-  { address: '0x45B14877a0A640f94a09C1Ab4445DEb000f7Aff7', symbol: 'HYPE', name: 'Hyperliquid', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32196.png' },
-];
-
-const AER_TOKENS: TokenInfo[] = [
-  { address: 'native', symbol: 'AER', name: 'AER', decimals: 18, logoURI: aerLogoAsset.url, isNative: true },
-  { address: '0x4Fd3765cde8D1d2BE4EdbaA03940AfC56794c304', symbol: 'WAER', name: 'Wrapped AER', decimals: 18, logoURI: aerLogoAsset.url },
-  { address: '0x70af1341F5D5c60F913F6a21C669586C38592510', symbol: 'DRAGON', name: 'Dragon Token', decimals: 18, logoURI: '/tokens/dragon.png' },
-  { address: '0xBB3B44EB672650Fb4a1Cf6D9dc5d3b7494F333AB', symbol: 'BNB', name: 'Binance Coin', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png' },
-  { address: '0xEa71393074fFCB6d132B8a2b6028CAF952af03A5', symbol: 'ETH', name: 'Ethereum', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
-  { address: '0x5b0AE944A4Ee6241a5A638C440A0dCD42411bD3C', symbol: 'HYPE', name: 'Hyperliquid', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32196.png' },
-  { address: '0xF143eCFE3DFEEB4ae188cA4f1c7c7ab0b5F592eb', symbol: 'UNI', name: 'Uniswap', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/7083.png' },
-  { address: '0x98cA063a7066Ae68B395ad49B9f05F2Df510d6B5', symbol: 'XRP', name: 'XRP', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/52.png' },
+const QMS_TOKENS: TokenInfo[] = [
+  { address: 'native', symbol: 'QMS', name: 'QMS', decimals: 18, logoURI: '/tokens/qms.svg', isNative: true },
+  { address: '0x9AA510295aC664A3d5A3182a3eFe959DE2B12c34', symbol: 'WQMS', name: 'Wrapped QMS', decimals: 18, logoURI: '/tokens/qms.svg' },
+  { address: '0x66E5cbb0325Ab93B42c16592Be91456cc195E427', symbol: 'QTX', name: 'QuantaX Token', decimals: 18, logoURI: '/tokens/qtx.svg' },
+  { address: '0x7b277d0387ccDFC395Eae0EFe2321765afAb37c8', symbol: 'BNB', name: 'Binance Coin', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1839.png' },
+  { address: '0x0177E73214265D1d6f29a273155803Af5Bf47cFa', symbol: 'ETH', name: 'Ethereum', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png' },
+  { address: '0x05466944d61662225ad19916725975230bb5b2B7', symbol: 'MON', name: 'Monad', decimals: 18, logoURI: '/tokens/mon.jpg' },
+  { address: '0x1C9FAFD0A5803d51EB2BEb9D54304cAe574734CF', symbol: 'HYPE', name: 'Hyperliquid', decimals: 18, logoURI: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32196.png' },
 ];
 
 export const TOKEN_LIST_BY_CHAIN: Record<number, TokenInfo[]> = {
-  [OPN_CHAIN_ID]: OPN_TOKENS,
-  [AER_CHAIN_ID]: AER_TOKENS,
+  [QMS_CHAIN_ID]: QMS_TOKENS,
 };
 
-// Legacy singleton (OPN default)
-export const TOKEN_LIST: TokenInfo[] = OPN_TOKENS;
+export const TOKEN_LIST: TokenInfo[] = QMS_TOKENS;
 
 export const TOKENS = {
-  WOPN: '0xd38b2Cd5D8d68E6EA75f9aD9bC01F9e168d4b5E1',
-  BNB: '0x542ed1D0572428f6aCC16852bFd9a4AD8e90A7b6',
-  MON: '0xbC7aa080ECe100522E5d2b396d0C31b39cEEa87b',
-  HYPE: '0x45B14877a0A640f94a09C1Ab4445DEb000f7Aff7',
-  ETH: '0x769511B4237AE00Af2bbF77a339eC71CACe0e08B',
-  DRAGON: '0x76c8BF103D0548dC171EC9675bCc327f20f35A42',
+  WQMS: '0x9AA510295aC664A3d5A3182a3eFe959DE2B12c34',
+  QTX: '0x66E5cbb0325Ab93B42c16592Be91456cc195E427',
+  BNB: '0x7b277d0387ccDFC395Eae0EFe2321765afAb37c8',
+  ETH: '0x0177E73214265D1d6f29a273155803Af5Bf47cFa',
+  MON: '0x05466944d61662225ad19916725975230bb5b2B7',
+  HYPE: '0x1C9FAFD0A5803d51EB2BEb9D54304cAe574734CF',
 } as const;
 
 export function getTokenList(chainId?: number): TokenInfo[] {
-  return TOKEN_LIST_BY_CHAIN[chainId ?? OPN_CHAIN_ID] ?? TOKEN_LIST_BY_CHAIN[OPN_CHAIN_ID];
+  return TOKEN_LIST_BY_CHAIN[chainId ?? QMS_CHAIN_ID] ?? TOKEN_LIST_BY_CHAIN[QMS_CHAIN_ID];
 }
 
 export const getTokenByAddress = (address: string, chainId?: number): TokenInfo | undefined => {
@@ -112,4 +88,4 @@ export const getTokenBySymbol = (symbol: string, chainId?: number): TokenInfo | 
   return getTokenList(chainId).find((token) => token.symbol.toLowerCase() === symbol.toLowerCase());
 };
 
-export { OPN_CHAIN_ID, AER_CHAIN_ID, aerediumTestnet };
+export { QMS_CHAIN_ID, qmsTestnet };
