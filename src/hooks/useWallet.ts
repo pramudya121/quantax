@@ -1,5 +1,5 @@
 import { useAccount, useBalance, useConnect, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { opnTestnet } from '@/config/wagmi';
+import { qmsTestnet } from '@/config/wagmi';
 import { SUPPORTED_CHAINS } from '@/config/chains';
 
 export function useWallet() {

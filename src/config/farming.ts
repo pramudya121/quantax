@@ -9,7 +9,7 @@ export const FARMING_BY_CHAIN: Record<number, `0x${string}`> = {
 export const FARMING_CONTRACT = FARMING_BY_CHAIN[QMS_CHAIN_ID];
 
 export function getFarmingContract(chainId?: number): `0x${string}` {
-  return FARMING_BY_CHAIN[chainId ?? OPN_CHAIN_ID] ?? FARMING_BY_CHAIN[OPN_CHAIN_ID];
+  return FARMING_BY_CHAIN[chainId ?? QMS_CHAIN_ID] ?? FARMING_BY_CHAIN[QMS_CHAIN_ID];
 }
 
 // Owner address allowed to manage farming pools (admin panel access).
