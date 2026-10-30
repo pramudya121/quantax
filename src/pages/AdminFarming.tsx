@@ -15,8 +15,8 @@ import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { GlowOrb } from '@/components/ui/premium/GlowOrb';
 import { toast } from 'sonner';
 
-import { FARMING_CONTRACT } from '@/config/farming';
-import { TOKEN_LIST, type TokenInfo } from '@/config/contracts';
+import { getFarmingContract } from '@/config/farming';
+import { getTokenList, type TokenInfo } from '@/config/contracts';
 import {
   formatTokenAmount,
   useFarmingActions,
@@ -24,12 +24,16 @@ import {
   useFarmingPools,
 } from '@/hooks/useFarming';
 import { useWallet } from '@/hooks/useWallet';
+import { useChainId } from 'wagmi';
 import { cn } from '@/lib/utils';
 
 type Tab = 'add' | 'edit' | 'mass';
 
 // ERC20 tokens available as staking/reward (exclude native QMS)
-const FARM_TOKENS: TokenInfo[] = TOKEN_LIST.filter((t) => !t.isNative);
+function useFarmTokens(): TokenInfo[] {
+  const chainId = useChainId();
+  return useMemo(() => getTokenList(chainId).filter((t) => !t.isNative), [chainId]);
+}
 
 function TokenChips({
   value,
@@ -37,7 +41,8 @@ function TokenChips({
 }: {
   value: string;
   onPick: (addr: string) => void;
-}) {
+) {
+  const FARM_TOKENS = useFarmTokens();
   return (
     <div className="flex flex-wrap gap-1.5 mt-2">
       {FARM_TOKENS.map((t) => {
@@ -64,6 +69,8 @@ function TokenChips({
 }
 
 export default function AdminFarming() {
+  const FARM_TOKENS = useFarmTokens();
+  const FARMING_CONTRACT = getFarmingContract(useChainId());
   const { isAdmin, owner } = useFarmingOwner();
   const { isConnected, address } = useWallet();
   const { pools, loading, refresh } = useFarmingPools();
@@ -86,11 +93,11 @@ export default function AdminFarming() {
 
   const stakingSymbol = useMemo(
     () => FARM_TOKENS.find((t) => t.address.toLowerCase() === stakingToken.toLowerCase())?.symbol,
-    [stakingToken]
+    [stakingToken, FARM_TOKENS]
   );
   const rewardSymbol = useMemo(
     () => FARM_TOKENS.find((t) => t.address.toLowerCase() === rewardToken.toLowerCase())?.symbol,
-    [rewardToken]
+    [rewardToken, FARM_TOKENS]
   );
 
   if (!isConnected) {

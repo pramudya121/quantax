@@ -2,7 +2,8 @@ import { Suspense, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, Float } from '@react-three/drei';
 import * as THREE from 'three';
-import { TOKEN_LIST } from '@/config/contracts';
+import { useChainId } from 'wagmi';
+import { getTokenList } from '@/config/contracts';
 
 /**
  * 3D Token Globe
@@ -136,6 +137,7 @@ function GlobeCore() {
 }
 
 function GlobeScene() {
+  const tokenList = getTokenList(useChainId());
   const systemRef = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (systemRef.current) systemRef.current.rotation.y += delta * 0.06;
@@ -153,7 +155,7 @@ function GlobeScene() {
     }> = [];
     ORBITS.forEach((o, oi) => {
       o.symbols.forEach((sym, si) => {
-        const tok = TOKEN_LIST.find((t) => t.symbol === sym);
+        const tok = tokenList.find((t) => t.symbol === sym);
         if (!tok) return;
         items.push({
           key: `${sym}-${oi}-${si}`,
@@ -167,7 +169,7 @@ function GlobeScene() {
       });
     });
     return items;
-  }, []);
+  }, [tokenList]);
 
   return (
     <>

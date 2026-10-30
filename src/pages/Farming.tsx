@@ -2,7 +2,7 @@ import { SEO } from '@/components/seo/SEO';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatUnits, parseUnits, type Address } from 'viem';
-import { useAccount, usePublicClient, useReadContract } from 'wagmi';
+import { useAccount, usePublicClient, useReadContract, useChainId } from 'wagmi';
 import { erc20Abi } from 'viem';
 import {
   Sprout, TrendingUp, Lock, Gift, AlertTriangle, Loader2, RefreshCw, Settings,
@@ -31,7 +31,7 @@ import {
   useFarmingPools,
   useUserFarmInfo,
 } from '@/hooks/useFarming';
-import { FARMING_CONTRACT } from '@/config/farming';
+import { getFarmingContract } from '@/config/farming';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { getTokenByAddress } from '@/config/contracts';
 
@@ -75,6 +75,7 @@ function FarmCard({
   onAction: () => void;
 }) {
   const { address } = useAccount();
+  const FARMING_CONTRACT = getFarmingContract(useChainId());
   const client = usePublicClient() as any;
   const { info, refresh } = useUserFarmInfo(pool.pid);
   const { deposit, withdraw, harvest, emergencyWithdraw } = useFarmingActions();

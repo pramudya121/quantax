@@ -1,12 +1,12 @@
-# DRAGONDEX
+# QUANTAX
 
-> DRAGONDEX is a decentralized exchange (DEX) on OPN Testnet (Chain ID 984) using the UniswapV2-style AMM model. Users can swap tokens, provide liquidity, and earn 0.3% trading fees.
+> QuantaX is a decentralized exchange (DEX) on QMS Testnet (Chain ID 19480) using the UniswapV2-style AMM model. Users can swap tokens, provide liquidity, and earn 0.3% trading fees.
 
-DRAGONDEX runs entirely on-chain with non-custodial wallet connections (MetaMask, WalletConnect, Coinbase, OKX, Rabby, Bitget, and more). It features multi-hop routing, automatic slippage tuning, native OPN↔WOPN wrap/unwrap, real-time analytics, and an AI assistant (DragonBot) for trading help.
+QuantaX runs entirely on-chain with non-custodial wallet connections (MetaMask, WalletConnect, Coinbase, OKX, Rabby, Bitget, and more). It features multi-hop routing, automatic slippage tuning, native QMS↔WQMS wrap/unwrap, real-time analytics, and an AI assistant (QuantaBot) for trading help.
 
 ## Pages
 
-- [Home](/): Overview of DRAGONDEX, hero, featured pools, and protocol stats.
+- [Home](/): Overview of QuantaX, hero, featured pools, and protocol stats.
 - [Swap](/swap): Trade any supported token pair with multi-hop routing and price-impact protection.
 - [Liquidity](/liquidity): Add or remove liquidity from token pairs and earn 0.3% fees.
 - [Pools](/pools): Browse all liquidity pools with TVL, volume, and APR data.
@@ -16,6 +16,12 @@ DRAGONDEX runs entirely on-chain with non-custodial wallet connections (MetaMask
 - [Docs](/docs): User guides, DeFi concepts, smart-contract addresses, FAQ, and roadmap.
 - [Learn](/learn): Plain-English guides — What is a DEX, How to Swap, Providing Liquidity, Impermanent Loss, Farming Risks.
 
+## Contracts (QMS Testnet, Chain ID 19480)
+
+- Factory: 0x97C305119f5D98aFd11bCD19a1ba8c27d68F3546
+- Router: 0x3A153e8BcDe02F4Cf6C5eeECD9c83bC0296FFbD3
+- WQMS (wrapped native): 0x9AA510295aC664A3d5A3182a3eFe959DE2B12c34
+
 ## Optional
 
-- [Block Explorer](https://testnet.iopn.tech): OPN Testnet block explorer for verifying transactions.
+- [Block Explorer](https://testnet.qmsscan.io): QMS Testnet block explorer for verifying transactions.

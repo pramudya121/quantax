@@ -11,8 +11,9 @@ import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { StatCardSkeleton, TableRowSkeleton } from '@/components/ui/loading/Skeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useChainId } from 'wagmi';
 import { formatUnits } from 'viem';
-import { TOKEN_LIST } from '@/config/contracts';
+import { getTokenList } from '@/config/contracts';
 import { Link } from 'react-router-dom';
 import { TokenDetails } from '@/components/analytics/TokenDetails';
 import { TokenIcon } from '@/components/ui/TokenIcon';
@@ -67,6 +68,7 @@ function StatCard({ icon: Icon, label, value, prefix = '', suffix = '', delay = 
 }
 
 export default function Analytics() {
+  const tokenList = getTokenList(useChainId());
   const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
   const { logs: swapLogs, stats: volStats, isLoading: volLoading, refetch: refetchVol, latestBlock } = useSwapVolume(pools, prices);
@@ -133,7 +135,7 @@ export default function Analytics() {
     });
 
     // Add tokens not yet in pools
-    TOKEN_LIST.forEach(t => {
+    tokenList.forEach(t => {
       const sym = t.symbol;
       if (!tokenMap[sym]) {
         tokenMap[sym] = { symbol: sym, logo: t.logoURI, totalLiquidity: 0, poolCount: 0, price: prices[sym] || 0 };
@@ -153,7 +155,7 @@ export default function Analytics() {
     { icon: Users, label: 'Unique Traders', value: volStats.uniqueTraders, isOnChain: true },
     { icon: Layers, label: 'Total Pools', value: pairCount, isOnChain: true },
     { icon: Activity, label: 'Active Pools', value: activePools, isOnChain: true },
-    { icon: Coins, label: 'Listed Tokens', value: TOKEN_LIST.length, isOnChain: true },
+    { icon: Coins, label: 'Listed Tokens', value: tokenList.length, isOnChain: true },
     { icon: Percent, label: 'Est. Fees Earned', value: volStats.estimatedFees, prefix: '$', isOnChain: true },
   ];
 
@@ -302,7 +304,7 @@ export default function Analytics() {
                     </button>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
-                    {TOKEN_LIST.map((token, i) => (
+                    {tokenList.map((token, i) => (
                       <motion.div
                         key={token.symbol}
                         initial={{ opacity: 0, scale: 0.9 }}

@@ -20,11 +20,19 @@ interface TokenSelectorProps {
   label?: string;
 }
 
-const IMPORTED_TOKENS_KEY = 'dragondex_imported_tokens';
+const IMPORTED_TOKENS_KEY = 'quantax_imported_tokens';
 
 function getImportedTokens(): TokenInfo[] {
   try {
-    const stored = localStorage.getItem(IMPORTED_TOKENS_KEY);
+    let stored = localStorage.getItem(IMPORTED_TOKENS_KEY);
+    if (!stored) {
+      const legacy = localStorage.getItem('dragondex_imported_tokens');
+      if (legacy) {
+        localStorage.setItem(IMPORTED_TOKENS_KEY, legacy);
+        localStorage.removeItem('dragondex_imported_tokens');
+        stored = legacy;
+      }
+    }
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
