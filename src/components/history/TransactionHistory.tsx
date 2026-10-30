@@ -203,10 +203,18 @@ export function TransactionHistory({
   );
 }
 
-// Helper to read transactions from localStorage
+// Helper to read transactions from localStorage (migrates legacy brand key)
 function readStoredTransactions(): Transaction[] {
   try {
-    const stored = localStorage.getItem('quantax_transactions');
+    let stored = localStorage.getItem('quantax_transactions');
+    if (!stored) {
+      const legacy = localStorage.getItem('dragondex_transactions');
+      if (legacy) {
+        localStorage.setItem('quantax_transactions', legacy);
+        localStorage.removeItem('dragondex_transactions');
+        stored = legacy;
+      }
+    }
     if (!stored) return [];
     const parsed = JSON.parse(stored);
     // Restore Date objects from JSON strings
