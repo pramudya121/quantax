@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Droplets, DollarSign, BarChart3, Percent } from 'lucide-react';
 import { BorderBeam } from '@/components/ui/magic/BorderBeam';
 import { NumberTicker } from '@/components/ui/magic/NumberTicker';
-import { TOKEN_LIST } from '@/config/contracts';
+import { getTokenList } from '@/config/contracts';
 import { StatCardSkeleton } from '@/components/ui/loading/Skeleton';
 
 interface PoolStatsProps {
@@ -103,7 +103,7 @@ export function PoolStats({ isLoading, pairCount, totalTVL, activePools }: PoolS
           </div>
           <div>
             <p className="text-[10px] md:text-xs text-muted-foreground">Tokens</p>
-            <p className="text-lg font-bold"><NumberTicker value={TOKEN_LIST.length} /></p>
+            <p className="text-lg font-bold"><NumberTicker value={tokenList.length} /></p>
           </div>
         </motion.div>
 

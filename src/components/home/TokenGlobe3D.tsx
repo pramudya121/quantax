@@ -2,7 +2,7 @@ import { Suspense, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, Float } from '@react-three/drei';
 import * as THREE from 'three';
-import { TOKEN_LIST } from '@/config/contracts';
+import { getTokenList } from '@/config/contracts';
 
 /**
  * 3D Token Globe
@@ -153,7 +153,7 @@ function GlobeScene() {
     }> = [];
     ORBITS.forEach((o, oi) => {
       o.symbols.forEach((sym, si) => {
-        const tok = TOKEN_LIST.find((t) => t.symbol === sym);
+        const tok = tokenList.find((t) => t.symbol === sym);
         if (!tok) return;
         items.push({
           key: `${sym}-${oi}-${si}`,
