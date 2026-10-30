@@ -20,7 +20,7 @@ interface TokenSelectorProps {
   label?: string;
 }
 
-const IMPORTED_TOKENS_KEY = 'dragondex_imported_tokens';
+const IMPORTED_TOKENS_KEY = 'quantax_imported_tokens';
 
 function getImportedTokens(): TokenInfo[] {
   try {

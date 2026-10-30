@@ -206,7 +206,7 @@ export function TransactionHistory({
 // Helper to read transactions from localStorage
 function readStoredTransactions(): Transaction[] {
   try {
-    const stored = localStorage.getItem('dragondex_transactions');
+    const stored = localStorage.getItem('quantax_transactions');
     if (!stored) return [];
     const parsed = JSON.parse(stored);
     // Restore Date objects from JSON strings
@@ -236,7 +236,7 @@ export function useTransactionHistory() {
       if (document.visibilityState === 'visible') syncFromStorage();
     };
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'dragondex_transactions') syncFromStorage();
+      if (e.key === 'quantax_transactions') syncFromStorage();
     };
     
     document.addEventListener('visibilitychange', handleVisibility);
@@ -259,7 +259,7 @@ export function useTransactionHistory() {
     };
     setTransactions(prev => {
       const updated = [newTx, ...prev].slice(0, 50);
-      localStorage.setItem('dragondex_transactions', JSON.stringify(updated));
+      localStorage.setItem('quantax_transactions', JSON.stringify(updated));
       return updated;
     });
     return newTx;
@@ -270,14 +270,14 @@ export function useTransactionHistory() {
       const updated = prev.map(tx =>
         tx.hash === hash ? { ...tx, ...updates } : tx
       );
-      localStorage.setItem('dragondex_transactions', JSON.stringify(updated));
+      localStorage.setItem('quantax_transactions', JSON.stringify(updated));
       return updated;
     });
   }, []);
 
   const clearHistory = useCallback(() => {
     setTransactions([]);
-    localStorage.removeItem('dragondex_transactions');
+    localStorage.removeItem('quantax_transactions');
   }, []);
 
   return {

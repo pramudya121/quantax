@@ -224,7 +224,7 @@ export default function Portfolio() {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `dragondex-portfolio-${Date.now()}.csv`;
+                a.download = `quantax-portfolio-${Date.now()}.csv`;
                 a.click();
                 URL.revokeObjectURL(url);
               }}
