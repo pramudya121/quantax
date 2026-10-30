@@ -15,8 +15,8 @@ import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { GlowOrb } from '@/components/ui/premium/GlowOrb';
 import { toast } from 'sonner';
 
-import { FARMING_CONTRACT } from '@/config/farming';
-import { TOKEN_LIST, type TokenInfo } from '@/config/contracts';
+import { getFarmingContract } from '@/config/farming';
+import { getTokenList, type TokenInfo } from '@/config/contracts';
 import {
   formatTokenAmount,
   useFarmingActions,
