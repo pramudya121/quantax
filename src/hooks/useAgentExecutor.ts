@@ -2,8 +2,8 @@ import { useCallback } from 'react';
 import { useAccount, usePublicClient, useWriteContract } from 'wagmi';
 import { erc20Abi, parseUnits, type Address } from 'viem';
 import { ROUTER_ABI, WETH_ABI } from '@/config/abis';
-import { CONTRACTS, TOKEN_LIST, getTokenBySymbol } from '@/config/contracts';
-import { FARMING_ABI, FARMING_CONTRACT } from '@/config/farming';
+import { getContracts, getTokenBySymbol } from '@/config/contracts';
+import { FARMING_ABI, getFarmingContract } from '@/config/farming';
 import type { AgentAction } from '@/components/chat/agentTools';
 
 const DEADLINE_SECS = 60 * 20;
@@ -45,7 +45,7 @@ export function useAgentExecutor() {
         case 'wrap': {
           const value = parseUnits(action.amount, 18);
           const hash = await (writeContractAsync as any)({
-            address: CONTRACTS.WETH as Address, abi: WETH_ABI,
+            address: C.WETH as Address, abi: WETH_ABI,
             functionName: 'deposit', value,
           });
           return hash;
@@ -53,7 +53,7 @@ export function useAgentExecutor() {
         case 'unwrap': {
           const amount = parseUnits(action.amount, 18);
           const hash = await (writeContractAsync as any)({
-            address: CONTRACTS.WETH as Address, abi: WETH_ABI,
+            address: C.WETH as Address, abi: WETH_ABI,
             functionName: 'withdraw', args: [amount],
           });
           return hash;
@@ -70,13 +70,13 @@ export function useAgentExecutor() {
           if (from.isNative && to.symbol === 'WQMS') return execute({ type: 'wrap', amount: action.amount });
           if (from.symbol === 'WQMS' && to.isNative) return execute({ type: 'unwrap', amount: action.amount });
 
-          const fromAddr = (from.isNative ? CONTRACTS.WETH : from.address) as Address;
-          const toAddr = (to.isNative ? CONTRACTS.WETH : to.address) as Address;
+          const fromAddr = (from.isNative ? C.WETH : from.address) as Address;
+          const toAddr = (to.isNative ? C.WETH : to.address) as Address;
           const path: Address[] = [fromAddr, toAddr];
 
           // Quote
           const amounts = (await publicClient.readContract({
-            address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+            address: C.ROUTER as Address, abi: ROUTER_ABI,
             functionName: 'getAmountsOut', args: [amountIn, path],
           })) as bigint[];
           const expectedOut = amounts[amounts.length - 1];
@@ -84,7 +84,7 @@ export function useAgentExecutor() {
 
           if (from.isNative) {
             const hash = await (writeContractAsync as any)({
-              address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+              address: C.ROUTER as Address, abi: ROUTER_ABI,
               functionName: 'swapExactETHForTokens',
               args: [minOut, path, address, deadline],
               value: amountIn, gas: 300000n,
@@ -92,18 +92,18 @@ export function useAgentExecutor() {
             return hash;
           }
           if (to.isNative) {
-            await ensureAllowance(fromAddr, CONTRACTS.ROUTER as Address, amountIn);
+            await ensureAllowance(fromAddr, C.ROUTER as Address, amountIn);
             const hash = await (writeContractAsync as any)({
-              address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+              address: C.ROUTER as Address, abi: ROUTER_ABI,
               functionName: 'swapExactTokensForETH',
               args: [amountIn, minOut, path, address, deadline],
               gas: 300000n,
             });
             return hash;
           }
-          await ensureAllowance(fromAddr, CONTRACTS.ROUTER as Address, amountIn);
+          await ensureAllowance(fromAddr, C.ROUTER as Address, amountIn);
           const hash = await (writeContractAsync as any)({
-            address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+            address: C.ROUTER as Address, abi: ROUTER_ABI,
             functionName: 'swapExactTokensForTokens',
             args: [amountIn, minOut, path, address, deadline],
             gas: 300000n,
@@ -124,19 +124,19 @@ export function useAgentExecutor() {
             const tokenAmt = a.isNative ? amtB : amtA;
             const tokenMin = a.isNative ? minB : minA;
             const ethMin = a.isNative ? minA : minB;
-            await ensureAllowance(tokenSide.address as Address, CONTRACTS.ROUTER as Address, tokenAmt);
+            await ensureAllowance(tokenSide.address as Address, C.ROUTER as Address, tokenAmt);
             const hash = await (writeContractAsync as any)({
-              address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+              address: C.ROUTER as Address, abi: ROUTER_ABI,
               functionName: 'addLiquidityETH',
               args: [tokenSide.address as Address, tokenAmt, tokenMin, ethMin, address, deadline],
               value: ethAmt, gas: 500000n,
             });
             return hash;
           }
-          await ensureAllowance(a.address as Address, CONTRACTS.ROUTER as Address, amtA);
-          await ensureAllowance(b.address as Address, CONTRACTS.ROUTER as Address, amtB);
+          await ensureAllowance(a.address as Address, C.ROUTER as Address, amtA);
+          await ensureAllowance(b.address as Address, C.ROUTER as Address, amtB);
           const hash = await (writeContractAsync as any)({
-            address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+            address: C.ROUTER as Address, abi: ROUTER_ABI,
             functionName: 'addLiquidity',
             args: [a.address as Address, b.address as Address, amtA, amtB, minA, minB, address, deadline],
             gas: 500000n,
@@ -149,13 +149,13 @@ export function useAgentExecutor() {
           const lpAmount = parseUnits(action.lpAmount, 18);
           // Resolve pair address
           const pair = (await publicClient.readContract({
-            address: CONTRACTS.FACTORY as Address,
+            address: C.FACTORY as Address,
             abi: [{ inputs: [{type: 'address'},{type: 'address'}], name: 'getPair', outputs: [{type:'address'}], stateMutability:'view', type:'function' }],
             functionName: 'getPair',
-            args: [(a.isNative ? CONTRACTS.WETH : a.address) as Address, (b.isNative ? CONTRACTS.WETH : b.address) as Address],
+            args: [(a.isNative ? C.WETH : a.address) as Address, (b.isNative ? C.WETH : b.address) as Address],
           })) as Address;
           if (!pair || pair === '0x0000000000000000000000000000000000000000') throw new Error('Pair not found');
-          await ensureAllowance(pair, CONTRACTS.ROUTER as Address, lpAmount);
+          await ensureAllowance(pair, C.ROUTER as Address, lpAmount);
 
           // Read pair reserves + totalSupply to compute MEV-safe minimums (1% slippage)
           const pairAbi = [
@@ -169,7 +169,7 @@ export function useAgentExecutor() {
             publicClient.readContract({ address: pair, abi: pairAbi, functionName: 'totalSupply' }) as Promise<bigint>,
           ]);
           if (totalSupply === 0n) throw new Error('Pool has no liquidity');
-          const aAddr = (a.isNative ? CONTRACTS.WETH : a.address).toLowerCase();
+          const aAddr = (a.isNative ? C.WETH : a.address).toLowerCase();
           const aIsToken0 = token0.toLowerCase() === aAddr;
           const reserveA = aIsToken0 ? reserves[0] : reserves[1];
           const reserveB = aIsToken0 ? reserves[1] : reserves[0];
@@ -183,7 +183,7 @@ export function useAgentExecutor() {
             const tokenMin = a.isNative ? minB : minA;
             const ethMin = a.isNative ? minA : minB;
             const hash = await (writeContractAsync as any)({
-              address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+              address: C.ROUTER as Address, abi: ROUTER_ABI,
               functionName: 'removeLiquidityETH',
               args: [tokenSide.address as Address, lpAmount, tokenMin, ethMin, address, deadline],
               gas: 500000n,
@@ -191,7 +191,7 @@ export function useAgentExecutor() {
             return hash;
           }
           const hash = await (writeContractAsync as any)({
-            address: CONTRACTS.ROUTER as Address, abi: ROUTER_ABI,
+            address: C.ROUTER as Address, abi: ROUTER_ABI,
             functionName: 'removeLiquidity',
             args: [a.address as Address, b.address as Address, lpAmount, minA, minB, address, deadline],
             gas: 500000n,
@@ -201,7 +201,7 @@ export function useAgentExecutor() {
         case 'farm_stake': {
           // Look up staking token from pool
           const info = (await publicClient.readContract({
-            address: FARMING_CONTRACT, abi: FARMING_ABI,
+            address: FARM, abi: FARMING_ABI,
             functionName: 'poolInfo', args: [BigInt(action.pid)],
           })) as any;
           const stakingToken = info[0] as Address;
@@ -213,16 +213,16 @@ export function useAgentExecutor() {
             }));
           } catch {}
           const amount = parseUnits(action.amount, decimals);
-          await ensureAllowance(stakingToken, FARMING_CONTRACT, amount);
+          await ensureAllowance(stakingToken, FARM, amount);
           const hash = await (writeContractAsync as any)({
-            address: FARMING_CONTRACT, abi: FARMING_ABI,
+            address: FARM, abi: FARMING_ABI,
             functionName: 'deposit', args: [BigInt(action.pid), amount],
           });
           return hash;
         }
         case 'farm_unstake': {
           const info = (await publicClient.readContract({
-            address: FARMING_CONTRACT, abi: FARMING_ABI,
+            address: FARM, abi: FARMING_ABI,
             functionName: 'poolInfo', args: [BigInt(action.pid)],
           })) as any;
           const stakingToken = info[0] as Address;
@@ -234,21 +234,21 @@ export function useAgentExecutor() {
           } catch {}
           const amount = parseUnits(action.amount, decimals);
           const hash = await (writeContractAsync as any)({
-            address: FARMING_CONTRACT, abi: FARMING_ABI,
+            address: FARM, abi: FARMING_ABI,
             functionName: 'withdraw', args: [BigInt(action.pid), amount],
           });
           return hash;
         }
         case 'farm_harvest': {
           const hash = await (writeContractAsync as any)({
-            address: FARMING_CONTRACT, abi: FARMING_ABI,
+            address: FARM, abi: FARMING_ABI,
             functionName: 'deposit', args: [BigInt(action.pid), 0n],
           });
           return hash;
         }
         case 'farm_emergency': {
           const hash = await (writeContractAsync as any)({
-            address: FARMING_CONTRACT, abi: FARMING_ABI,
+            address: FARM, abi: FARMING_ABI,
             functionName: 'emergencyWithdraw', args: [BigInt(action.pid)],
           });
           return hash;
