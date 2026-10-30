@@ -137,6 +137,7 @@ function GlobeCore() {
 }
 
 function GlobeScene() {
+  const tokenList = getTokenList(useChainId());
   const systemRef = useRef<THREE.Group>(null);
   useFrame((_, delta) => {
     if (systemRef.current) systemRef.current.rotation.y += delta * 0.06;
@@ -168,7 +169,7 @@ function GlobeScene() {
       });
     });
     return items;
-  }, []);
+  }, [tokenList]);
 
   return (
     <>
