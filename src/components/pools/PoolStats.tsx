@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Droplets, DollarSign, BarChart3, Percent } from 'lucide-react';
 import { BorderBeam } from '@/components/ui/magic/BorderBeam';
 import { NumberTicker } from '@/components/ui/magic/NumberTicker';
+import { useChainId } from 'wagmi';
 import { getTokenList } from '@/config/contracts';
 import { StatCardSkeleton } from '@/components/ui/loading/Skeleton';
 
@@ -13,6 +14,7 @@ interface PoolStatsProps {
 }
 
 export function PoolStats({ isLoading, pairCount, totalTVL, activePools }: PoolStatsProps) {
+  const tokenList = getTokenList(useChainId());
   if (isLoading) {
     return (
       <>

@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ExternalLink, ChevronDown, Droplets, Coins } from 'lucide-react';
 import { formatUnits } from 'viem';
+import { useChainId } from 'wagmi';
 import { getTokenList, getContracts } from '@/config/contracts';
+import type { TokenInfo } from "@/config/contracts";
 import type { LiquidityPool } from '@/hooks/useLiquidityPools';
 import { cn } from '@/lib/utils';
 import { TokenIcon } from '@/components/ui/TokenIcon';
@@ -45,7 +47,7 @@ interface TokenPoolEntry {
 
 interface TokenEntry {
   symbol: string;
-  meta: typeof tokenList[number];
+  meta: TokenInfo;
   price: number;
   tokenPools: TokenPoolEntry[];
   priceSource: TokenPoolEntry | null;
@@ -55,6 +57,9 @@ interface TokenEntry {
 }
 
 export function TokenDetails({ pools, prices, isLoading = false }: Props) {
+  const chainId = useChainId();
+  const tokenList = getTokenList(chainId);
+  const C = getContracts(chainId);
   const [open, setOpen] = useState<string | null>(FEATURED[0]);
   const showSkeleton = isLoading && pools.length === 0;
 
@@ -110,7 +115,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
       });
     }
     return out;
-  }, [pools, prices]);
+  }, [pools, prices, tokenList, C]);
 
   return (
     <div className="glass-card p-4 md:p-5">

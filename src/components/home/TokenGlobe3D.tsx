@@ -2,6 +2,7 @@ import { Suspense, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Html, Float } from '@react-three/drei';
 import * as THREE from 'three';
+import { useChainId } from 'wagmi';
 import { getTokenList } from '@/config/contracts';
 
 /**
