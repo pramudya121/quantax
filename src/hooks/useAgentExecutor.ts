@@ -16,8 +16,11 @@ function resolveToken(symbol: string) {
 
 /** Executes an agent action on-chain and returns the tx hash. */
 export function useAgentExecutor() {
+  const chainId = useChainId();
   const { address } = useAccount();
   const publicClient = usePublicClient() as any;
+  const C = getContracts(chainId);
+  const FARM = getFarmingContract(chainId);
   const { writeContractAsync } = useWriteContract();
 
   const ensureAllowance = useCallback(
