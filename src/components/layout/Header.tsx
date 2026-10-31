@@ -9,7 +9,7 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import { FloatingDock } from '@/components/ui/aceternity/FloatingDock';
 import { prefetchRoute } from '@/lib/prefetchRoutes';
 
-import dragonLogo from '@/assets/dragon-logo.png';
+import quantaxLogo from '@/assets/quantax-logo.jpg';
 
 const navItems = [
   { name: 'Home', path: '/', icon: Home },
@@ -47,12 +47,8 @@ export function Header() {
                 className="relative"
               >
                 <div className="absolute inset-0 rounded-xl bg-primary/40 blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
-                <img src={dragonLogo} alt="QuantaX" className="relative h-10 w-10 rounded-xl ring-1 ring-primary/30" />
+                <img src={quantaxLogo} alt="QuantaX" className="relative h-11 w-11 rounded-xl ring-1 ring-primary/30" />
               </motion.div>
-              <div className="hidden sm:flex flex-col leading-none">
-                <span className="brand-wordmark text-xl">QUANTAX</span>
-                <span className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground/70 mt-0.5">Forge of Liquidity</span>
-              </div>
             </Link>
 
             {/* Desktop Navigation */}

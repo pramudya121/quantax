@@ -1,7 +1,7 @@
 import { useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, ArrowRight } from 'lucide-react';
-import dragonLogo from '@/assets/dragon-logo.png';
+import quantaxLogo from '@/assets/quantax-logo.jpg';
 import { Link } from 'react-router-dom';
 import { ShimmerButton } from '@/components/ui/magic/ShimmerButton';
 import { AnimatedGradientText } from '@/components/ui/magic/AnimatedGradientText';
@@ -54,7 +54,7 @@ export function HeroSection() {
               className="flex items-center gap-3 mb-6"
             >
               <img
-                src={dragonLogo}
+                src={quantaxLogo}
                 alt="QuantaX Logo"
                 className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_0_30px_hsl(var(--primary)/0.55)]"
               />
