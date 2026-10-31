@@ -48,8 +48,8 @@ export async function streamChat({
     if (!resp.ok) {
       let errorDetail = "";
       try { errorDetail = await resp.text(); } catch {}
-      console.error("[DragonBot] Error:", resp.status, errorDetail);
-      onError(`DragonBot error (${resp.status}). Please try again.`);
+      console.error("[QuantaBot] Error:", resp.status, errorDetail);
+      onError(`QuantaBot error (${resp.status}). Please try again.`);
       return;
     }
     if (!resp.body) {
@@ -119,7 +119,7 @@ export async function streamChat({
     }
 
     if (!hasReceivedContent) {
-      onError("DragonBot returned an empty response. Please try again.");
+      onError("QuantaBot returned an empty response. Please try again.");
       return;
     }
 
@@ -127,9 +127,9 @@ export async function streamChat({
   } catch (e: any) {
     clearTimeout(timeout);
     if (e?.name === 'AbortError') {
-      onError("Request timed out. DragonBot is busy, please try again. 🐉");
+      onError("Request timed out. QuantaBot is busy, please try again. 🐉");
     } else {
-      console.error("[DragonBot] Stream error:", e?.message || e);
+      console.error("[QuantaBot. Stream error:", e?.message || e);
       onError("Connection lost. Please try again.");
     }
   }
