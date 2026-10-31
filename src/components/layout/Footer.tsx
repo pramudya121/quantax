@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Flame, ExternalLink, Github, Twitter, MessageCircle } from 'lucide-react';
-import quantaxLogo from '@/assets/quantax-logo.jpg.asset.json';
+import quantaxLogo from '@/assets/quantax-logo.jpg';
 
 const footerLinks = {
   Products: [
@@ -34,7 +34,7 @@ export function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3 mb-4">
-              <img src={quantaxLogo.url} alt="QuantaX" className="h-10 w-10 rounded-xl" />
+              <img src={quantaxLogo} alt="QuantaX" className="h-10 w-10 rounded-xl" />
               <span className="text-xl font-bold gradient-text">QUANTAX</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs mb-6">

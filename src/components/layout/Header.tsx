@@ -9,7 +9,7 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import { FloatingDock } from '@/components/ui/aceternity/FloatingDock';
 import { prefetchRoute } from '@/lib/prefetchRoutes';
 
-import quantaxLogo from '@/assets/quantax-logo.jpg.asset.json';
+import quantaxLogo from '@/assets/quantax-logo.jpg';
 
 const navItems = [
   { name: 'Home', path: '/', icon: Home },
@@ -47,7 +47,7 @@ export function Header() {
                 className="relative"
               >
                 <div className="absolute inset-0 rounded-xl bg-primary/40 blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
-                <img src={quantaxLogo.url} alt="QuantaX" className="relative h-11 w-11 rounded-xl ring-1 ring-primary/30" />
+                <img src={quantaxLogo} alt="QuantaX" className="relative h-11 w-11 rounded-xl ring-1 ring-primary/30" />
               </motion.div>
             </Link>
 
