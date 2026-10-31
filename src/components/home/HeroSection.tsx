@@ -54,7 +54,7 @@ export function HeroSection() {
               className="flex items-center gap-3 mb-6"
             >
               <img
-                src={dragonLogo}
+                src={quantaxLogo.url}
                 alt="QuantaX Logo"
                 className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_0_30px_hsl(var(--primary)/0.55)]"
               />
