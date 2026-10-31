@@ -85,7 +85,7 @@ const roadmapItems = [
   { title: 'Phase 2 - Liquidity', status: 'done' as const, features: ['Add Liquidity', 'Remove Liquidity', 'Pool Creation'] },
   { title: 'Phase 3 - Analytics & Portfolio', status: 'done' as const, features: ['Analytics Dashboard', 'Portfolio Tracker', 'Price Charts'] },
   { title: 'Phase 4 - Premium UI', status: 'done' as const, features: ['3D Animations', 'Particle Effects', 'Glassmorphism'] },
-  { title: 'Phase 5 - AI & Optimization', status: 'done' as const, features: ['DragonBot AI', 'Multi-hop Routing', 'Send/Transfer'] },
+  { title: 'Phase 5 - AI & Optimization', status: 'done' as const, features: ['QuantaBot AI', 'Multi-hop Routing', 'Send/Transfer'] },
   { title: 'Phase 6 - Governance & DAO', status: 'upcoming' as const, features: ['DAO Voting', 'Proposal System', 'Treasury Management'] },
   { title: 'Phase 7 - Advanced Trading', status: 'upcoming' as const, features: ['Limit Orders', 'Stop Loss', 'Advanced Charts'] },
   { title: 'Phase 8 - Cross-Chain', status: 'upcoming' as const, features: ['Bridge Integration', 'Cross-Chain Swap', 'Multi-Network'] },
@@ -131,7 +131,7 @@ function SectionIntroduction() {
         <div>
           <p className="text-sm font-medium">New to DeFi?</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Start by connecting your wallet, then try your first swap. Use DragonBot AI (bottom-right button) for help anytime!
+            Start by connecting your wallet, then try your first swap. Use QuantaBot AI (bottom-right button) for help anytime!
           </p>
         </div>
       </div>
@@ -144,7 +144,7 @@ function SectionIntroduction() {
           { icon: Coins, title: 'Liquidity Pools', desc: 'Provide liquidity and earn 0.3% fees', color: 'text-accent' },
           { icon: BarChart3, title: 'Analytics', desc: 'Real-time charts, TVL, volume, pair data', color: 'text-secondary' },
           { icon: Wallet, title: 'Portfolio', desc: 'Track holdings, LP positions, send tokens', color: 'text-primary' },
-          { icon: MessageCircle, title: 'DragonBot AI', desc: 'AI assistant with real-time price data', color: 'text-accent' },
+          { icon: MessageCircle, title: 'QuantaBot AI', desc: 'AI assistant with real-time price data', color: 'text-accent' },
           { icon: Clock, title: 'History', desc: 'Complete transaction history with details', color: 'text-secondary' },
         ].map((f, i) => (
           <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-card border border-border hover:border-primary/30 transition-colors">

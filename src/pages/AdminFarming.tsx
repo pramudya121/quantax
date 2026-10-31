@@ -41,7 +41,7 @@ function TokenChips({
 }: {
   value: string;
   onPick: (addr: string) => void;
-) {
+}) {
   const FARM_TOKENS = useFarmTokens();
   return (
     <div className="flex flex-wrap gap-1.5 mt-2">
