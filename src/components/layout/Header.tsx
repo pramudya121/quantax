@@ -9,7 +9,7 @@ import { NotificationCenter } from '@/components/notifications/NotificationCente
 import { FloatingDock } from '@/components/ui/aceternity/FloatingDock';
 import { prefetchRoute } from '@/lib/prefetchRoutes';
 
-import dragonLogo from '@/assets/dragon-logo.png';
+import quantaxLogo from '@/assets/quantax-logo.jpg.asset.json';
 
 const navItems = [
   { name: 'Home', path: '/', icon: Home },

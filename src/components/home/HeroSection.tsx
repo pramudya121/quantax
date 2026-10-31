@@ -1,7 +1,7 @@
 import { useMemo, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, ArrowRight } from 'lucide-react';
-import dragonLogo from '@/assets/dragon-logo.png';
+import quantaxLogo from '@/assets/quantax-logo.jpg.asset.json';
 import { Link } from 'react-router-dom';
 import { ShimmerButton } from '@/components/ui/magic/ShimmerButton';
 import { AnimatedGradientText } from '@/components/ui/magic/AnimatedGradientText';

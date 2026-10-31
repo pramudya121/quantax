@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Flame, ExternalLink, Github, Twitter, MessageCircle } from 'lucide-react';
-import dragonLogo from '@/assets/dragon-logo.png';
+import quantaxLogo from '@/assets/quantax-logo.jpg.asset.json';
 
 const footerLinks = {
   Products: [
