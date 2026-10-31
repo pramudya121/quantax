@@ -11,7 +11,7 @@ const StarCometOverlay = lazy(() =>
   import('@/components/ui/StarCometOverlay').then(m => ({ default: m.StarCometOverlay }))
 );
 const DragonBot = lazy(() =>
-  import('@/components/chat/DragonBot').then(m => ({ default: m.DragonBot }))
+  import('@/components/chat/DragonBot').then(m => ({ default: m.QuantaBot }))
 );
 
 
