@@ -174,6 +174,9 @@ export default function Liquidity() {
   
   // Router hook
   const router = useRouter();
+  // Factory hook (creates the pair on-chain when it does not exist yet)
+  const factory = useFactory();
+  const [creatingPool, setCreatingPool] = useState(false);
   
   // Separate approve hooks for token A and token B
   const { 
