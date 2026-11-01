@@ -675,20 +675,26 @@ export default function Liquidity() {
                       </motion.div>
                     )}
 
-                    {/* Pool Status Indicator */}
+                    {/* New Pair Info Indicator */}
                     {!isSameUnderlyingPair && !isPoolDataLoading && tokenA && tokenB && !validPair && (
                       <motion.div
                         initial={{ opacity: 0, y: -8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-destructive/10 border border-destructive/30 rounded-xl p-4"
+                        className="bg-primary/5 border border-primary/25 rounded-xl p-4"
                       >
-                        <p className="text-sm font-medium text-destructive mb-1 flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4" />
-                          Pool tidak ditemukan
+                        <p className="text-sm font-medium text-primary mb-1 flex items-center gap-2">
+                          <Info className="w-4 h-4" />
+                          Pool Baru — {tokenA.symbol}/{tokenB.symbol}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          Pool {tokenA.symbol}/{tokenB.symbol} belum ada. <a href="/create-pool" className="text-primary hover:underline">Buat Pool</a> terlebih dahulu.
+                          Pair ini belum ada. Pool akan dibuat otomatis saat kamu menambahkan likuiditas pertama — tidak perlu ke halaman Create Pool.
+                          Atur rasio harga awal dengan mengisi jumlah kedua token.
                         </p>
+                        {amountA && amountB && parseFloat(amountA) > 0 && parseFloat(amountB) > 0 && (
+                          <p className="text-xs text-foreground mt-2 font-medium">
+                            Harga awal: 1 {tokenA.symbol} = {(parseFloat(amountB) / parseFloat(amountA)).toFixed(6)} {tokenB.symbol}
+                          </p>
+                        )}
                       </motion.div>
                     )}
                     
@@ -855,15 +861,17 @@ export default function Liquidity() {
                       <Button 
                         onClick={handleAddLiquidity}
                         className="w-full h-12 text-base btn-dragon sticky-cta"
-                        disabled={isLoading || !amountA || !amountB || !!needsApprovalA || !!needsApprovalB || isSameUnderlyingPair || insufficientTokenA || insufficientTokenB || (!validPair && !isSameUnderlyingPair)}
+                        disabled={isLoading || creatingPool || !amountA || !amountB || !!needsApprovalA || !!needsApprovalB || isSameUnderlyingPair || insufficientTokenA || insufficientTokenB || isPoolDataLoading}
 
                       >
-                        {isLoading ? (
+                        {creatingPool ? (
+                          <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Creating Pool...</>
+                        ) : isLoading ? (
                           <><Loader2 className="w-5 h-5 animate-spin mr-2" /> Adding Liquidity...</>
                         ) : isSameUnderlyingPair ? (
                           <>Invalid Pair (Use Swap Wrap/Unwrap)</>
                         ) : !validPair && tokenA && tokenB ? (
-                          <>Pool Not Found (Create Pool first)</>
+                          <>Create Pool & Add Liquidity</>
                         ) : insufficientTokenA || insufficientTokenB ? (
                           <>{tokenA?.isNative || tokenB?.isNative ? 'Insufficient balance (keep gas)' : 'Insufficient token balance'}</>
                         ) : (
