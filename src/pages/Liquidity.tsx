@@ -382,28 +382,8 @@ export default function Liquidity() {
     approveTokenB(tokenB.address as `0x${string}`, C.ROUTER, getSafeApprovalAmount(amountBBigInt));
   };
 
-  const handleAddLiquidity = () => {
+  const executeAddLiquidity = useCallback(() => {
     if (!address || !tokenA || !tokenB || !amountA || !amountB) return;
-
-    if (isSameUnderlyingPair) {
-      toast.error('Pair tidak valid untuk liquidity', {
-        description: 'QMS dan WQMS memiliki underlying yang sama. Gunakan menu Swap untuk Wrap/Unwrap.',
-      });
-      return;
-    }
-
-    // Strict pre-transaction validation for both sides
-    const vA = validatePreTx({
-      amount: amountA, decimals: tokenA.decimals, balance: getTokenADisplayBalance(),
-      isNative: tokenA.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenA.symbol,
-    });
-    if (!vA.ok) { toast.error(vA.title || 'Cannot Add', { description: vA.error }); return; }
-    const vB = validatePreTx({
-      amount: amountB, decimals: tokenB.decimals, balance: getTokenBDisplayBalance(),
-      isNative: tokenB.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenB.symbol,
-    });
-    if (!vB.ok) { toast.error(vB.title || 'Cannot Add', { description: vB.error }); return; }
-
 
     toast.loading('Adding liquidity...', { id: 'add-liq' });
     const deadline = getSafeDeadline(deadlineMinutes);
@@ -434,7 +414,67 @@ export default function Liquidity() {
         deadline
       );
     }
+  }, [address, tokenA, tokenB, amountA, amountB, amountABigInt, amountBBigInt, slippageBps, deadlineMinutes, router]);
+
+  const handleAddLiquidity = () => {
+    if (!address || !tokenA || !tokenB || !amountA || !amountB) return;
+
+    if (isSameUnderlyingPair) {
+      toast.error('Pair tidak valid untuk liquidity', {
+        description: 'QMS dan WQMS memiliki underlying yang sama. Gunakan menu Swap untuk Wrap/Unwrap.',
+      });
+      return;
+    }
+
+    // Strict pre-transaction validation for both sides
+    const vA = validatePreTx({
+      amount: amountA, decimals: tokenA.decimals, balance: getTokenADisplayBalance(),
+      isNative: tokenA.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenA.symbol,
+    });
+    if (!vA.ok) { toast.error(vA.title || 'Cannot Add', { description: vA.error }); return; }
+    const vB = validatePreTx({
+      amount: amountB, decimals: tokenB.decimals, balance: getTokenBDisplayBalance(),
+      isNative: tokenB.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenB.symbol,
+    });
+    if (!vB.ok) { toast.error(vB.title || 'Cannot Add', { description: vB.error }); return; }
+
+    // New pair: create the pool on-chain first, then add liquidity automatically.
+    if (!validPair && !creatingPool) {
+      setCreatingPool(true);
+      toast.loading(`Creating pool ${tokenA.symbol}/${tokenB.symbol}...`, { id: 'add-liq' });
+      factory.createPair(tokenAAddr, tokenBAddr);
+      return;
+    }
+
+    executeAddLiquidity();
   };
+
+  // Once the pool is created, continue straight into adding liquidity.
+  useEffect(() => {
+    if (!creatingPool || !factory.isSuccess || !factory.hash) return;
+    setCreatingPool(false);
+    toast.dismiss('add-liq');
+    toast.success('Pool created!', {
+      description: 'Pool baru berhasil dibuat. Lanjut menambahkan likuiditas...',
+      action: {
+        label: 'View TX',
+        onClick: () => window.open(`https://testnet.qmsscan.io/tx/${factory.hash}`, '_blank'),
+      },
+    });
+    refetchPair();
+    executeAddLiquidity();
+  }, [creatingPool, factory.isSuccess, factory.hash, executeAddLiquidity]);
+
+  // If pool creation fails, allow the user to retry.
+  useEffect(() => {
+    if (creatingPool && factory.error) {
+      setCreatingPool(false);
+      toast.dismiss('add-liq');
+      toast.error('Gagal membuat pool', {
+        description: factory.error.message.slice(0, 100),
+      });
+    }
+  }, [creatingPool, factory.error]);
 
   const handleApproveLPTokens = () => {
     if (!validPair || !lpBalance) return;
