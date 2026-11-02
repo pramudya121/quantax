@@ -79,9 +79,9 @@ export function HeroSection() {
               <span className="text-muted-foreground">· Chain 19480</span>
             </motion.div>
 
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black mb-5 tracking-tight leading-[1.05]">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black mb-5 tracking-tight leading-[1.1]">
               Trade the universe of{' '}
-              <AnimatedGradientText className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black">
+              <AnimatedGradientText className="font-display text-3xl sm:text-4xl lg:text-5xl font-black">
                 on-chain
               </AnimatedGradientText>{' '}
               tokens.
