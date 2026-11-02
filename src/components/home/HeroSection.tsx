@@ -120,9 +120,9 @@ export function HeroSection() {
             {/* Stats - Real On-Chain Data */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
               {[
-                { value: Number(pairsCount || 0), label: 'TOTAL POOLS', prefix: '', color: 'text-primary' },
-                { value: totalTVL, label: 'ON-CHAIN TVL', prefix: '$', color: 'text-primary' },
-                { value: activePools, label: 'ACTIVE POOLS', prefix: '', color: 'text-primary' },
+                { value: Number(pairsCount || 0) || pools.length, label: 'TOTAL POOLS', prefix: '', color: 'text-primary', compact: false },
+                { value: totalTVL, label: 'ON-CHAIN TVL', prefix: '$', color: 'text-primary', compact: true },
+                { value: activePools, label: 'ACTIVE POOLS', prefix: '', color: 'text-primary', compact: false },
               ].map((stat, idx) => (
                 <motion.div
                   key={idx}
@@ -135,7 +135,9 @@ export function HeroSection() {
                   <p className="text-[10px] tracking-[0.18em] text-muted-foreground mb-1">{stat.label}</p>
                   <p className={`text-lg sm:text-xl md:text-2xl font-bold ${stat.color}`}>
                     {stat.prefix}
-                    <NumberTicker value={stat.value} decimalPlaces={stat.prefix === '$' ? 2 : 0} />
+                    {stat.compact && stat.value >= 1_000_000
+                      ? `${(stat.value / 1_000_000).toFixed(1)}M`
+                      : <NumberTicker value={stat.value} decimalPlaces={stat.prefix === '$' ? 2 : 0} />}
                   </p>
                 </motion.div>
               ))}

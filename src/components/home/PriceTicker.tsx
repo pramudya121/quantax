@@ -29,7 +29,9 @@ function PriceTickerItem({ symbol, price, basePrice }: { symbol: string; price: 
       <span className="font-semibold">{symbol}</span>
       <span className="text-muted-foreground">${formatPrice(displayPrice)}</span>
       <span className={isPositive ? 'text-success' : 'text-destructive'}>
-        {hasPrice && basePrice > 0 ? `${isPositive ? '+' : ''}${change.toFixed(2)}%` : ''}
+        {hasPrice && basePrice > 0 && Math.abs(change) < 99.5
+          ? `${isPositive ? '+' : ''}${change.toFixed(2)}%`
+          : ''}
       </span>
     </div>
   );
