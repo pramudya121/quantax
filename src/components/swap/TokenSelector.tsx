@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Search, X, Loader2, AlertCircle, Check, Plus, Download, Shield, ShieldAlert, ShieldX, AlertTriangle, Trash2 } from 'lucide-react';
 import { getTokenList, TokenInfo } from '@/config/contracts';
