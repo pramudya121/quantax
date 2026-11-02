@@ -300,7 +300,8 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
         <ChevronDown className={cn("w-4 h-4 ml-auto text-muted-foreground transition-transform", isOpen && "rotate-180")} />
       </motion.button>
 
-      <AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -498,7 +499,9 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
             </motion.div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+        document.body
+      )}
     </>
   );
 }
