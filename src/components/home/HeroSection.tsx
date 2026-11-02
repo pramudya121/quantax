@@ -59,7 +59,7 @@ export function HeroSection() {
                 className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_0_30px_hsl(var(--primary)/0.55)]"
               />
               <div className="leading-tight">
-                <div className="font-display text-2xl sm:text-3xl font-black tracking-tight">
+                <div className="font-display text-xl sm:text-2xl font-black tracking-tight">
                   QuantaX<span className="text-primary">DEX</span>
                 </div>
                 <div className="text-[10px] sm:text-xs tracking-[0.25em] text-muted-foreground uppercase">
