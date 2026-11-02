@@ -59,7 +59,7 @@ export function HeroSection() {
                 className="w-14 h-14 sm:w-16 sm:h-16 drop-shadow-[0_0_30px_hsl(var(--primary)/0.55)]"
               />
               <div className="leading-tight">
-                <div className="font-display text-2xl sm:text-3xl font-black tracking-tight">
+                <div className="font-display text-xl sm:text-2xl font-black tracking-tight">
                   QuantaX<span className="text-primary">DEX</span>
                 </div>
                 <div className="text-[10px] sm:text-xs tracking-[0.25em] text-muted-foreground uppercase">
@@ -79,9 +79,9 @@ export function HeroSection() {
               <span className="text-muted-foreground">· Chain 19480</span>
             </motion.div>
 
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black mb-5 tracking-tight leading-[1.05]">
+            <h1 className="font-display text-3xl sm:text-4xl lg:text-5xl font-black mb-5 tracking-tight leading-[1.1]">
               Trade the universe of{' '}
-              <AnimatedGradientText className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black">
+              <AnimatedGradientText className="font-display text-3xl sm:text-4xl lg:text-5xl font-black">
                 on-chain
               </AnimatedGradientText>{' '}
               tokens.
@@ -120,9 +120,9 @@ export function HeroSection() {
             {/* Stats - Real On-Chain Data */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
               {[
-                { value: Number(pairsCount || 0), label: 'TOTAL POOLS', prefix: '', color: 'text-primary' },
-                { value: totalTVL, label: 'ON-CHAIN TVL', prefix: '$', color: 'text-primary' },
-                { value: activePools, label: 'ACTIVE POOLS', prefix: '', color: 'text-primary' },
+                { value: Number(pairsCount || 0) || pools.length, label: 'TOTAL POOLS', prefix: '', color: 'text-primary', compact: false },
+                { value: totalTVL, label: 'ON-CHAIN TVL', prefix: '$', color: 'text-primary', compact: true },
+                { value: activePools, label: 'ACTIVE POOLS', prefix: '', color: 'text-primary', compact: false },
               ].map((stat, idx) => (
                 <motion.div
                   key={idx}
@@ -135,7 +135,9 @@ export function HeroSection() {
                   <p className="text-[10px] tracking-[0.18em] text-muted-foreground mb-1">{stat.label}</p>
                   <p className={`text-lg sm:text-xl md:text-2xl font-bold ${stat.color}`}>
                     {stat.prefix}
-                    <NumberTicker value={stat.value} decimalPlaces={stat.prefix === '$' ? 2 : 0} />
+                    {stat.compact && stat.value >= 1_000_000
+                      ? `${(stat.value / 1_000_000).toFixed(1)}M`
+                      : <NumberTicker value={stat.value} decimalPlaces={stat.prefix === '$' ? 2 : 0} />}
                   </p>
                 </motion.div>
               ))}

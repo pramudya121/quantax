@@ -10,6 +10,14 @@ function PriceTickerItem({ symbol, price, basePrice }: { symbol: string; price: 
   const isPositive = change >= 0;
   const displayPrice = hasPrice ? price : basePrice;
 
+  // Small on-chain testnet prices need enough decimals to stay readable.
+  const formatPrice = (v: number) => {
+    if (v >= 1) return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (v >= 0.01) return v.toFixed(4);
+    if (v > 0) return v.toFixed(6);
+    return '—';
+  };
+
   return (
     <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg border border-border/50 mx-2">
       <TokenIcon
@@ -19,14 +27,11 @@ function PriceTickerItem({ symbol, price, basePrice }: { symbol: string; price: 
         size={20}
       />
       <span className="font-semibold">{symbol}</span>
-      <span className="text-muted-foreground">
-        ${displayPrice.toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: displayPrice < 1 ? 4 : 2,
-        })}
-      </span>
+      <span className="text-muted-foreground">${formatPrice(displayPrice)}</span>
       <span className={isPositive ? 'text-success' : 'text-destructive'}>
-        {isPositive ? '+' : ''}{change.toFixed(2)}%
+        {hasPrice && basePrice > 0 && Math.abs(change) < 99.5
+          ? `${isPositive ? '+' : ''}${change.toFixed(2)}%`
+          : ''}
       </span>
     </div>
   );
