@@ -158,6 +158,10 @@ export function useLiquidityPools() {
 
         if (!token0Address || !token1Address) continue;
 
+        // Get symbol from map if not in TOKEN_LIST
+        const token0Data = symbolMap.get(token0Address.toLowerCase());
+        const token1Data = symbolMap.get(token1Address.toLowerCase());
+
         // Known tokens keep their curated metadata (logo, native flag).
         // Unknown (custom) tokens get a full TokenInfo built from the
         // on-chain symbol/name/decimals reads, so reserves, prices and TVL
