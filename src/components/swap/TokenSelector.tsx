@@ -240,7 +240,7 @@ export function TokenSelector({ selectedToken, onSelect, disabledToken, label }:
       address: search,
       symbol: symbol,
       name: name || symbol,
-      decimals: decimals || 18,
+      decimals: decimals ?? 18,
       logoURI: '/tokens/qms.svg',
     };
 

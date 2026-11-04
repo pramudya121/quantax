@@ -134,7 +134,8 @@ export function useLiquidityPools() {
         symbolMap.set(addresses[i].toLowerCase(), {
           symbol: normalizedSymbol,
           name: isWrapped ? normalizedName : (name || symbol),
-          decimals: decimals || 18,
+          // Preserve 0-decimal tokens; only fall back when the read failed.
+          decimals: typeof decimals === 'number' ? decimals : 18,
         });
       }
     }
@@ -157,19 +158,35 @@ export function useLiquidityPools() {
 
         if (!token0Address || !token1Address) continue;
 
-        const token0Info = getTokenByAddress(token0Address, chainId);
-        const token1Info = getTokenByAddress(token1Address, chainId);
+        // Known tokens keep their curated metadata (logo, native flag).
+        // Unknown (custom) tokens get a full TokenInfo built from the
+        // on-chain symbol/name/decimals reads, so reserves, prices and TVL
+        // use the real decimals instead of an assumed 18.
+        const resolveTokenInfo = (
+          tokenAddress: `0x${string}`,
+          onChainData: { symbol: string; name: string; decimals: number } | undefined
+        ): TokenInfo | null => {
+          const known = getTokenByAddress(tokenAddress, chainId);
+          if (known) return known;
+          if (!onChainData) return null;
+          return {
+            address: tokenAddress,
+            symbol: onChainData.symbol === 'WETH' ? wrappedSymbol : onChainData.symbol,
+            name: onChainData.name,
+            decimals: onChainData.decimals,
+            logoURI: '',
+          };
+        };
 
-        // Get symbol from map if not in TOKEN_LIST
-        const token0Data = symbolMap.get(token0Address.toLowerCase());
-        const token1Data = symbolMap.get(token1Address.toLowerCase());
+        const token0Info = resolveTokenInfo(token0Address, token0Data);
+        const token1Info = resolveTokenInfo(token1Address, token1Data);
 
         const normalizeSym = (s?: string) => (s === 'WETH' ? wrappedSymbol : s || 'Unknown');
 
         poolsData.push({
           pairAddress,
-          token0: token0Info || null,
-          token1: token1Info || null,
+          token0: token0Info,
+          token1: token1Info,
           token0Address,
           token1Address,
           reserve0: reserves?.[0] || 0n,
@@ -230,15 +247,16 @@ export function useValidateToken(address: `0x${string}` | undefined) {
     query: { enabled: !!isValidAddress },
   });
 
+  // A 0-decimal token is valid — only treat "not loaded yet" as invalid.
   const isLoading = symbolResult.isLoading || nameResult.isLoading || decimalsResult.isLoading;
-  const isValid = !!symbolResult.data && !!decimalsResult.data;
+  const isValid = symbolResult.data !== undefined && decimalsResult.data !== undefined;
 
   return {
     isValid,
     isLoading,
     symbol: symbolResult.data as string | undefined,
     name: nameResult.data as string | undefined,
-    decimals: (decimalsResult.data as number | undefined) || 18,
+    decimals: decimalsResult.data !== undefined ? Number(decimalsResult.data) : 18,
     error: symbolResult.error || nameResult.error || decimalsResult.error,
   };
 }
