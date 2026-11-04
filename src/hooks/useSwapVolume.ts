@@ -8,8 +8,9 @@ const SWAP_EVENT = parseAbiItem(
 );
 
 // QMS Testnet ~2s block time → 24h ≈ 43200 blocks.
-// Public RPCs often cap getLogs ranges, so we scan a tighter recent window in chunks.
-const BLOCK_WINDOW = 20000n;
+// Public RPCs often cap getLogs ranges, so we scan the full 24h window
+// in chunks and skip failed chunks rather than silently scanning less.
+const BLOCK_WINDOW = 43200n;
 const CHUNK = 2000n;
 
 export interface SwapEventLog {

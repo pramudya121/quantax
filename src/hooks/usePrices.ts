@@ -4,15 +4,12 @@ import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
 import { PAIR_ABI, FACTORY_ABI } from '@/config/abis';
 import { formatUnits } from 'viem';
 
-// Default prices for QMS Testnet tokens (simulated - would use oracles in production)
+// Reference anchor only. Every other price is derived from real pool
+// reserves (token priced in WQMS). WQMS is treated as the $1 reference
+// unit — no invented fiat prices for tokens without a pool.
 export const BASE_PRICES: Record<string, number> = {
   QMS: 1.0,
   WQMS: 1.0,
-  QTX: 0.25,
-  BNB: 580.0,
-  ETH: 3200.0,
-  MON: 2.5,
-  HYPE: 15.0,
 };
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
