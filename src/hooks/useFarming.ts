@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount, usePublicClient, useWriteContract, useReadContract, useChainId } from 'wagmi';
 import { parseUnits, formatUnits, erc20Abi, type Address } from 'viem';
 import { getFarmingContract, FARMING_ABI } from '@/config/farming';
+import { QMS_CHAIN_ID } from '@/config/chains';
+import { getExplorerTxUrl } from '@/config/chains';
 import { getTokenByAddress } from '@/config/contracts';
 import { toast } from 'sonner';
 
