@@ -1,7 +1,10 @@
+// ============= Full file contents =============
+
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAccount, usePublicClient, useWriteContract, useReadContract, useChainId } from 'wagmi';
 import { parseUnits, formatUnits, erc20Abi, type Address } from 'viem';
 import { getFarmingContract, FARMING_ABI } from '@/config/farming';
+import { QMS_CHAIN_ID, getExplorerUrl } from '@/config/chains';
 import { getTokenByAddress } from '@/config/contracts';
 import { toast } from 'sonner';
 
@@ -25,6 +28,15 @@ export interface UserFarmInfo {
   pending: bigint;
 }
 
+// Error messages we toast ourselves — the caller must not re-toast these.
+const HANDLED_ERRORS = new Set([
+  'WALLET_NOT_CONNECTED',
+  'WRONG_NETWORK',
+  'CONTRACT_NOT_DEPLOYED',
+  'TRANSACTION_REVERTED',
+  'POOL_NOT_CREATED',
+]);
+
 async function fetchTokenMeta(client: any, addr: Address, chainId?: number) {
   const known = getTokenByAddress(addr, chainId);
   if (known) return { symbol: known.symbol, decimals: known.decimals };
@@ -39,6 +51,18 @@ async function fetchTokenMeta(client: any, addr: Address, chainId?: number) {
   }
 }
 
+// Retry transient RPC failures so one flaky read doesn't hide a real pool.
+async function readWithRetry<T>(fn: () => Promise<T>, attempts = 2): Promise<T | null> {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch {
+      // retry
+    }
+  }
+  return null;
+}
+
 export function useFarmingOwner() {
   const chainId = useChainId();
   const FARMING_CONTRACT = getFarmingContract(chainId);
@@ -46,9 +70,16 @@ export function useFarmingOwner() {
     address: FARMING_CONTRACT,
     abi: FARMING_ABI,
     functionName: 'owner',
+    // Only meaningful on QMS Testnet — never read a foreign chain.
+    query: { enabled: chainId === QMS_CHAIN_ID },
   });
   const { address } = useAccount();
-  const isAdmin = !!(owner && address && (owner as string).toLowerCase() === address.toLowerCase());
+  const isAdmin = !!(
+    chainId === QMS_CHAIN_ID &&
+    owner &&
+    address &&
+    (owner as string).toLowerCase() === address.toLowerCase()
+  );
   return { owner: owner as Address | undefined, isAdmin };
 }
 
@@ -58,33 +89,74 @@ export function useFarmingPools() {
   const client = usePublicClient() as any;
   const [pools, setPools] = useState<FarmPool[]>([]);
   const [loading, setLoading] = useState(false);
+  const [wrongNetwork, setWrongNetwork] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // Auto-refresh every 30s so pools added by the owner appear without a
+  // manual reload.
+  useEffect(() => {
+    const id = setInterval(() => setRefreshKey((k) => k + 1), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
   useEffect(() => {
     if (!client) return;
+    if (chainId !== QMS_CHAIN_ID) {
+      // Never probe a foreign chain: the farming address only exists on
+      // QMS Testnet, and reads elsewhere would silently return garbage.
+      setWrongNetwork(true);
+      setPools([]);
+      return;
+    }
+    setWrongNetwork(false);
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        // Discover pools by probing poolInfo(pid) until it reverts
-        const found: FarmPool[] = [];
-        for (let pid = 0; pid < 50; pid++) {
-          try {
-            const info = (await client.readContract({
+        // Verify the contract is actually deployed on this chain first —
+        // a call to an empty address "succeeds" and hides real problems.
+        const code = await client.getBytecode({ address: FARMING_CONTRACT });
+        if (!code || code === '0x') {
+          if (!cancelled) setPools([]);
+          return;
+        }
+
+        // Discover pools from poolLength() — reliable, unlike blind probing.
+        const length = Number(
+          (await readWithRetry(() =>
+            client.readContract({
               address: FARMING_CONTRACT,
               abi: FARMING_ABI,
-              functionName: 'poolInfo',
-              args: [BigInt(pid)],
-            })) as readonly [Address, Address, bigint, bigint, bigint, bigint];
+              functionName: 'poolLength',
+            })
+          )) ?? 0n
+        );
+        if (length === 0 || cancelled) {
+          if (!cancelled) setPools([]);
+          return;
+        }
 
-            const [stakingToken, rewardToken, lastRewardBlock, accRewardPerShare, rewardPerBlock, totalStaked] = info;
+        const pids = Array.from({ length: Math.min(length, 200) }, (_, i) => i);
+        const found = await Promise.all(
+          pids.map(async (pid): Promise<FarmPool | null> => {
+            const info = await readWithRetry(() =>
+              client.readContract({
+                address: FARMING_CONTRACT,
+                abi: FARMING_ABI,
+                functionName: 'poolInfo',
+                args: [BigInt(pid)],
+              })
+            );
+            if (!info) return null;
+            const [stakingToken, rewardToken, lastRewardBlock, accRewardPerShare, rewardPerBlock, totalStaked] =
+              info as readonly [Address, Address, bigint, bigint, bigint, bigint];
             const [sMeta, rMeta] = await Promise.all([
-              fetchTokenMeta(client, stakingToken),
-              fetchTokenMeta(client, rewardToken),
+              fetchTokenMeta(client, stakingToken, chainId),
+              fetchTokenMeta(client, rewardToken, chainId),
             ]);
-            found.push({
+            return {
               pid,
               stakingToken,
               rewardToken,
@@ -96,12 +168,10 @@ export function useFarmingPools() {
               totalStaked,
               lastRewardBlock,
               accRewardPerShare,
-            });
-          } catch {
-            break;
-          }
-        }
-        if (!cancelled) setPools(found);
+            };
+          })
+        );
+        if (!cancelled) setPools(found.filter(Boolean) as FarmPool[]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -109,9 +179,9 @@ export function useFarmingPools() {
     return () => {
       cancelled = true;
     };
-  }, [client, refreshKey]);
+  }, [client, chainId, refreshKey]);
 
-  return { pools, loading, refresh };
+  return { pools, loading, refresh, wrongNetwork };
 }
 
 export function useUserFarmInfo(pid: number | null) {
@@ -125,7 +195,7 @@ export function useUserFarmInfo(pid: number | null) {
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
-    if (!client || pid === null || !address) {
+    if (!client || pid === null || !address || chainId !== QMS_CHAIN_ID) {
       setInfo(null);
       return;
     }
@@ -158,7 +228,7 @@ export function useUserFarmInfo(pid: number | null) {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [client, pid, address, refreshKey]);
+  }, [client, pid, address, chainId, refreshKey]);
 
   return { info, refresh };
 }
@@ -170,6 +240,49 @@ export function useFarmingActions() {
   const writeContractAsync = writeRaw as any;
   const { address } = useAccount();
   const client = usePublicClient() as any;
+
+  // Pre-flight guard: wallet connected, correct network, contract deployed.
+  // Without this a transaction to an empty address is mined successfully
+  // and does nothing — the exact bug that made added farms never appear.
+  const guard = useCallback(
+    async (toastId: string) => {
+      if (!address) {
+        toast.error('Connect your wallet first', { id: toastId });
+        throw new Error('WALLET_NOT_CONNECTED');
+      }
+      if (chainId !== QMS_CHAIN_ID) {
+        toast.error('Wrong network — switch to QMS Testnet, then try again.', { id: toastId });
+        throw new Error('WRONG_NETWORK');
+      }
+      try {
+        const code = await client.getBytecode({ address: FARMING_CONTRACT });
+        if (!code || code === '0x') {
+          toast.error('Farming contract not found on this network — switch to QMS Testnet.', { id: toastId });
+          throw new Error('CONTRACT_NOT_DEPLOYED');
+        }
+      } catch (e: any) {
+        if (e?.message === 'CONTRACT_NOT_DEPLOYED') throw e;
+        // Transient bytecode read failure — allow the attempt to proceed.
+      }
+    },
+    [address, chainId, client, FARMING_CONTRACT]
+  );
+
+  // Wait for the receipt and only pass when the transaction truly succeeded.
+  const confirmTx = useCallback(
+    async (hash: `0x${string}`, toastId: string, errLabel: string) => {
+      if (!client) return;
+      const receipt = await client.waitForTransactionReceipt({ hash });
+      if (receipt.status !== 'success') {
+        toast.error(`${errLabel} — ${getExplorerUrl(QMS_CHAIN_ID, `tx/${hash}`)}`, {
+          id: toastId,
+          duration: 10_000,
+        });
+        throw new Error('TRANSACTION_REVERTED');
+      }
+    },
+    [client]
+  );
 
   const ensureAllowance = useCallback(
     async (token: Address, amount: bigint) => {
@@ -187,15 +300,16 @@ export function useFarmingActions() {
           functionName: 'approve',
           args: [FARMING_CONTRACT, amount],
         });
-        await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-deposit', 'Approval failed on-chain');
       }
     },
-    [address, client, writeContractAsync]
+    [address, client, FARMING_CONTRACT, writeContractAsync, confirmTx]
   );
 
   const deposit = useCallback(
     async (pid: number, amount: bigint, stakingToken: Address) => {
       try {
+        await guard('farm-deposit');
         toast.loading('Approving...', { id: 'farm-deposit' });
         await ensureAllowance(stakingToken, amount);
         toast.loading('Depositing...', { id: 'farm-deposit' });
@@ -205,20 +319,23 @@ export function useFarmingActions() {
           functionName: 'deposit',
           args: [BigInt(pid), amount],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-deposit', 'Deposit failed on-chain');
         toast.success('Deposited!', { id: 'farm-deposit' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Deposit failed', { id: 'farm-deposit' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Deposit failed', { id: 'farm-deposit' });
+        }
         throw e;
       }
     },
-    [client, ensureAllowance, writeContractAsync]
+    [client, ensureAllowance, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   const withdraw = useCallback(
     async (pid: number, amount: bigint) => {
       try {
+        await guard('farm-withdraw');
         toast.loading('Withdrawing...', { id: 'farm-withdraw' });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
@@ -226,21 +343,24 @@ export function useFarmingActions() {
           functionName: 'withdraw',
           args: [BigInt(pid), amount],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-withdraw', 'Withdraw failed on-chain');
         toast.success('Withdrawn!', { id: 'farm-withdraw' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Withdraw failed', { id: 'farm-withdraw' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Withdraw failed', { id: 'farm-withdraw' });
+        }
         throw e;
       }
     },
-    [client, writeContractAsync]
+    [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   const harvest = useCallback(
     async (pid: number) => {
       // deposit(pid, 0) harvests pending reward
       try {
+        await guard('farm-harvest');
         toast.loading('Harvesting...', { id: 'farm-harvest' });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
@@ -248,20 +368,23 @@ export function useFarmingActions() {
           functionName: 'deposit',
           args: [BigInt(pid), 0n],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-harvest', 'Harvest failed on-chain');
         toast.success('Harvested!', { id: 'farm-harvest' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Harvest failed', { id: 'farm-harvest' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Harvest failed', { id: 'farm-harvest' });
+        }
         throw e;
       }
     },
-    [client, writeContractAsync]
+    [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   const emergencyWithdraw = useCallback(
     async (pid: number) => {
       try {
+        await guard('farm-emergency');
         toast.loading('Emergency withdrawing...', { id: 'farm-emergency' });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
@@ -269,21 +392,24 @@ export function useFarmingActions() {
           functionName: 'emergencyWithdraw',
           args: [BigInt(pid)],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-emergency', 'Emergency withdraw failed on-chain');
         toast.success('Emergency withdrawn (rewards forfeited)', { id: 'farm-emergency' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Emergency withdraw failed', { id: 'farm-emergency' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Emergency withdraw failed', { id: 'farm-emergency' });
+        }
         throw e;
       }
     },
-    [client, writeContractAsync]
+    [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   // Admin
   const addPool = useCallback(
     async (stakingToken: Address, rewardToken: Address, rewardPerBlock: bigint) => {
       try {
+        await guard('farm-add');
         toast.loading('Adding pool...', { id: 'farm-add' });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
@@ -291,20 +417,37 @@ export function useFarmingActions() {
           functionName: 'addPool',
           args: [stakingToken, rewardToken, rewardPerBlock],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-add', 'Add pool failed on-chain');
+        // Verify on-chain that a pool really exists now — a mined but
+        // ineffective transaction must never be reported as success.
+        const len = (await client.readContract({
+          address: FARMING_CONTRACT,
+          abi: FARMING_ABI,
+          functionName: 'poolLength',
+        })) as bigint;
+        if (len === 0n) {
+          toast.error(
+            'Transaction mined, but no farm was created. Verify you are on QMS Testnet and try again.',
+            { id: 'farm-add', duration: 10_000 }
+          );
+          throw new Error('POOL_NOT_CREATED');
+        }
         toast.success('Pool added!', { id: 'farm-add' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Add pool failed', { id: 'farm-add' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Add pool failed', { id: 'farm-add' });
+        }
         throw e;
       }
     },
-    [client, writeContractAsync]
+    [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   const updateRewardPerBlock = useCallback(
     async (pid: number, rewardPerBlock: bigint) => {
       try {
+        await guard('farm-upd');
         toast.loading('Updating reward...', { id: 'farm-upd' });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
@@ -312,37 +455,43 @@ export function useFarmingActions() {
           functionName: 'updateRewardPerBlock',
           args: [BigInt(pid), rewardPerBlock],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-upd', 'Update failed on-chain');
         toast.success('Reward updated!', { id: 'farm-upd' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Update failed', { id: 'farm-upd' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Update failed', { id: 'farm-upd' });
+        }
         throw e;
       }
     },
-    [client, writeContractAsync]
+    [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   const massUpdatePools = useCallback(async () => {
     try {
+      await guard('farm-mass');
       toast.loading('Mass updating pools...', { id: 'farm-mass' });
       const hash = await writeContractAsync({
         address: FARMING_CONTRACT,
         abi: FARMING_ABI,
         functionName: 'massUpdatePools',
       });
-      if (client) await client.waitForTransactionReceipt({ hash });
+      await confirmTx(hash, 'farm-mass', 'Mass update failed on-chain');
       toast.success('All pools updated!', { id: 'farm-mass' });
       return hash;
     } catch (e: any) {
-      toast.error(e?.shortMessage || e?.message || 'Failed', { id: 'farm-mass' });
+      if (!HANDLED_ERRORS.has(e?.message)) {
+        toast.error(e?.shortMessage || e?.message || 'Failed', { id: 'farm-mass' });
+      }
       throw e;
     }
-  }, [client, writeContractAsync]);
+  }, [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]);
 
   const updatePool = useCallback(
     async (pid: number) => {
       try {
+        await guard('farm-updp');
         toast.loading('Updating pool...', { id: 'farm-updp' });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
@@ -350,20 +499,23 @@ export function useFarmingActions() {
           functionName: 'updatePool',
           args: [BigInt(pid)],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-updp', 'Pool update failed on-chain');
         toast.success('Pool updated!', { id: 'farm-updp' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Failed', { id: 'farm-updp' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Failed', { id: 'farm-updp' });
+        }
         throw e;
       }
     },
-    [client, writeContractAsync]
+    [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   const transferOwnership = useCallback(
     async (newOwner: Address) => {
       try {
+        await guard('farm-own');
         toast.loading('Transferring ownership...', { id: 'farm-own' });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
@@ -371,15 +523,17 @@ export function useFarmingActions() {
           functionName: 'transferOwnership',
           args: [newOwner],
         });
-        if (client) await client.waitForTransactionReceipt({ hash });
+        await confirmTx(hash, 'farm-own', 'Transfer failed on-chain');
         toast.success('Ownership transferred', { id: 'farm-own' });
         return hash;
       } catch (e: any) {
-        toast.error(e?.shortMessage || e?.message || 'Failed', { id: 'farm-own' });
+        if (!HANDLED_ERRORS.has(e?.message)) {
+          toast.error(e?.shortMessage || e?.message || 'Failed', { id: 'farm-own' });
+        }
         throw e;
       }
     },
-    [client, writeContractAsync]
+    [client, guard, confirmTx, writeContractAsync, FARMING_CONTRACT]
   );
 
   return {
@@ -427,4 +581,3 @@ export function calculateAPR(
 export { BLOCKS_PER_YEAR };
 
 export { parseUnits };
-
