@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Search, QrCode, Loader2 } from 'lucide-react';
 import { useConnect, Connector } from 'wagmi';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 // Official wallet logos from WalletConnect Explorer CDN
@@ -163,6 +164,7 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
 
     for (const [key, meta] of Object.entries(WALLETS)) {
       const conn = findConnector(key, meta);
+      if (key === 'WalletConnect' && !conn) continue;
       const detected = !!meta.detector?.();
       rows.push({
         key,
@@ -211,7 +213,14 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
       await connect({ connector: row.connector });
       onClose();
     } catch (e) {
-      console.error('Connect failed:', e);
+      const message = e instanceof Error ? e.message : String(e);
+      if (/not been authorized|unauthorized|origin/i.test(message)) {
+        toast.error(`Approve this site in your wallet to continue (${window.location.host}).`);
+      } else if (/cannot redefine property.*ethereum/i.test(message)) {
+        toast.error('Another wallet extension is conflicting with this wallet. Disable the other wallet extension, then reconnect.');
+      } else {
+        toast.error(message || 'Wallet connection failed. Try reconnecting your wallet.');
+      }
     } finally {
       setConnecting(null);
     }
