@@ -2,11 +2,11 @@ import { SEO } from '@/components/seo/SEO';
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatUnits, parseUnits, type Address } from 'viem';
-import { useAccount, usePublicClient, useReadContract, useChainId } from 'wagmi';
+import { useAccount, usePublicClient, useReadContract, useChainId, useSwitchChain } from 'wagmi';
 import { erc20Abi } from 'viem';
 import {
   Sprout, TrendingUp, Lock, Gift, AlertTriangle, Loader2, RefreshCw, Settings,
-  Coins, Percent, DollarSign, Flame,
+  Coins, Percent, DollarSign, Flame, ExternalLink,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -34,6 +34,7 @@ import {
 import { getFarmingContract } from '@/config/farming';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { getTokenByAddress } from '@/config/contracts';
+import { QMS_CHAIN_ID, getExplorerUrl } from '@/config/chains';
 
 function TokenLogo({ address, symbol, size = 32 }: { address: string; symbol: string; size?: number }) {
   const meta = getTokenByAddress(address);
@@ -76,7 +77,7 @@ function FarmCard({
 }) {
   const { address } = useAccount();
   const FARMING_CONTRACT = getFarmingContract(useChainId());
-  const client = usePublicClient() as any;
+  const client = usePublicClient();
   const { info, refresh } = useUserFarmInfo(pool.pid);
   const { deposit, withdraw, harvest, emergencyWithdraw } = useFarmingActions();
   const [amount, setAmount] = useState('');
@@ -107,12 +108,14 @@ function FarmCard({
           args: [address, FARMING_CONTRACT],
         })) as bigint;
         if (!cancelled) setAllowance(a);
-      } catch {}
+      } catch {
+        if (!cancelled) setAllowance(0n);
+      }
     };
     fetch();
     const id = setInterval(fetch, 12000);
     return () => { cancelled = true; clearInterval(id); };
-  }, [address, client, pool.stakingToken]);
+  }, [address, client, pool.stakingToken, FARMING_CONTRACT]);
 
   const handle = async (fn: () => Promise<unknown>) => {
     setBusy(true);
@@ -121,7 +124,9 @@ function FarmCard({
       refresh();
       onAction();
       setAmount('');
-    } catch {}
+    } catch {
+      // The contract action hook already reports wallet and transaction errors.
+    }
     setBusy(false);
   };
 
@@ -394,8 +399,9 @@ function FarmCard({
 }
 
 export default function Farming() {
-  const { pools, loading, refresh } = useFarmingPools();
+  const { pools, loading, refresh, wrongNetwork } = useFarmingPools();
   const { isAdmin } = useFarmingOwner();
+  const { switchChain, isPending: switchingNetwork } = useSwitchChain();
   const { prices } = useTokenPrices();
 
   // Aggregate stats
@@ -455,6 +461,36 @@ export default function Farming() {
           </motion.div>
         </div>
 
+        {wrongNetwork && (
+          <Card role="alert" className="mx-auto mb-8 flex max-w-3xl flex-col gap-4 border-amber-500/30 bg-amber-500/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 size-5 shrink-0 text-amber-500" aria-hidden="true" />
+              <div>
+                <h2 className="font-semibold">Wrong network</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Farming pools and transactions are available on QMS Testnet only. Switch networks before staking or withdrawing.
+                </p>
+                <a
+                  href={getExplorerUrl(QMS_CHAIN_ID, `address/${getFarmingContract(QMS_CHAIN_ID)}`)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-primary underline-offset-4 hover:underline"
+                >
+                  View farming contract <ExternalLink className="size-3" aria-hidden="true" />
+                </a>
+              </div>
+            </div>
+            <Button
+              className="shrink-0"
+              disabled={switchingNetwork}
+              onClick={() => switchChain({ chainId: QMS_CHAIN_ID })}
+            >
+              {switchingNetwork && <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />}
+              Switch to QMS Testnet
+            </Button>
+          </Card>
+        )}
+
         {/* Summary stats */}
         {pools.length > 0 && (
           <motion.div
@@ -485,7 +521,7 @@ export default function Farming() {
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         )}
-        {!loading && pools.length === 0 && (
+        {!loading && !wrongNetwork && pools.length === 0 && (
           <Card className="p-12 text-center max-w-md mx-auto">
             <Sprout className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
             <p className="text-muted-foreground">No farms available yet.</p>
