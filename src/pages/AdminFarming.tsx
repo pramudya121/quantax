@@ -1,7 +1,7 @@
 import { SEO } from '@/components/seo/SEO';
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { parseUnits, type Address, isAddress } from 'viem';
+import { erc20Abi, parseUnits, type Address, isAddress } from 'viem';
 import { Link } from 'react-router-dom';
 import {
   Shield, ArrowLeft, Plus, RefreshCw, Loader2, Crown, Sprout, Zap, Edit3, Users, Settings,
@@ -16,6 +16,7 @@ import { GlowOrb } from '@/components/ui/premium/GlowOrb';
 import { toast } from 'sonner';
 
 import { getFarmingContract } from '@/config/farming';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { getTokenList, type TokenInfo } from '@/config/contracts';
 import {
   formatTokenAmount,
@@ -24,7 +25,7 @@ import {
   useFarmingPools,
 } from '@/hooks/useFarming';
 import { useWallet } from '@/hooks/useWallet';
-import { useChainId } from 'wagmi';
+import { useChainId, useReadContract } from 'wagmi';
 import { cn } from '@/lib/utils';
 
 type Tab = 'add' | 'edit' | 'mass';
@@ -69,8 +70,9 @@ function TokenChips({
 }
 
 export default function AdminFarming() {
+  const chainId = useChainId();
   const FARM_TOKENS = useFarmTokens();
-  const FARMING_CONTRACT = getFarmingContract(useChainId());
+  const FARMING_CONTRACT = getFarmingContract(chainId);
   const { isAdmin, owner } = useFarmingOwner();
   const { isConnected, address } = useWallet();
   const { pools, loading, refresh } = useFarmingPools();
@@ -83,6 +85,27 @@ export default function AdminFarming() {
   const [stakingToken, setStakingToken] = useState('');
   const [rewardToken, setRewardToken] = useState('');
   const [rewardPerBlock, setRewardPerBlock] = useState('0.01');
+  const isRewardAddress = isAddress(rewardToken);
+  const selectedRewardToken = useMemo(
+    () => FARM_TOKENS.find((token) => token.address.toLowerCase() === rewardToken.toLowerCase()),
+    [FARM_TOKENS, rewardToken]
+  );
+  const {
+    data: onChainRewardDecimals,
+    isLoading: isLoadingRewardDecimals,
+    isError: failedToReadRewardDecimals,
+  } = useReadContract({
+    address: isRewardAddress ? (rewardToken as Address) : undefined,
+    abi: erc20Abi,
+    functionName: 'decimals',
+    query: {
+      enabled: chainId === QMS_CHAIN_ID && isRewardAddress && !selectedRewardToken,
+      staleTime: Infinity,
+      retry: 1,
+    },
+  });
+  const rewardDecimals = selectedRewardToken?.decimals ??
+    (onChainRewardDecimals === undefined ? undefined : Number(onChainRewardDecimals));
 
   // Edit pool form
   const [editPid, setEditPid] = useState<number | null>(null);
@@ -145,11 +168,25 @@ export default function AdminFarming() {
       toast.error('Pilih staking & reward token');
       return;
     }
-    if (!rewardPerBlock || Number(rewardPerBlock) <= 0) {
-      toast.error('Reward per block tidak valid');
+    if (rewardDecimals === undefined) {
+      toast.error(
+        isLoadingRewardDecimals
+          ? 'Tunggu desimal reward token selesai dibaca.'
+          : 'Tidak dapat membaca desimal reward token di QMS Testnet.'
+      );
       return;
     }
-    const rpb = parseUnits(rewardPerBlock, 18);
+    let rpb: bigint;
+    try {
+      rpb = parseUnits(rewardPerBlock.trim(), rewardDecimals);
+    } catch {
+      toast.error(`Reward per block harus valid dan maksimal ${rewardDecimals} angka desimal.`);
+      return;
+    }
+    if (rpb <= 0n) {
+      toast.error('Reward per block harus lebih besar dari 0.');
+      return;
+    }
     handle(
       () => addPool(stakingToken as Address, rewardToken as Address, rpb),
       () => {
@@ -280,12 +317,24 @@ export default function AdminFarming() {
                     Reward Per Block (in Reward-Token Units)
                   </Label>
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.01"
                     value={rewardPerBlock}
                     onChange={(e) => setRewardPerBlock(e.target.value)}
                     className="font-mono mt-1"
                   />
+                  <p className="mt-2 text-[11px] text-muted-foreground" aria-live="polite">
+                    {selectedRewardToken
+                      ? `${selectedRewardToken.symbol} uses ${rewardDecimals} decimals.`
+                      : rewardDecimals !== undefined
+                        ? `Reward token uses ${rewardDecimals} decimals.`
+                        : isLoadingRewardDecimals
+                          ? 'Reading reward token precision from QMS Testnet…'
+                          : failedToReadRewardDecimals
+                            ? 'Could not read token precision. Check the address and network.'
+                            : 'Enter a reward token address to read its precision.'}
+                  </p>
                   {stakingSymbol && rewardSymbol && (
                     <p className="text-[11px] text-muted-foreground mt-2">
                       Pool: <span className="text-primary font-semibold">Stake {stakingSymbol}</span> →{' '}
@@ -296,7 +345,7 @@ export default function AdminFarming() {
 
                 <Button
                   className="w-full h-12 bg-gradient-to-r from-primary to-accent text-base font-bold"
-                  disabled={busy}
+                  disabled={busy || (isRewardAddress && rewardDecimals === undefined)}
                   onClick={handleAddPool}
                 >
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : (<><Plus className="w-4 h-4 mr-2" /> Add Pool</>)}

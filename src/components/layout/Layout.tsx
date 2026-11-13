@@ -2,6 +2,7 @@ import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { useLiveSwapNotifications } from '@/hooks/useLiveSwapNotifications';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Defer decorative backgrounds — pure visuals, not part of the critical path.
 const WaveBackground = lazy(() =>
@@ -49,9 +50,11 @@ export function Layout({ children }: LayoutProps) {
       </main>
       <Footer />
       {showBot && (
-        <Suspense fallback={null}>
-          <DragonBot />
-        </Suspense>
+        <ErrorBoundary fallback={<></>}>
+          <Suspense fallback={null}>
+            <DragonBot />
+          </Suspense>
+        </ErrorBoundary>
       )}
     </div>
   );

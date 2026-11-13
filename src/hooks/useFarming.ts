@@ -396,6 +396,13 @@ export function useFarmingActions() {
       try {
         await guard('farm-add');
         toast.loading('Adding pool...', { id: 'farm-add' });
+        await client.simulateContract({
+          account: address,
+          address: FARMING_CONTRACT,
+          abi: FARMING_ABI,
+          functionName: 'addPool',
+          args: [stakingToken, rewardToken, rewardPerBlock],
+        });
         const hash = await writeContractAsync({
           address: FARMING_CONTRACT,
           abi: FARMING_ABI,
@@ -409,7 +416,14 @@ export function useFarmingActions() {
         return hash;
       } catch (e: any) {
         if (!HANDLED_ERRORS.has(e?.message)) {
-          toast.error(e?.shortMessage || e?.message || 'Add pool failed', { id: 'farm-add' });
+          const reason =
+            e?.cause?.reason ||
+            e?.cause?.shortMessage ||
+            e?.details ||
+            e?.shortMessage ||
+            e?.message ||
+            'Unknown wallet or contract error';
+          toast.error(`Add pool failed: ${reason}`, { id: 'farm-add', duration: 12_000 });
         }
         throw e;
       }
