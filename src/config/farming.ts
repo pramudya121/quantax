@@ -2,7 +2,7 @@
 import { QMS_CHAIN_ID } from './chains';
 
 export const FARMING_BY_CHAIN: Record<number, `0x${string}`> = {
-  [QMS_CHAIN_ID]: '0xA5A90E43Df65AD62E45Edc526A1FD147cdDea6c8',
+  [QMS_CHAIN_ID]: '0x13d99027d7019ca18B843da6f8198eDD40ba4eCE',
 };
 
 // Legacy singleton — kept for backwards compatibility.
@@ -91,13 +91,6 @@ export const FARMING_ABI = [
     type: 'function',
   },
   {
-    inputs: [],
-    name: 'poolLength',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
     inputs: [
       { internalType: 'uint256', name: '_pid', type: 'uint256' },
       { internalType: 'address', name: '_user', type: 'address' },
@@ -134,7 +127,35 @@ export const FARMING_ABI = [
     stateMutability: 'view',
     type: 'function',
   },
-  // Events (helpful for discovering pools)
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: true, internalType: 'uint256', name: 'pid', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'Deposit',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: true, internalType: 'uint256', name: 'pid', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'EmergencyWithdraw',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'prevOwner', type: 'address' },
+      { indexed: true, internalType: 'address', name: 'newOwner', type: 'address' },
+    ],
+    name: 'OwnershipTransferred',
+    type: 'event',
+  },
   {
     anonymous: false,
     inputs: [
@@ -144,6 +165,35 @@ export const FARMING_ABI = [
       { indexed: false, internalType: 'uint256', name: 'rewardPerBlock', type: 'uint256' },
     ],
     name: 'PoolAdded',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: true, internalType: 'uint256', name: 'pid', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'RewardPaid',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'uint256', name: 'pid', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'rewardPerBlock', type: 'uint256' },
+    ],
+    name: 'RewardPerBlockUpdated',
+    type: 'event',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { indexed: true, internalType: 'address', name: 'user', type: 'address' },
+      { indexed: true, internalType: 'uint256', name: 'pid', type: 'uint256' },
+      { indexed: false, internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'Withdraw',
     type: 'event',
   },
 ] as const;
