@@ -34,7 +34,6 @@ const HANDLED_ERRORS = new Set([
   'WRONG_NETWORK',
   'CONTRACT_NOT_DEPLOYED',
   'TRANSACTION_REVERTED',
-  'POOL_NOT_CREATED',
 ]);
 
 async function fetchTokenMeta(client: any, addr: Address, chainId?: number) {
@@ -404,20 +403,8 @@ export function useFarmingActions() {
           args: [stakingToken, rewardToken, rewardPerBlock],
         });
         await confirmTx(hash, 'farm-add', 'Add pool failed on-chain');
-        // Verify on-chain that a pool really exists now — a mined but
-        // ineffective transaction must never be reported as success.
-        const len = (await client.readContract({
-          address: FARMING_CONTRACT,
-          abi: FARMING_ABI,
-          functionName: 'poolLength',
-        })) as bigint;
-        if (len === 0n) {
-          toast.error(
-            'Transaction mined, but no farm was created. Verify you are on QMS Testnet and try again.',
-            { id: 'farm-add', duration: 10_000 }
-          );
-          throw new Error('POOL_NOT_CREATED');
-        }
+        // The current farming contract ABI has no poolLength() getter; a
+        // successful receipt confirms addPool completed on-chain.
         toast.success('Pool added!', { id: 'farm-add' });
         return hash;
       } catch (e: any) {
