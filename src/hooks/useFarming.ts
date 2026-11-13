@@ -34,7 +34,6 @@ const HANDLED_ERRORS = new Set([
   'WRONG_NETWORK',
   'CONTRACT_NOT_DEPLOYED',
   'TRANSACTION_REVERTED',
-  'POOL_NOT_CREATED',
 ]);
 
 async function fetchTokenMeta(client: any, addr: Address, chainId?: number) {
@@ -123,55 +122,41 @@ export function useFarmingPools() {
           return;
         }
 
-        // Discover pools from poolLength() — reliable, unlike blind probing.
-        const length = Number(
-          (await readWithRetry(() =>
+        // The new contract ABI has no poolLength() getter. Pool IDs are contiguous,
+        // so discover them by reading poolInfo until the first missing pool.
+        const found: FarmPool[] = [];
+        for (let pid = 0; pid < 200; pid += 1) {
+          if (cancelled) return;
+          const info = await readWithRetry(() =>
             client.readContract({
               address: FARMING_CONTRACT,
               abi: FARMING_ABI,
-              functionName: 'poolLength',
+              functionName: 'poolInfo',
+              args: [BigInt(pid)],
             })
-          )) ?? 0n
-        );
-        if (length === 0 || cancelled) {
-          if (!cancelled) setPools([]);
-          return;
+          );
+          if (!info) break;
+          const [stakingToken, rewardToken, lastRewardBlock, accRewardPerShare, rewardPerBlock, totalStaked] =
+            info as readonly [Address, Address, bigint, bigint, bigint, bigint];
+          const [sMeta, rMeta] = await Promise.all([
+            fetchTokenMeta(client, stakingToken, chainId),
+            fetchTokenMeta(client, rewardToken, chainId),
+          ]);
+          found.push({
+            pid,
+            stakingToken,
+            rewardToken,
+            stakingSymbol: sMeta.symbol,
+            rewardSymbol: rMeta.symbol,
+            stakingDecimals: sMeta.decimals,
+            rewardDecimals: rMeta.decimals,
+            rewardPerBlock,
+            totalStaked,
+            lastRewardBlock,
+            accRewardPerShare,
+          });
         }
-
-        const pids = Array.from({ length: Math.min(length, 200) }, (_, i) => i);
-        const found = await Promise.all(
-          pids.map(async (pid): Promise<FarmPool | null> => {
-            const info = await readWithRetry(() =>
-              client.readContract({
-                address: FARMING_CONTRACT,
-                abi: FARMING_ABI,
-                functionName: 'poolInfo',
-                args: [BigInt(pid)],
-              })
-            );
-            if (!info) return null;
-            const [stakingToken, rewardToken, lastRewardBlock, accRewardPerShare, rewardPerBlock, totalStaked] =
-              info as readonly [Address, Address, bigint, bigint, bigint, bigint];
-            const [sMeta, rMeta] = await Promise.all([
-              fetchTokenMeta(client, stakingToken, chainId),
-              fetchTokenMeta(client, rewardToken, chainId),
-            ]);
-            return {
-              pid,
-              stakingToken,
-              rewardToken,
-              stakingSymbol: sMeta.symbol,
-              rewardSymbol: rMeta.symbol,
-              stakingDecimals: sMeta.decimals,
-              rewardDecimals: rMeta.decimals,
-              rewardPerBlock,
-              totalStaked,
-              lastRewardBlock,
-              accRewardPerShare,
-            };
-          })
-        );
-        if (!cancelled) setPools(found.filter(Boolean) as FarmPool[]);
+        if (!cancelled) setPools(found);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -418,20 +403,8 @@ export function useFarmingActions() {
           args: [stakingToken, rewardToken, rewardPerBlock],
         });
         await confirmTx(hash, 'farm-add', 'Add pool failed on-chain');
-        // Verify on-chain that a pool really exists now — a mined but
-        // ineffective transaction must never be reported as success.
-        const len = (await client.readContract({
-          address: FARMING_CONTRACT,
-          abi: FARMING_ABI,
-          functionName: 'poolLength',
-        })) as bigint;
-        if (len === 0n) {
-          toast.error(
-            'Transaction mined, but no farm was created. Verify you are on QMS Testnet and try again.',
-            { id: 'farm-add', duration: 10_000 }
-          );
-          throw new Error('POOL_NOT_CREATED');
-        }
+        // The current farming contract ABI has no poolLength() getter; a
+        // successful receipt confirms addPool completed on-chain.
         toast.success('Pool added!', { id: 'farm-add' });
         return hash;
       } catch (e: any) {

@@ -1,12 +1,12 @@
 import { SEO } from '@/components/seo/SEO';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { formatUnits, parseUnits, type Address } from 'viem';
 import { useAccount, usePublicClient, useReadContract, useChainId, useSwitchChain } from 'wagmi';
 import { erc20Abi } from 'viem';
 import {
   Sprout, TrendingUp, Lock, Gift, AlertTriangle, Loader2, RefreshCw, Settings,
-  Coins, Percent, DollarSign, Flame, ExternalLink,
+  Coins, Percent, DollarSign, Flame, ExternalLink, Search, SlidersHorizontal,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -70,10 +70,12 @@ function FarmCard({
   pool,
   prices,
   onAction,
+  onPositionChange,
 }: {
   pool: FarmPool;
   prices: Record<string, number>;
   onAction: () => void;
+  onPositionChange: (pid: number, amount: bigint, pending: bigint) => void;
 }) {
   const { address } = useAccount();
   const FARMING_CONTRACT = getFarmingContract(useChainId());
@@ -132,6 +134,10 @@ function FarmCard({
 
   const staked = info?.amount ?? 0n;
   const pending = info?.pending ?? 0n;
+
+  useEffect(() => {
+    onPositionChange(pool.pid, staked, pending);
+  }, [onPositionChange, pool.pid, staked, pending]);
 
   // Derived numbers
   const stakingPrice = prices[pool.stakingSymbol] ?? 0;
@@ -403,6 +409,44 @@ export default function Farming() {
   const { isAdmin } = useFarmingOwner();
   const { switchChain, isPending: switchingNetwork } = useSwitchChain();
   const { prices } = useTokenPrices();
+  const { address } = useAccount();
+  const [search, setSearch] = useState('');
+  const [positionsOnly, setPositionsOnly] = useState(false);
+  const [positions, setPositions] = useState<Record<number, { amount: bigint; pending: bigint }>>({});
+
+  const reportPosition = useCallback((pid: number, amount: bigint, pending: bigint) => {
+    setPositions((current) => {
+      const existing = current[pid];
+      if (existing?.amount === amount && existing?.pending === pending) return current;
+      return { ...current, [pid]: { amount, pending } };
+    });
+  }, []);
+
+  const filteredPools = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return pools.filter((pool) => {
+      const matchesQuery = !term || `${pool.stakingSymbol} ${pool.rewardSymbol} ${pool.pid}`.toLowerCase().includes(term);
+      const hasPosition = (positions[pool.pid]?.amount ?? 0n) > 0n;
+      return matchesQuery && (!positionsOnly || hasPosition);
+    });
+  }, [pools, positions, positionsOnly, search]);
+
+  const personalRewards = useMemo(() => {
+    const totals = new Map<string, { symbol: string; decimals: number; amount: bigint }>();
+    for (const pool of pools) {
+      const pending = positions[pool.pid]?.pending ?? 0n;
+      if (pending <= 0n) continue;
+      const key = pool.rewardToken.toLowerCase();
+      const current = totals.get(key);
+      totals.set(key, {
+        symbol: pool.rewardSymbol,
+        decimals: pool.rewardDecimals,
+        amount: (current?.amount ?? 0n) + pending,
+      });
+    }
+    return [...totals.values()];
+  }, [pools, positions]);
+  const positionsCount = pools.filter((pool) => (positions[pool.pid]?.amount ?? 0n) > 0n).length;
 
   // Aggregate stats
   const summary = useMemo(() => {
@@ -515,7 +559,58 @@ export default function Farming() {
           </motion.div>
         )}
 
+        {address && pools.length > 0 && (
+          <Card className="mx-auto mb-8 max-w-5xl border-primary/20 bg-card/70 p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Your farming overview</p>
+                <p className="mt-1 text-2xl font-bold">{positionsCount} <span className="text-base font-medium text-muted-foreground">{positionsCount === 1 ? 'active position' : 'active positions'}</span></p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {personalRewards.length > 0 ? personalRewards.map((reward) => (
+                  <div key={reward.symbol} className="rounded-lg border border-accent/20 bg-accent/5 px-3 py-2">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Unclaimed {reward.symbol}</p>
+                    <p className="font-mono text-sm font-semibold text-accent">{formatTokenAmount(reward.amount, reward.decimals, 6)}</p>
+                  </div>
+                )) : <p className="self-center text-sm text-muted-foreground">No rewards waiting to harvest</p>}
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Pools grid */}
+        <div className="mx-auto mb-5 flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="font-display text-xl font-bold">Explore farms</h2>
+            <p className="mt-1 text-xs text-muted-foreground">Choose a pool to stake, manage your position, or harvest rewards.</p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="relative min-w-0 sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <Input
+                aria-label="Search farms by token or pool ID"
+                placeholder="Search token or pool ID"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              type="button"
+              variant={positionsOnly ? 'default' : 'outline'}
+              aria-pressed={positionsOnly}
+              disabled={!address}
+              onClick={() => setPositionsOnly((value) => !value)}
+              className="shrink-0"
+            >
+              <SlidersHorizontal className="mr-2 size-4" aria-hidden="true" />
+              {positionsOnly ? 'Your farms' : 'All farms'}
+            </Button>
+          </div>
+        </div>
+        <p className="mx-auto mb-3 max-w-7xl text-xs text-muted-foreground" aria-live="polite">
+          Showing {filteredPools.length} of {pools.length} {pools.length === 1 ? 'farm' : 'farms'}
+        </p>
         {loading && (
           <div className="flex justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -532,9 +627,25 @@ export default function Farming() {
             )}
           </Card>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 max-w-7xl mx-auto">
-          {pools.map((p) => (
-            <FarmCard key={p.pid} pool={p} prices={prices} onAction={refresh} />
+        {!loading && pools.length > 0 && filteredPools.length === 0 && (
+          <Card className="mx-auto max-w-xl p-8 text-center">
+            <Search className="mx-auto mb-3 size-8 text-muted-foreground" aria-hidden="true" />
+            <h3 className="font-semibold">No matching farms</h3>
+            <p className="mt-1 text-sm text-muted-foreground">Try another token or switch back to all farms.</p>
+            <Button className="mt-4" variant="outline" onClick={() => { setSearch(''); setPositionsOnly(false); }}>
+              Clear filters
+            </Button>
+          </Card>
+        )}
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {filteredPools.map((pool) => (
+            <FarmCard
+              key={pool.pid}
+              pool={pool}
+              prices={prices}
+              onAction={refresh}
+              onPositionChange={reportPosition}
+            />
           ))}
         </div>
       </div>
