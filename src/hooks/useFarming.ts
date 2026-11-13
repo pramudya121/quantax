@@ -33,6 +33,7 @@ const HANDLED_ERRORS = new Set([
   'WALLET_NOT_CONNECTED',
   'WRONG_NETWORK',
   'CONTRACT_NOT_DEPLOYED',
+  'RPC_UNAVAILABLE',
   'TRANSACTION_REVERTED',
 ]);
 
@@ -239,15 +240,24 @@ export function useFarmingActions() {
         toast.error('Wrong network — switch to QMS Testnet, then try again.', { id: toastId });
         throw new Error('WRONG_NETWORK');
       }
+      if (!client) {
+        toast.error('RPC client is unavailable. Check your connection and retry.', { id: toastId });
+        throw new Error('RPC_UNAVAILABLE');
+      }
+      let code: string | undefined;
       try {
-        const code = await client.getBytecode({ address: FARMING_CONTRACT });
-        if (!code || code === '0x') {
-          toast.error('Farming contract not found on this network — switch to QMS Testnet.', { id: toastId });
-          throw new Error('CONTRACT_NOT_DEPLOYED');
-        }
+        code = await client.getBytecode({ address: FARMING_CONTRACT });
       } catch (e: any) {
-        if (e?.message === 'CONTRACT_NOT_DEPLOYED') throw e;
-        // Transient bytecode read failure — allow the attempt to proceed.
+        const reason = e?.shortMessage || e?.message;
+        toast.error(
+          reason ? `Could not verify farming contract: ${reason}` : 'Could not verify farming contract. Check your RPC connection and retry.',
+          { id: toastId, duration: 12_000 }
+        );
+        throw new Error('RPC_UNAVAILABLE');
+      }
+      if (!code || code === '0x') {
+        toast.error('Farming contract not found on this network — switch to QMS Testnet.', { id: toastId });
+        throw new Error('CONTRACT_NOT_DEPLOYED');
       }
     },
     [address, chainId, client, FARMING_CONTRACT]

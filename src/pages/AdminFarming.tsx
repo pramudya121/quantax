@@ -110,6 +110,10 @@ export default function AdminFarming() {
   // Edit pool form
   const [editPid, setEditPid] = useState<number | null>(null);
   const [editRpb, setEditRpb] = useState('');
+  const selectedEditPool = useMemo(
+    () => pools.find((pool) => pool.pid === editPid),
+    [pools, editPid]
+  );
 
   // Transfer ownership
   const [newOwner, setNewOwner] = useState('');
@@ -198,15 +202,21 @@ export default function AdminFarming() {
   };
 
   const handleEditPool = () => {
-    if (editPid === null) {
+    if (editPid === null || !selectedEditPool) {
       toast.error('Pilih pool dulu');
       return;
     }
-    if (!editRpb || Number(editRpb) < 0) {
+    let rpb: bigint;
+    try {
+      rpb = parseUnits(editRpb.trim(), selectedEditPool.rewardDecimals);
+    } catch {
+      toast.error(`Reward harus valid dan maksimal ${selectedEditPool.rewardDecimals} angka desimal.`);
+      return;
+    }
+    if (rpb < 0n) {
       toast.error('Reward tidak valid');
       return;
     }
-    const rpb = parseUnits(editRpb, 18);
     handle(() => updateRewardPerBlock(editPid, rpb), () => setEditRpb(''));
   };
 
@@ -403,10 +413,11 @@ export default function AdminFarming() {
 
                 <div>
                   <Label className="text-[11px] tracking-wider text-muted-foreground uppercase">
-                    New Reward Per Block
+                    New Reward Per Block{selectedEditPool ? ` (${selectedEditPool.rewardSymbol}, ${selectedEditPool.rewardDecimals} decimals)` : ''}
                   </Label>
                   <Input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.01"
                     value={editRpb}
                     onChange={(e) => setEditRpb(e.target.value)}

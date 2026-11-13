@@ -1,4 +1,5 @@
-import { ReactNode, lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { useLiveSwapNotifications } from '@/hooks/useLiveSwapNotifications';
@@ -11,10 +12,6 @@ const WaveBackground = lazy(() =>
 const StarCometOverlay = lazy(() =>
   import('@/components/ui/StarCometOverlay').then(m => ({ default: m.StarCometOverlay }))
 );
-const DragonBot = lazy(() =>
-  import('@/components/chat/DragonBot').then(m => ({ default: m.QuantaBot }))
-);
-
 
 interface LayoutProps {
   children: ReactNode;
@@ -22,6 +19,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [showBot, setShowBot] = useState(false);
+  const [DragonBotComponent, setDragonBotComponent] = useState<ComponentType | null>(null);
   useLiveSwapNotifications();
 
   useEffect(() => {
@@ -34,6 +32,21 @@ export function Layout({ children }: LayoutProps) {
       else clearTimeout(id as unknown as number);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showBot) return;
+    let active = true;
+    import('@/components/chat/DragonBot')
+      .then(({ QuantaBot }) => {
+        if (active) setDragonBotComponent(() => QuantaBot);
+      })
+      .catch((error) => {
+        console.error('[v0] Optional chat widget failed to load:', error);
+      });
+    return () => {
+      active = false;
+    };
+  }, [showBot]);
 
   return (
     <div className="min-h-screen relative flex flex-col" style={{ background: 'hsl(0 0% 3%)' }}>
@@ -49,11 +62,9 @@ export function Layout({ children }: LayoutProps) {
         {children}
       </main>
       <Footer />
-      {showBot && (
+      {showBot && DragonBotComponent && (
         <ErrorBoundary fallback={<></>}>
-          <Suspense fallback={null}>
-            <DragonBot />
-          </Suspense>
+          <DragonBotComponent />
         </ErrorBoundary>
       )}
     </div>
