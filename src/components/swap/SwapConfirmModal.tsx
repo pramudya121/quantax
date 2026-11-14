@@ -16,8 +16,8 @@ interface SwapConfirmModalProps {
   rate: number | null;
   minReceived: string;
   slippage: number;
-  priceImpact: number;
-  severity: 'low' | 'medium' | 'high';
+  priceImpact: number | null;
+  severity: 'low' | 'medium' | 'high' | 'unknown';
   isWrapUnwrap?: boolean;
   isWrapping?: boolean;
   /** transaction is being submitted / mined */
@@ -87,7 +87,10 @@ export function SwapConfirmModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.97 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="relative w-full sm:max-w-md bg-card border border-border/60 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden"
+            role="dialog"
+          aria-modal="true"
+          aria-labelledby="swap-confirm-title"
+          className="relative w-full sm:max-w-md bg-card border border-border/60 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden"
           >
             {/* Top glow line */}
             <div className="h-[2px] bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
@@ -98,7 +101,7 @@ export function SwapConfirmModal({
                 <div className="p-1.5 rounded-lg bg-primary/10">
                   <Flame className="w-4 h-4 text-primary" />
                 </div>
-                <h3 className="text-base font-bold">
+                <h3 id="swap-confirm-title" className="text-base font-bold">
                   {isError ? 'Transaction Failed' : isSuccess ? 'Transaction Confirmed' : isProcessing ? 'Processing Transaction' : 'Confirm Swap'}
                 </h3>
               </div>
@@ -139,16 +142,17 @@ export function SwapConfirmModal({
                       <Row label="Min. Received" value={`${minReceived} ${toToken.symbol}`} />
                       <Row label="Slippage" value={`${slippage}%`} />
                       <Row
-                        label="Price Impact"
-                        value={`${priceImpact.toFixed(2)}%`}
+                        label="Execution delta (incl. fee)"
+                        value={priceImpact === null ? 'Unavailable for this route' : `${priceImpact.toFixed(2)}%`}
                         valueClassName={cn(
                           severity === 'high' ? 'text-destructive' :
-                          severity === 'medium' ? 'text-warning' : 'text-success'
+                          severity === 'medium' ? 'text-warning' :
+                          severity === 'low' ? 'text-success' : 'text-muted-foreground'
                         )}
                       />
                     </>
                   )}
-                  <Row label="Network Fee" value="~0.001 QMS" />
+                  <Row label="Network Fee" value="Estimate shown by wallet before signing" />
                 </div>
               )}
 

@@ -27,8 +27,8 @@ export function HeroSection() {
     return pools.reduce((acc, pool) => {
       const price0 = prices[pool.token0Symbol] || 0;
       const price1 = prices[pool.token1Symbol] || 0;
-      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18)) * price0;
-      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
+      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
+      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
       return acc + value0 + value1;
     }, 0);
   }, [pools, prices]);

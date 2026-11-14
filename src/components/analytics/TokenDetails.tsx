@@ -181,13 +181,13 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-semibold">
-                    ${t.price.toLocaleString(undefined, {
+                    {t.price > 0 ? `${t.price.toLocaleString(undefined, {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: t.price < 1 ? 4 : 2,
-                    })}
+                    })} WQMS est.` : 'No pool quote'}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    TVL ${t.totalLiquidity.toFixed(2)} · {t.activePools} pool{t.activePools !== 1 ? 's' : ''}
+                    TVL {t.totalLiquidity.toFixed(2)} WQMS est. · {t.activePools} pool{t.activePools !== 1 ? 's' : ''}
                   </p>
                 </div>
                 <ChevronDown
@@ -211,7 +211,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
                       {/* Price source */}
                       <div className="rounded-lg bg-background/40 border border-border/40 p-3">
                         <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground mb-1.5">
-                          Price Source (on-chain)
+                          On-chain spot quote
                         </p>
                         {t.priceSource ? (
                           <>
@@ -251,7 +251,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
                           </>
                         ) : (
                           <p className="text-[11px] text-muted-foreground">
-                            No active pool yet — displayed price falls back to the listed base price.
+                            No active pool quote is available, so no price estimate is shown.
                           </p>
                         )}
                       </div>
@@ -265,7 +265,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
                           {t.tokenPools.length === 0 && (
                             <p className="text-[11px] text-muted-foreground">No pools created yet.</p>
                           )}
-                          {t.tokenPools.map((p: any) => (
+                          {t.tokenPools.map((p) => (
                             <div
                               key={p.pool.pairAddress}
                               className="flex items-center justify-between gap-2 text-[11px] py-1 border-b border-border/30 last:border-0"
@@ -274,7 +274,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
                                 {t.symbol}/{p.quoteSymbol}
                               </span>
                               <span className="text-muted-foreground font-mono">
-                                ${p.tvl.toFixed(2)}
+                                {p.tvl.toFixed(2)} WQMS est.
                               </span>
                             </div>
                           ))}

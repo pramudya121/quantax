@@ -1,59 +1,38 @@
 import { Marquee } from '@/components/ui/magic/Marquee';
-import { useTokenPrices, BASE_PRICES } from '@/hooks/usePrices';
-import { getTokenBySymbol } from '@/config/contracts';
+import { useTokenPrices } from '@/hooks/usePrices';
+import { getTokenList } from '@/config/contracts';
 import { TokenIcon } from '@/components/ui/TokenIcon';
 
-function PriceTickerItem({ symbol, price, basePrice }: { symbol: string; price: number; basePrice: number }) {
-  const token = getTokenBySymbol(symbol);
-  const hasPrice = price > 0;
-  const change = hasPrice && basePrice > 0 ? ((price - basePrice) / basePrice) * 100 : 0;
-  const isPositive = change >= 0;
-  const displayPrice = hasPrice ? price : basePrice;
-
-  // Small on-chain testnet prices need enough decimals to stay readable.
-  const formatPrice = (v: number) => {
-    if (v >= 1) return v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    if (v >= 0.01) return v.toFixed(4);
-    if (v > 0) return v.toFixed(6);
-    return '—';
-  };
-
-  return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-muted/30 rounded-lg border border-border/50 mx-2">
-      <TokenIcon
-        src={token?.logoURI}
-        symbol={symbol}
-        alt={symbol}
-        size={20}
-      />
-      <span className="font-semibold">{symbol}</span>
-      <span className="text-muted-foreground">${formatPrice(displayPrice)}</span>
-      <span className={isPositive ? 'text-success' : 'text-destructive'}>
-        {hasPrice && basePrice > 0 && Math.abs(change) < 99.5
-          ? `${isPositive ? '+' : ''}${change.toFixed(2)}%`
-          : ''}
-      </span>
-    </div>
-  );
+function formatQuote(value: number) {
+  if (value >= 1) return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 });
+  if (value >= 0.01) return value.toFixed(4);
+  if (value > 0) return value.toFixed(8);
+  return '—';
 }
 
 export function PriceTicker() {
-  const { prices } = useTokenPrices();
-
-  const tokenList = ['QMS', 'QTX', 'BNB', 'ETH', 'MON', 'HYPE'];
+  const { prices, isLoading } = useTokenPrices();
+  const quotedTokens = getTokenList()
+    .filter((token) => Number.isFinite(prices[token.symbol]) && prices[token.symbol] > 0)
+    .map((token) => token.symbol);
 
   return (
-    <div className="border-b border-border/50 bg-background/50 backdrop-blur-sm py-2 overflow-hidden">
-      <Marquee pauseOnHover speed={30}>
-        {tokenList.map((symbol) => (
-          <PriceTickerItem
-            key={symbol}
-            symbol={symbol}
-            price={prices[symbol] || 0}
-            basePrice={BASE_PRICES[symbol] || 0}
-          />
-        ))}
-      </Marquee>
+    <div aria-label="Live token quotes denominated in WQMS" className="overflow-hidden border-b border-border/50 bg-background/50 py-2 backdrop-blur-sm">
+      {isLoading && quotedTokens.length === 0 ? (
+        <p className="px-4 py-2 text-center text-xs text-muted-foreground" role="status">Loading on-chain quotes…</p>
+      ) : quotedTokens.length > 0 ? (
+        <Marquee pauseOnHover speed={30}>
+          {quotedTokens.map((symbol) => (
+            <div key={symbol} className="mx-2 flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-4 py-2">
+              <TokenIcon src={getTokenList().find((token) => token.symbol === symbol)?.logoURI} symbol={symbol} alt={symbol} size={20} />
+              <span className="font-semibold">{symbol}</span>
+              <span className="text-muted-foreground">{formatQuote(prices[symbol])} WQMS</span>
+            </div>
+          ))}
+        </Marquee>
+      ) : (
+        <p className="px-4 py-2 text-center text-xs text-muted-foreground" role="status">No on-chain pool quotes available.</p>
+      )}
     </div>
   );
 }

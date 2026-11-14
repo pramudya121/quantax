@@ -108,9 +108,8 @@ export function SwapCard() {
   const amountIn = useMemo(() => {
     if (!fromAmount || !fromToken) return undefined;
     try {
-      const num = parseFloat(fromAmount);
-      if (isNaN(num) || num <= 0) return undefined;
-      return parseUnits(fromAmount, fromToken.decimals || 18);
+      const amount = parseUnits(fromAmount.startsWith('.') ? `0${fromAmount}` : fromAmount, fromToken.decimals ?? 18);
+      return amount > 0n ? amount : undefined;
     } catch {
       return undefined;
     }
@@ -162,20 +161,6 @@ export function SwapCard() {
   }, [hasRoute, bestRoute, isWrapUnwrap]);
 
   const isPoolDataLoading = isWrapUnwrap ? false : isRouteLoading;
-
-  // Auto-slippage: adjust based on price impact
-  useEffect(() => {
-    if (!autoSlippage) return;
-    if (isWrapUnwrap) {
-      setSlippage(0.1);
-    } else if (priceImpact > 5) {
-      setSlippage(Math.min(priceImpact + 2, 49));
-    } else if (priceImpact > 2) {
-      setSlippage(1.0);
-    } else {
-      setSlippage(0.5);
-    }
-  }, [autoSlippage, isWrapUnwrap]);
 
   // Refetch pair and reserves periodically to keep data fresh
   useEffect(() => {
@@ -336,13 +321,13 @@ export function SwapCard() {
   useEffect(() => {
     if (isWrapUnwrap) {
       setToAmount(fromAmount);
-    } else if (amountsOut && amountsOut.length > 1) {
-      const outputAmount = formatUnits(amountsOut[amountsOut.length - 1], toToken?.decimals || 18);
-      setToAmount(parseFloat(outputAmount).toFixed(6));
-    } else if (!fromAmount) {
+    } else if (isRouteLoading || !amountsOut || amountsOut.length <= 1) {
       setToAmount('');
+    } else {
+      const outputAmount = formatUnits(amountsOut[amountsOut.length - 1], toToken?.decimals ?? 18);
+      setToAmount(outputAmount);
     }
-  }, [amountsOut, toToken, fromAmount, isWrapUnwrap]);
+  }, [amountsOut, toToken, fromAmount, isWrapUnwrap, isRouteLoading]);
 
   const handleSwapTokens = () => {
     const temp = fromToken;
@@ -354,13 +339,18 @@ export function SwapCard() {
 
   const fromBalance = useMemo(() => {
     if (fromToken?.isNative) return nativeBalance ? formatEther(nativeBalance.value) : '0';
-    return tokenBalance ? formatUnits(tokenBalance, fromToken?.decimals || 18) : '0';
+    return tokenBalance ? formatUnits(tokenBalance, fromToken?.decimals ?? 18) : '0';
   }, [fromToken, nativeBalance, tokenBalance]);
 
   const maxSpendableFromBalance = useMemo(() => {
     if (!fromToken?.isNative) return fromBalance;
-    const spendable = Math.max(parseFloat(fromBalance) - NATIVE_GAS_RESERVE, 0);
-    return spendable.toString();
+    try {
+      const balanceUnits = parseUnits(fromBalance, fromToken.decimals);
+      const reserveUnits = parseUnits(NATIVE_GAS_RESERVE.toString(), fromToken.decimals);
+      return formatUnits(balanceUnits > reserveUnits ? balanceUnits - reserveUnits : 0n, fromToken.decimals);
+    } catch {
+      return '0';
+    }
   }, [fromToken, fromBalance]);
 
   const handleSwap = useCallback(async () => {
@@ -457,34 +447,54 @@ export function SwapCard() {
   // Only use on-chain reserves for single-hop; for multi-hop use AMM estimation
   const reservePair = !isMultiHop && reserves ? [reserves[0], reserves[1]] as [bigint, bigint] : undefined;
   const { priceImpact, severity } = usePriceImpact(
-    fromToken, 
-    toToken, 
-    fromAmount, 
+    fromToken,
+    toToken,
+    fromAmount,
     toAmount,
     reservePair,
-    !isMultiHop ? pairToken0 : undefined
+    !isMultiHop ? pairToken0 : undefined,
   );
+
+  useEffect(() => {
+    if (!autoSlippage) return;
+    if (isWrapUnwrap) {
+      setSlippage(0.1);
+    } else if (priceImpact !== null && priceImpact > 5) {
+      setSlippage(Math.min(priceImpact + 2, 49));
+    } else if (priceImpact !== null && priceImpact > 2) {
+      setSlippage(1.0);
+    } else {
+      setSlippage(0.5);
+    }
+  }, [autoSlippage, isWrapUnwrap, priceImpact]);
 
   // Calculate minimum received
   const minReceived = useMemo(() => {
-    if (!toAmount) return '0';
-    return (parseFloat(toAmount) * (1 - slippage / 100)).toFixed(6);
-  }, [toAmount, slippage]);
+    if (!toAmount || !toToken) return '0';
+    try {
+      const outputUnits = parseUnits(toAmount, toToken.decimals);
+      const slippageBps = BigInt(Math.round(slippage * 100));
+      const minimumUnits = outputUnits * (10_000n - slippageBps) / 10_000n;
+      return formatUnits(minimumUnits, toToken.decimals);
+    } catch {
+      return '0';
+    }
+  }, [toAmount, toToken, slippage]);
 
-  // Calculate USD values
-  const fromUsdValue = useMemo(() => {
+  // Values are WQMS spot estimates, not fiat prices.
+  const fromWqmsValue = useMemo(() => {
     if (!fromToken || !fromAmount) return 0;
     return parseFloat(fromAmount) * getPrice(fromToken.symbol);
   }, [fromToken, fromAmount, getPrice]);
 
-  const toUsdValue = useMemo(() => {
+  const toWqmsValue = useMemo(() => {
     if (!toToken || !toAmount) return 0;
     return parseFloat(toAmount) * getPrice(toToken.symbol);
   }, [toToken, toAmount, getPrice]);
 
   // High slippage warning
   const isHighImpact = severity === 'high';
-  const showImpactWarning = severity !== 'low' && priceImpact > 1;
+  const showImpactWarning = Boolean(fromAmount && toAmount && !isWrapUnwrap && (severity === 'unknown' || (priceImpact !== null && severity !== 'low' && priceImpact > 1)));
 
   // Rate display
   const rate = useMemo(() => {
@@ -626,15 +636,16 @@ export function SwapCard() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <Input 
-                    type="number" 
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.0" 
                     value={fromAmount} 
                     onChange={(e) => setFromAmount(sanitizeAmountInput(e.target.value))} 
                     className="text-xl sm:text-2xl font-bold bg-transparent border-none p-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/30" 
                   />
-                  {fromUsdValue > 0 && (
+                  {fromWqmsValue > 0 && (
                     <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                      ≈ ${fromUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ≈ {fromWqmsValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} WQMS (spot estimate)
                     </p>
                   )}
                 </div>
@@ -648,8 +659,13 @@ export function SwapCard() {
                     <button
                       key={p}
                       onClick={() => {
-                        const bal = p === 100 ? maxSpendableFromBalance : (parseFloat(fromBalance) * p / 100).toString();
-                        setFromAmount(bal);
+                        try {
+                          const sourceBalance = parseUnits(maxSpendableFromBalance, fromToken?.decimals ?? 18);
+                          const amount = sourceBalance * BigInt(p) / 100n;
+                          setFromAmount(formatUnits(amount, fromToken?.decimals ?? 18));
+                        } catch {
+                          setFromAmount('');
+                        }
                       }}
                       className={cn(
                         "flex-1 py-1 text-[10px] sm:text-xs rounded-md font-medium transition-all",
@@ -703,9 +719,9 @@ export function SwapCard() {
                       )}>
                         {toAmount || '0.0'}
                       </div>
-                      {toUsdValue > 0 && (
+                      {toWqmsValue > 0 && (
                         <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                          ≈ ${toUsdValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ≈ {toWqmsValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} WQMS (spot estimate)
                         </p>
                       )}
                     </>
@@ -743,10 +759,10 @@ export function SwapCard() {
                     <span className={cn(
                       "text-[10px] px-1.5 py-0.5 rounded font-medium",
                       severity === 'high' ? 'bg-destructive/10 text-destructive' : 
-                      severity === 'medium' ? 'bg-warning/10 text-warning' : 
-                      'bg-success/10 text-success'
+                      severity === 'medium' ? 'bg-warning/10 text-warning' :
+                      severity === 'low' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground'
                     )}>
-                      {priceImpact.toFixed(2)}%
+                      {priceImpact === null ? 'Unavailable' : `${priceImpact.toFixed(2)}%`}
                     </span>
                     <ChevronDown className={cn(
                       "w-3.5 h-3.5 text-muted-foreground transition-transform",
@@ -764,8 +780,8 @@ export function SwapCard() {
                       className="overflow-hidden"
                     >
                       <div className="px-3 pb-3 space-y-2 border-t border-border/20 pt-2">
-                        <DetailRow label="Price Impact" value={`${priceImpact.toFixed(2)}%`} valueClassName={cn(
-                          severity === 'high' ? 'text-destructive' : severity === 'medium' ? 'text-warning' : 'text-success'
+                        <DetailRow label="Execution delta (incl. fee)" value={priceImpact === null ? 'Unavailable for this route' : `${priceImpact.toFixed(2)}%`} valueClassName={cn(
+                          severity === 'high' ? 'text-destructive' : severity === 'medium' ? 'text-warning' : severity === 'low' ? 'text-success' : 'text-muted-foreground'
                         )} />
                         <DetailRow label="Min. Received" value={`${minReceived} ${toToken?.symbol}`} />
                         <DetailRow 
@@ -793,7 +809,7 @@ export function SwapCard() {
                             } 
                           />
                         )}
-                        <DetailRow label="Network Fee" value="~0.001 QMS" />
+                        <DetailRow label="Network Fee" value="Estimate shown by wallet before signing" />
                       </div>
                     </motion.div>
                   )}
@@ -816,7 +832,7 @@ export function SwapCard() {
                 bestRoute={bestRoute}
                 allRoutes={allRoutes}
                 allQuotes={allQuotes}
-                toDecimals={toToken?.decimals || 18}
+                toDecimals={toToken?.decimals ?? 18}
                 toSymbol={toToken?.symbol || ''}
               />
             )}

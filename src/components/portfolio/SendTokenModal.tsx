@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, Loader2, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendTransaction } from 'wagmi';
-import { parseEther, isAddress } from 'viem';
+import { formatUnits, isAddress, parseUnits } from 'viem';
+import { isValidAmount as isValidAmountInput } from '@/lib/security';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ERC20_ABI } from '@/config/abis';
@@ -14,6 +15,7 @@ interface TokenOption {
   balance: string;
   logo: string;
   address: string;
+  decimals: number;
   isNative?: boolean;
 }
 
@@ -36,7 +38,7 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
       if (found) { setSelectedToken(found); return; }
     }
     if (!selectedToken && tokens[0]) setSelectedToken(tokens[0]);
-  }, [isOpen, initialSymbol, tokens]);
+  }, [isOpen, initialSymbol, tokens, selectedToken]);
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [showTokenList, setShowTokenList] = useState(false);
@@ -50,19 +52,44 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
   const isPending = isWritePending || isSendPending || isConfirming;
   const error = writeError || sendError;
 
+  const amountUnits = useMemo(() => {
+    if (!selectedToken || !isValidAmountInput(amount, selectedToken.decimals)) return null;
+    try {
+      return parseUnits(amount.startsWith('.') ? `0${amount}` : amount, selectedToken.decimals);
+    } catch {
+      return null;
+    }
+  }, [amount, selectedToken]);
+  const balanceUnits = useMemo(() => {
+    if (!selectedToken) return null;
+    try {
+      return parseUnits(selectedToken.balance, selectedToken.decimals);
+    } catch {
+      return null;
+    }
+  }, [selectedToken]);
+  const spendableBalanceUnits = useMemo(() => {
+    if (!selectedToken || balanceUnits === null) return null;
+    if (!selectedToken.isNative) return balanceUnits;
+    try {
+      const reserve = parseUnits('0.01', selectedToken.decimals);
+      return balanceUnits > reserve ? balanceUnits - reserve : 0n;
+    } catch {
+      return 0n;
+    }
+  }, [selectedToken, balanceUnits]);
   const isValidRecipient = recipient && isAddress(recipient);
-  const isValidAmount = amount && parseFloat(amount) > 0;
-  const hasEnoughBalance = selectedToken && parseFloat(amount || '0') <= parseFloat(selectedToken.balance);
-  const canSend = isValidRecipient && isValidAmount && hasEnoughBalance && !isPending && selectedToken;
+  const hasEnoughBalance = amountUnits !== null && amountUnits > 0n && spendableBalanceUnits !== null && amountUnits <= spendableBalanceUnits;
+  const canSend = Boolean(isValidRecipient && hasEnoughBalance && !isPending && selectedToken);
 
   const handleSend = async () => {
-    if (!canSend || !selectedToken) return;
+    if (!canSend || !selectedToken || amountUnits === null) return;
 
     try {
       if (selectedToken.isNative) {
         sendTransaction({
           to: recipient as `0x${string}`,
-          value: parseEther(amount),
+          value: amountUnits,
         }, {
           onSuccess: (hash) => setTxHash(hash),
         });
@@ -71,8 +98,8 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
           address: selectedToken.address as `0x${string}`,
           abi: ERC20_ABI,
           functionName: 'transfer',
-          args: [recipient as `0x${string}`, parseEther(amount)],
-        } as any, {
+          args: [recipient as `0x${string}`, amountUnits],
+        }, {
           onSuccess: (hash) => setTxHash(hash),
         });
       }
@@ -92,9 +119,14 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
 
   const handleMax = () => {
     if (selectedToken) {
-      // Leave small amount for gas if native
-      const bal = parseFloat(selectedToken.balance);
-      setAmount(selectedToken.isNative ? Math.max(0, bal - 0.01).toString() : selectedToken.balance);
+      try {
+        const balance = parseUnits(selectedToken.balance, selectedToken.decimals);
+        const reserve = selectedToken.isNative ? parseUnits('0.01', selectedToken.decimals) : 0n;
+        const maximum = balance > reserve ? balance - reserve : 0n;
+        setAmount(formatUnits(maximum, selectedToken.decimals));
+      } catch {
+        setAmount('');
+      }
     }
   };
 
@@ -106,8 +138,11 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
-        onClick={handleClose}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="send-token-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+          onClick={handleClose}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -122,7 +157,7 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
               <div className="p-2 rounded-lg bg-primary/10">
                 <Send className="w-5 h-5 text-primary" />
               </div>
-              <h2 className="text-lg font-bold">Send Token</h2>
+              <h2 id="send-token-title" className="text-lg font-bold">Send Token</h2>
             </div>
             <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
               <X className="w-5 h-5" />
@@ -198,7 +233,7 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
 
               {/* Recipient */}
               <div className="mb-4">
-                <label className="text-xs text-muted-foreground mb-1.5 block">Recipient Address</label>
+                <label htmlFor="send-recipient" className="text-xs text-muted-foreground mb-1.5 block">Recipient Address</label>
                 <Input
                   placeholder="0x..."
                   value={recipient}
@@ -215,10 +250,12 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
 
               {/* Amount */}
               <div className="mb-5">
-                <label className="text-xs text-muted-foreground mb-1.5 block">Amount</label>
+                <label htmlFor="send-amount" className="text-xs text-muted-foreground mb-1.5 block">Amount</label>
                 <div className="relative">
                   <Input
-                    type="number"
+                    id="send-amount"
+                    type="text"
+                    inputMode="decimal"
                     placeholder="0.0"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}

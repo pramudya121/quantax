@@ -91,7 +91,7 @@ export function useLiquidityPools() {
       enabled: pairAddresses.length > 0,
       staleTime: 20_000,
       gcTime: 60_000,
-      refetchInterval: 45_000,
+      refetchInterval: 15_000,
       refetchIntervalInBackground: false,
     },
   });

@@ -18,7 +18,7 @@ import { formatUnits } from 'viem';
 export default function Pools() {
   const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
-  const { stats: swapStats } = useSwapVolume(pools, prices);
+  const { stats: swapStats, isLoading: volumeLoading, volumeScanComplete } = useSwapVolume(pools, prices);
   const perPool = swapStats.perPool;
   const hotPoolAddr = useMemo(() => {
     let top: string | null = null; let max = 0;
@@ -30,7 +30,7 @@ export default function Pools() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [filter, setFilter] = useState<'all' | 'active' | 'empty'>('all');
-  const [sortBy, setSortBy] = useState<'tvl' | 'volume' | 'apy'>('tvl');
+  const [sortBy, setSortBy] = useState<'tvl' | 'volume'>('tvl');
 
   const activePools = pools.filter(p => p.reserve0 > 0n && p.reserve1 > 0n).length;
 
@@ -38,8 +38,8 @@ export default function Pools() {
     return pools.reduce((acc, pool) => {
       const price0 = prices[pool.token0Symbol] || 0;
       const price1 = prices[pool.token1Symbol] || 0;
-      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18)) * price0;
-      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
+      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
+      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
       return acc + value0 + value1;
     }, 0);
   }, [pools, prices]);
@@ -48,8 +48,8 @@ export default function Pools() {
     const computeTvl = (pool: typeof pools[number]) => {
       const p0 = prices[pool.token0Symbol] || 0;
       const p1 = prices[pool.token1Symbol] || 0;
-      const v0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18)) * p0;
-      const v1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * p1;
+      const v0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * p0;
+      const v1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * p1;
       return v0 + v1;
     };
     const filtered = pools.filter(pool => {
@@ -67,13 +67,7 @@ export default function Pools() {
       if (sortBy === 'volume') {
         return (perPool[b.pairAddress] || 0) - (perPool[a.pairAddress] || 0);
       }
-      // APR = fees24h * 365 / TVL
-      const aprOf = (p: typeof pools[number]) => {
-        const t = computeTvl(p);
-        const v = perPool[p.pairAddress] || 0;
-        return t > 0 && v > 0 ? (v * 0.003 * 365) / t : 0;
-      };
-      return aprOf(b) - aprOf(a);
+      return 0;
     });
   }, [pools, prices, searchQuery, filter, sortBy, perPool]);
 
@@ -94,7 +88,7 @@ export default function Pools() {
             Forge of Liquidity
           </h1>
           <p className="text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
-            Explore live pools and provide liquidity to earn <span className="text-primary font-medium">0.3% fees</span> on every trade.
+            Explore live QMS Testnet pools. Reserve values and swap activity are read from deployed contracts; fiat values and unverified fee/APR estimates are intentionally omitted.
           </p>
         </div>
 
@@ -105,6 +99,9 @@ export default function Pools() {
           pairCount={pairCount}
           totalTVL={totalTVL}
           activePools={activePools}
+          recentVolumeWQMS={swapStats.totalVolumeWQMS}
+          recentSwapCount={swapStats.swapCount}
+          volumeScanComplete={volumeScanComplete}
         />
 
         {/* Controls */}
@@ -122,10 +119,10 @@ export default function Pools() {
 
             {/* Filter */}
             <div className="flex bg-muted/50 rounded-lg p-1">
-              {['all', 'active', 'empty'].map((f) => (
+              {(['all', 'active', 'empty'] as const).map((f) => (
                 <button
                   key={f}
-                  onClick={() => setFilter(f as any)}
+                  onClick={() => setFilter(f)}
                   className={cn(
                     "px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-colors capitalize",
                     filter === f ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -138,14 +135,13 @@ export default function Pools() {
 
             {/* Sort */}
             <div className="flex bg-muted/50 rounded-lg p-1">
-              {[
+              {([
                 { key: 'tvl', label: 'TVL', icon: <ArrowUpDown className="w-3 h-3" /> },
-                { key: 'volume', label: 'Volume' },
-                { key: 'apy', label: 'APY' },
-              ].map((s) => (
+                { key: 'volume', label: 'Recent volume' },
+              ] as const).map((s) => (
                 <button
                   key={s.key}
-                  onClick={() => setSortBy(s.key as any)}
+                  onClick={() => setSortBy(s.key)}
                   className={cn(
                     "px-2 md:px-3 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1",
                     sortBy === s.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
@@ -170,7 +166,7 @@ export default function Pools() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <Clock className="w-3 h-3" />
-              <span>Updated just now</span>
+              <span>Reserves refresh every 15s · swap events update live</span>
             </div>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
               <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
@@ -204,7 +200,9 @@ export default function Pools() {
                 pool={pool}
                 index={i}
                 prices={prices}
-                volume24h={perPool[pool.pairAddress] || 0}
+                volumeWQMS={perPool[pool.pairAddress] || 0}
+                  volumeScanComplete={volumeScanComplete}
+                  volumeLoading={volumeLoading}
                 isHot={hotPoolAddr === pool.pairAddress}
               />
             ))}

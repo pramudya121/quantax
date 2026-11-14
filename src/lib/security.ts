@@ -17,22 +17,19 @@ export function isValidAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-// Validate amount input (prevent overflow/underflow)
+// Validate a base-10 token amount without floating-point rounding.
 export function isValidAmount(amount: string, decimals: number = 18): boolean {
-  if (!amount || amount === '') return false;
-  
-  const num = parseFloat(amount);
-  if (isNaN(num) || num < 0) return false;
-  
-  // Check for reasonable bounds
-  const MAX_SAFE_VALUE = 1e30; // Reasonable upper bound
-  if (num > MAX_SAFE_VALUE) return false;
-  
-  // Check decimal precision
-  const parts = amount.split('.');
-  if (parts[1] && parts[1].length > decimals) return false;
-  
-  return true;
+  if (!amount || !Number.isInteger(decimals) || decimals < 0 || decimals > 255) return false;
+  if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(amount)) return false;
+
+  const normalized = amount.startsWith('.') ? `0${amount}` : amount;
+  const [whole, fraction = ''] = normalized.split('.');
+  if (fraction.length > decimals) return false;
+  try {
+    return BigInt(whole) <= 10n ** 30n;
+  } catch {
+    return false;
+  }
 }
 
 // Rate limiting for API calls
@@ -59,48 +56,47 @@ export function checkRateLimit(
   return true;
 }
 
-// Secure storage wrapper
+// Namespaced browser storage for non-secret preferences only; localStorage is not secure storage.
+const APP_STORAGE_PREFIX = 'quantax:';
+const storageKey = (key: string) => `${APP_STORAGE_PREFIX}${key}`;
+
 export const secureStorage = {
   set(key: string, value: unknown): void {
     try {
-      const serialized = JSON.stringify(value);
-      // Add timestamp for expiry checking
-      const wrapped = {
-        data: serialized,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(key, JSON.stringify(wrapped));
-    } catch (e) {
-      console.error('SecureStorage set error:', e);
+      const wrapped = { data: JSON.stringify(value), timestamp: Date.now() };
+      localStorage.setItem(storageKey(key), JSON.stringify(wrapped));
+    } catch (error) {
+      console.error('App storage set error:', error);
     }
   },
-  
+
   get<T>(key: string, maxAge?: number): T | null {
     try {
-      const item = localStorage.getItem(key);
+      const keyWithPrefix = storageKey(key);
+      const item = localStorage.getItem(keyWithPrefix);
       if (!item) return null;
-      
-      const wrapped = JSON.parse(item);
-      
-      // Check expiry
+
+      const wrapped = JSON.parse(item) as { data: string; timestamp: number };
       if (maxAge && Date.now() - wrapped.timestamp > maxAge) {
-        localStorage.removeItem(key);
+        localStorage.removeItem(keyWithPrefix);
         return null;
       }
-      
       return JSON.parse(wrapped.data) as T;
-    } catch (e) {
-      console.error('SecureStorage get error:', e);
+    } catch (error) {
+      console.error('App storage get error:', error);
       return null;
     }
   },
-  
+
   remove(key: string): void {
-    localStorage.removeItem(key);
+    localStorage.removeItem(storageKey(key));
   },
-  
+
   clear(): void {
-    localStorage.clear();
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(APP_STORAGE_PREFIX)) localStorage.removeItem(key);
+    }
   },
 };
 
@@ -133,10 +129,11 @@ export function isValidDeadline(minutes: number): boolean {
 
 // Safe BigInt parsing
 export function safeParseBigInt(value: string | number): bigint | null {
+  if (typeof value === 'number' && !Number.isSafeInteger(value)) return null;
+  const text = String(value);
+  if (!/^-?\d+$/.test(text)) return null;
   try {
-    const cleaned = String(value).replace(/[^0-9.-]/g, '');
-    if (!cleaned || cleaned === '-') return null;
-    return BigInt(Math.floor(parseFloat(cleaned)));
+    return BigInt(text);
   } catch {
     return null;
   }

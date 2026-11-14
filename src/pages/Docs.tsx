@@ -94,8 +94,8 @@ const roadmapItems = [
 const faqs = [
   { q: 'What is QUANTAX?', a: 'QUANTAX is a decentralized exchange (DEX) built on QMS Testnet using the automated market maker (AMM) model. It allows users to swap tokens and provide liquidity to earn trading fees.' },
   { q: 'How do I get started?', a: 'Connect a Web3 wallet (MetaMask, OKX, Rabby, or Bitget), get some testnet QMS, and you\'re ready to start trading!' },
-  { q: 'What are the trading fees?', a: 'QUANTAX charges a 0.3% fee on all trades. This fee is distributed to liquidity providers proportional to their share of the pool.' },
-  { q: 'Is QUANTAX safe?', a: 'QUANTAX uses battle-tested UniswapV2 smart contracts with reentrancy guards and comprehensive validation. However, as with any DeFi protocol, there are inherent smart contract risks.' },
+  { q: 'What are the trading fees?', a: 'The fee rate and distribution are determined by the deployed contracts. QUANTAX does not display an unverified fee estimate; verify the router and pair configuration before trading or providing liquidity.' },
+  { q: 'Is QUANTAX safe?', a: 'This interface is not a security audit. Verify the deployed contract source and bytecode, permissions, and independent audit reports before connecting a wallet or depositing assets. Smart-contract interactions carry risk.' },
   { q: 'What wallets are supported?', a: 'MetaMask, OKX Wallet, Rabby Wallet, and Bitget Wallet are all supported. Any EVM-compatible wallet should work.' },
   { q: 'What is impermanent loss?', a: 'Impermanent loss occurs when the price ratio of tokens in a liquidity pool changes compared to when you deposited. The bigger the change, the more impermanent loss you experience.' },
 ];
@@ -141,7 +141,7 @@ function SectionIntroduction() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {[
           { icon: ArrowRightLeft, title: 'Token Swap', desc: 'Instantly trade tokens with AMM pricing', color: 'text-primary' },
-          { icon: Coins, title: 'Liquidity Pools', desc: 'Provide liquidity and earn 0.3% fees', color: 'text-accent' },
+          { icon: Coins, title: 'Liquidity Pools', desc: 'Provide liquidity; fees follow deployed contract terms', color: 'text-accent' },
           { icon: BarChart3, title: 'Analytics', desc: 'Real-time charts, TVL, volume, pair data', color: 'text-secondary' },
           { icon: Wallet, title: 'Portfolio', desc: 'Track holdings, LP positions, send tokens', color: 'text-primary' },
           { icon: MessageCircle, title: 'QuantaBot AI', desc: 'AI assistant with real-time price data', color: 'text-accent' },
@@ -239,11 +239,11 @@ function SectionProvideLiquidity() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Provide Liquidity</h1>
-      <p className="text-muted-foreground">Earn 0.3% trading fees by providing liquidity to token pairs.</p>
+      <p className="text-muted-foreground">Provide liquidity to token pairs. Fee rates and distribution depend on deployed contract behavior.</p>
 
       <h2 className="text-xl font-bold">How It Works</h2>
       <p className="text-sm text-muted-foreground">
-        When you add liquidity, you deposit equal value of two tokens into a pool. In return, you receive LP (Liquidity Provider) tokens representing your share. Every trade in that pool pays a 0.3% fee, distributed proportionally to all LPs.
+        When you add liquidity, you deposit two tokens into a pool and receive LP tokens representing your share. Any swap fees and their distribution are defined by the deployed contracts; verify those terms before depositing.
       </p>
 
       <h2 className="text-xl font-bold">Steps to Add Liquidity</h2>
@@ -398,8 +398,8 @@ function SectionLPTokensFees() {
 
       <h2 className="text-xl font-bold">Fee Structure</h2>
       <div className="bg-card border border-border rounded-xl p-4 space-y-2 text-sm">
-        <div className="flex justify-between"><span className="text-muted-foreground">Swap Fee</span><span className="font-medium">0.3%</span></div>
-        <div className="flex justify-between"><span className="text-muted-foreground">Goes to LPs</span><span className="font-medium text-success">100%</span></div>
+<div className="flex justify-between"><span className="text-muted-foreground">Swap Fee</span><span className="font-medium">Contract-defined</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Distribution</span><span className="font-medium">Verify on-chain</span></div>
         <div className="flex justify-between"><span className="text-muted-foreground">Protocol Fee</span><span className="font-medium">0%</span></div>
       </div>
     </div>

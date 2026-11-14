@@ -138,7 +138,7 @@ export default function PairDetail() {
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[
-            { label: 'TVL', value: `$${tvl.toLocaleString(undefined, { maximumFractionDigits: 2 })}`, color: 'text-primary' },
+            { label: 'TVL (WQMS estimate)', value: `${tvl.toLocaleString(undefined, { maximumFractionDigits: 2 })} WQMS`, color: 'text-primary' },
             { label: `${pool.token0Symbol} Reserve`, value: reserve0.toLocaleString(undefined, { maximumFractionDigits: 4 }), color: '' },
             { label: `${pool.token1Symbol} Reserve`, value: reserve1.toLocaleString(undefined, { maximumFractionDigits: 4 }), color: '' },
             { label: 'LP Supply', value: parseFloat(formatUnits(pool.totalSupply, 18)).toLocaleString(undefined, { maximumFractionDigits: 4 }), color: 'text-accent' },
@@ -186,7 +186,7 @@ export default function PairDetail() {
                 </div>
               </div>
               <div className="text-[11px] text-muted-foreground pt-2 border-t border-border/40">
-                Fee: <span className="text-foreground font-medium">0.30%</span> per swap
+                Spot rates are derived from current on-chain reserves. This pair does not expose a verified fee tier in the current interface.
               </div>
             </div>
           </Card>

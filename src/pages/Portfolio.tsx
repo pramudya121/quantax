@@ -73,23 +73,23 @@ export default function Portfolio() {
 
   const lpPositions = useMemo(() => {
     if (!lpBalanceResults.data || pools.length === 0) return [];
-    return pools
-      .map((pool, i) => {
+    return pools.flatMap((pool, i) => {
         const balance = lpBalanceResults.data?.[i]?.result as bigint | undefined;
-        if (!balance || balance === 0n) return null;
+        if (!balance || balance === 0n) return [];
+        if (pool.totalSupply <= 0n) return [];
         const balanceFormatted = parseFloat(formatUnits(balance, 18));
-        const totalSupply = parseFloat(formatUnits(pool.totalSupply || 1n, 18));
-        const share = totalSupply > 0 ? (balanceFormatted / totalSupply) * 100 : 0;
-        const res0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18));
-        const res1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18));
+        const totalSupply = parseFloat(formatUnits(pool.totalSupply, 18));
+        if (!Number.isFinite(totalSupply) || totalSupply <= 0) return [];
+        const share = (balanceFormatted / totalSupply) * 100;
+        const res0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18));
+        const res1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18));
         const myToken0 = res0 * (share / 100);
         const myToken1 = res1 * (share / 100);
         const price0 = prices[pool.token0Symbol] || 0;
         const price1 = prices[pool.token1Symbol] || 0;
         const value = (myToken0 * price0) + (myToken1 * price1);
-        return { ...pool, lpBalance: balance, lpBalanceFormatted: balanceFormatted, share, myToken0, myToken1, value };
-      })
-      .filter(Boolean) as any[];
+        return [{ ...pool, lpBalance: balance, lpBalanceFormatted: balanceFormatted, share, myToken0, myToken1, value }];
+      });
   }, [pools, lpBalanceResults.data, prices]);
 
   const tokens = useMemo(() => {
@@ -126,7 +126,7 @@ export default function Portfolio() {
   }, [nativeToken, erc20Tokens, tokenBalances.data, opnBalance, prices]);
 
   const totalTokenValue = tokens.reduce((acc, token) => acc + parseFloat(token.balance) * token.price, 0);
-  const totalLPValue = lpPositions.reduce((acc: number, lp: any) => acc + lp.value, 0);
+  const totalLPValue = lpPositions.reduce((acc, lp) => acc + lp.value, 0);
   const totalValue = totalTokenValue + totalLPValue;
   const tokensWithBalance = tokens.filter(t => parseFloat(t.balance) > 0.0001);
 
@@ -134,7 +134,7 @@ export default function Portfolio() {
     const items = tokens.map(t => ({
       name: t.symbol, value: parseFloat(t.balance) * t.price, color: '', percentage: 0,
     }));
-    lpPositions.forEach((lp: any) => {
+    lpPositions.forEach((lp) => {
       items.push({ name: `${lp.token0Symbol}/${lp.token1Symbol} LP`, value: lp.value, color: '', percentage: 0 });
     });
     const total = items.reduce((s, i) => s + i.value, 0);
@@ -255,16 +255,17 @@ export default function Portfolio() {
                         <Coins className="w-5 h-5 text-primary-foreground" />
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground tracking-[0.18em] uppercase">Total Balance</p>
+                        <p className="text-xs text-muted-foreground tracking-[0.18em] uppercase">Quoted Portfolio Value</p>
                         <p className="font-mono-display text-2xl md:text-3xl font-bold">
-                          $<NumberTicker value={totalValue} decimalPlaces={2} />
+                          <NumberTicker value={totalValue} suffix=" WQMS" decimalPlaces={2} />
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1"><Coins className="w-3 h-3" /> Tokens: ${totalTokenValue.toFixed(2)}</span>
+                    <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                      <span>Assets without a pool quote are excluded from this estimate.</span>
+                      <span className="flex items-center gap-1"><Coins className="w-3 h-3" /> Tokens: {totalTokenValue.toFixed(2)} WQMS est.</span>
                       <span>•</span>
-                      <span className="flex items-center gap-1"><Droplets className="w-3 h-3" /> LP: ${totalLPValue.toFixed(2)}</span>
+                      <span className="flex items-center gap-1"><Droplets className="w-3 h-3" /> LP: {totalLPValue.toFixed(2)} WQMS est.</span>
                     </div>
                   </div>
                 </BackgroundGradient>
@@ -354,7 +355,7 @@ export default function Portfolio() {
                               <p className="font-medium text-sm">{token.symbol}</p>
                               <p className="text-xs text-muted-foreground">{balance.toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
                             </div>
-                            <p className="font-bold text-sm">${value.toFixed(2)}</p>
+                            <p className="font-bold text-sm">{value > 0 ? `${value.toFixed(2)} WQMS est.` : 'No pool quote'}</p>
                           </div>
                         );
                       })}
@@ -379,14 +380,14 @@ export default function Portfolio() {
                   </div>
                   {lpPositions.length > 0 ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {lpPositions.slice(0, 4).map((lp: any) => (
+                      {lpPositions.slice(0, 4).map((lp) => (
                         <div key={lp.pairAddress} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30">
                           <div className="flex -space-x-1">
                             <img src={lp.token0?.logoURI || '/tokens/qms.svg'} alt={`${lp.token0Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                             <img src={lp.token1?.logoURI || '/tokens/qms.svg'} alt={`${lp.token1Symbol} token logo`} className="w-5 h-5 rounded-full border border-background" onError={(e) => { (e.target as HTMLImageElement).src = '/tokens/qms.svg'; }} />
                           </div>
                           <span className="text-xs font-medium flex-1">{lp.token0Symbol}/{lp.token1Symbol}</span>
-                          <span className="text-xs font-bold text-success">${lp.value.toFixed(2)}</span>
+                          <span className="text-xs font-bold text-success">{lp.value > 0 ? `${lp.value.toFixed(2)} WQMS est.` : 'No pool quote'}</span>
                         </div>
                       ))}
                     </div>
@@ -430,7 +431,7 @@ export default function Portfolio() {
                           </div>
                           <div className="text-right">
                             <p className="font-bold text-sm md:text-base">{balance.toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
-                            <p className="text-xs md:text-sm text-muted-foreground">${value.toFixed(2)}</p>
+                            <p className="text-xs md:text-sm text-muted-foreground">{value > 0 ? `${value.toFixed(2)} WQMS est.` : 'No pool quote'}</p>
                           </div>
                           <button
                             onClick={() => openSendFor(token.symbol)}
@@ -464,7 +465,7 @@ export default function Portfolio() {
                 </div>
               ) : lpPositions.length > 0 ? (
                 <div className="grid gap-3 md:grid-cols-2">
-                  {lpPositions.map((lp: any) => (
+                  {lpPositions.map((lp) => (
                     <div key={lp.pairAddress} className="glass-card p-4 hover:border-primary/50 transition-all">
                       <div className="flex items-center gap-2 mb-3">
                         <div className="flex -space-x-1">
@@ -473,7 +474,7 @@ export default function Portfolio() {
                         </div>
                         <span className="font-medium text-sm">{lp.token0Symbol}/{lp.token1Symbol}</span>
                         <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-success/20 text-success">On-Chain</span>
-                        {lp.value > 0 && <span className="ml-auto text-sm font-bold text-success">${lp.value.toFixed(2)}</span>}
+                        <span className="ml-auto text-sm font-bold text-success">{lp.value > 0 ? `${lp.value.toFixed(2)} WQMS est.` : 'No pool quote'}</span>
                       </div>
                       <div className="space-y-1.5 text-xs text-muted-foreground">
                         <div className="flex justify-between"><span>LP Balance</span><span className="font-medium text-foreground">{lp.lpBalanceFormatted.toFixed(6)}</span></div>

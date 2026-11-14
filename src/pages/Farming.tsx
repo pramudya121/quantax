@@ -6,7 +6,7 @@ import { useAccount, usePublicClient, useReadContract, useChainId, useSwitchChai
 import { erc20Abi } from 'viem';
 import {
   Sprout, TrendingUp, Lock, Gift, AlertTriangle, Loader2, RefreshCw, Settings,
-  Coins, Percent, DollarSign, Flame, ExternalLink, Search, SlidersHorizontal,
+  Coins, Percent, Flame, ExternalLink, Search, SlidersHorizontal,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -60,10 +60,10 @@ function TokenLogo({ address, symbol, size = 32 }: { address: string; symbol: st
   );
 }
 
-function formatUsd(v: number) {
-  if (!isFinite(v) || v <= 0) return '$0';
-  if (v < 0.01) return '<$0.01';
-  return `$${v.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+function formatWqms(v: number) {
+  if (!Number.isFinite(v) || v <= 0) return '0 WQMS';
+  if (v < 0.01) return '<0.01 WQMS';
+  return `${v.toLocaleString(undefined, { maximumFractionDigits: 2 })} WQMS est.`;
 }
 
 function FarmCard({
@@ -146,10 +146,10 @@ function FarmCard({
   const totalStakedNum = Number(formatUnits(pool.totalStaked, pool.stakingDecimals));
   const userStakedNum = Number(formatUnits(staked, pool.stakingDecimals));
   const userSharePct = totalStakedNum > 0 ? (userStakedNum / totalStakedNum) * 100 : 0;
-  const userStakedUsd = userStakedNum * stakingPrice;
+  const userStakedWqms = userStakedNum * stakingPrice;
   const pendingNum = Number(formatUnits(pending, pool.rewardDecimals));
-  const pendingUsd = pendingNum * rewardPrice;
-  const tvlUsd = totalStakedNum * stakingPrice;
+  const pendingWqms = pendingNum * rewardPrice;
+  const tvlWqms = totalStakedNum * stakingPrice;
 
   const parsedAmt = (() => {
     try { return amount ? parseUnits(amount, pool.stakingDecimals) : 0n; }
@@ -223,9 +223,9 @@ function FarmCard({
             </div>
             <div className="rounded-lg p-2.5 bg-background/40 border border-border/40">
               <div className="text-[9px] uppercase tracking-wide text-muted-foreground flex items-center gap-1">
-                <DollarSign className="w-2.5 h-2.5" /> TVL
+                <Coins className="w-2.5 h-2.5" /> TVL
               </div>
-              <div className="font-mono text-xs font-bold mt-1 truncate">{formatUsd(tvlUsd)}</div>
+              <div className="font-mono text-xs font-bold mt-1 truncate">{formatWqms(tvlWqms)}</div>
             </div>
           </div>
 
@@ -239,7 +239,7 @@ function FarmCard({
                     {formatTokenAmount(staked, pool.stakingDecimals)} {pool.stakingSymbol}
                   </div>
                   <div className="text-[10px] text-muted-foreground">
-                    {formatUsd(userStakedUsd)} · {userSharePct.toFixed(2)}% share
+                    {formatWqms(userStakedWqms)} · {userSharePct.toFixed(2)}% share
                   </div>
                 </span>
               </div>
@@ -256,7 +256,7 @@ function FarmCard({
                   >
                     {formatTokenAmount(pending, pool.rewardDecimals, 6)} {pool.rewardSymbol}
                   </motion.div>
-                  <div className="text-[10px] text-muted-foreground">{formatUsd(pendingUsd)}</div>
+                  <div className="text-[10px] text-muted-foreground">{formatWqms(pendingWqms)}</div>
                 </span>
               </div>
               <Button
@@ -543,9 +543,9 @@ export default function Farming() {
             className="grid grid-cols-3 gap-3 max-w-3xl mx-auto mb-8"
           >
             {[
-              { label: 'Total TVL', value: formatUsd(summary.totalTvl), icon: DollarSign, color: 'text-primary' },
+              { label: 'Total TVL (WQMS est.)', value: formatWqms(summary.totalTvl), icon: Coins, color: 'text-primary' },
               { label: 'Active Farms', value: `${summary.activePools} / ${pools.length}`, icon: Coins, color: 'text-accent' },
-              { label: 'Best APR', value: summary.bestApr > 0 ? `${summary.bestApr.toFixed(1)}%` : '—', icon: Flame, color: 'text-success' },
+              { label: 'Best APR estimate', value: summary.bestApr > 0 ? `${summary.bestApr.toFixed(1)}%` : '—', icon: Flame, color: 'text-success' },
             ].map((s) => {
               const Icon = s.icon;
               return (

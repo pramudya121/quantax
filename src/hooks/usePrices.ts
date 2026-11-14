@@ -4,9 +4,8 @@ import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
 import { PAIR_ABI, FACTORY_ABI } from '@/config/abis';
 import { formatUnits } from 'viem';
 
-// Reference anchor only. Every other price is derived from real pool
-// reserves (token priced in WQMS). WQMS is treated as the $1 reference
-// unit — no invented fiat prices for tokens without a pool.
+// QMS and WQMS are shown at their 1:1 wrapper ratio. All other quotes
+// are derived from live pool reserves and denominated in WQMS, not USD.
 export const BASE_PRICES: Record<string, number> = {
   QMS: 1.0,
   WQMS: 1.0,
@@ -56,12 +55,12 @@ export function useTokenPrices() {
       { address: pairAddress, abi: PAIR_ABI, functionName: 'getReserves' },
       { address: pairAddress, abi: PAIR_ABI, functionName: 'token0' },
     ]),
-    // Auto-refresh prices every 45s; serve cached reserves for 20s to throttle RPCs.
+    // Refresh live reserve quotes every 15s while the page is visible.
     query: {
       enabled: pairTargets.length > 0,
-      staleTime: 20_000,
+      staleTime: 5_000,
       gcTime: 60_000,
-      refetchInterval: 45_000,
+      refetchInterval: 15_000,
       refetchIntervalInBackground: false,
     },
   });
@@ -83,9 +82,10 @@ export function useTokenPrices() {
       const wopnReserve = parseFloat(formatUnits(isToken0Wopn ? reserves[0] : reserves[1], 18));
       const tokenReserve = parseFloat(formatUnits(isToken0Wopn ? reserves[1] : reserves[0], token.decimals));
 
-      if (tokenReserve > 0) {
-        // Price in WQMS terms (WQMS = $1)
-        priceMap[token.symbol] = wopnReserve / tokenReserve;
+      const priceInWQMS = wopnReserve / tokenReserve;
+      if (Number.isFinite(wopnReserve) && Number.isFinite(tokenReserve) && tokenReserve > 0 && Number.isFinite(priceInWQMS) && priceInWQMS > 0) {
+        // Pool quotes use WQMS as the unit; wrapped-native parity is not a USD peg.
+        priceMap[token.symbol] = priceInWQMS;
       }
     }
 
@@ -99,70 +99,43 @@ export function useTokenPrices() {
   };
 }
 
-// Hook to calculate price impact for a swap.
-// Uses the Uniswap V2 constant-product formula directly on reserves so the
-// result is bounded between 0 and 100, regardless of decimal mismatches or
-// noisy quote data.
+// Compare the router's current quoted output with the direct pool mid-price.
+// If a trustworthy reserve baseline or quote is unavailable, report unknown
+// instead of inventing a size-based impact estimate.
 export function usePriceImpact(
   fromToken: TokenInfo | null,
   toToken: TokenInfo | null,
   fromAmount: string,
-  _toAmount: string,
+  quotedAmount: string,
   reserves?: [bigint, bigint],
   token0Address?: string
 ) {
   const chainId = useChainId();
   const wrappedNative = getContracts(chainId).WETH;
   return useMemo(() => {
+    const unknown = { priceImpact: null, severity: 'unknown' as const };
     const severityOf = (impact: number) =>
       impact > 10 ? ('high' as const) : impact > 3 ? ('medium' as const) : ('low' as const);
 
-    if (!fromToken || !toToken || !fromAmount) {
-      return { priceImpact: 0, severity: 'low' as const };
-    }
+    if (!fromToken || !toToken || !fromAmount || !quotedAmount || !reserves || !token0Address) return unknown;
 
-    const inputAmount = parseFloat(fromAmount);
-    if (!Number.isFinite(inputAmount) || inputAmount <= 0) {
-      return { priceImpact: 0, severity: 'low' as const };
-    }
+    const inputAmount = Number(fromAmount);
+    const outputAmount = Number(quotedAmount);
+    if (!Number.isFinite(inputAmount) || inputAmount <= 0 || !Number.isFinite(outputAmount) || outputAmount <= 0) return unknown;
+    if (reserves[0] <= 0n || reserves[1] <= 0n) return unknown;
 
-    // Direct-pair AMM formula (preferred): impact = 1 - midOut / amountOut*
-    // where midOut = amountIn * reserveOut / reserveIn (no fee, no slippage)
-    // and amountOut* = amountIn*997 * reserveOut / (reserveIn*1000 + amountIn*997)
-    if (reserves && reserves[0] > 0n && reserves[1] > 0n && token0Address) {
-      const fromAddr = (fromToken.isNative ? wrappedNative : fromToken.address).toLowerCase();
-      const isFromToken0 = token0Address.toLowerCase() === fromAddr;
+    const fromAddr = (fromToken.isNative ? wrappedNative : fromToken.address).toLowerCase();
+    const isFromToken0 = token0Address.toLowerCase() === fromAddr;
+    const reserveIn = Number(formatUnits(isFromToken0 ? reserves[0] : reserves[1], fromToken.decimals));
+    const reserveOut = Number(formatUnits(isFromToken0 ? reserves[1] : reserves[0], toToken.decimals));
+    if (!Number.isFinite(reserveIn) || !Number.isFinite(reserveOut) || reserveIn <= 0 || reserveOut <= 0) return unknown;
 
-      const reserveIn = parseFloat(formatUnits(
-        isFromToken0 ? reserves[0] : reserves[1],
-        fromToken.decimals,
-      ));
-      const reserveOut = parseFloat(formatUnits(
-        isFromToken0 ? reserves[1] : reserves[0],
-        toToken.decimals,
-      ));
+    const midPriceOutput = inputAmount * (reserveOut / reserveIn);
+    if (!Number.isFinite(midPriceOutput) || midPriceOutput <= 0 || outputAmount > midPriceOutput) return unknown;
 
-      if (reserveIn > 0 && reserveOut > 0) {
-        const amountInWithFee = inputAmount * 0.997;
-        const numerator = amountInWithFee * reserveOut;
-        const denominator = reserveIn + amountInWithFee;
-        const amountOut = numerator / denominator;
-        const midOut = inputAmount * (reserveOut / reserveIn);
-
-        if (midOut > 0 && amountOut > 0 && amountOut <= midOut) {
-          const impact = ((midOut - amountOut) / midOut) * 100;
-          const clamped = Math.max(0, Math.min(impact, 99.99));
-          return { priceImpact: clamped, severity: severityOf(clamped) };
-        }
-        // If amountOut > midOut something is off (stale reserves) — treat as low impact.
-        return { priceImpact: 0, severity: 'low' as const };
-      }
-    }
-
-    // Multi-hop / unknown reserves fallback: conservative size-based estimate.
-    const estimatedImpact = Math.min(inputAmount * 0.05, 10);
-    return { priceImpact: estimatedImpact, severity: severityOf(estimatedImpact) };
-  }, [fromToken, toToken, fromAmount, reserves, token0Address, wrappedNative]);
+    const impact = Math.max(0, Math.min(((midPriceOutput - outputAmount) / midPriceOutput) * 100, 99.99));
+    return { priceImpact: impact, severity: severityOf(impact) };
+  }, [fromToken, toToken, fromAmount, quotedAmount, reserves, token0Address, wrappedNative]);
 }
 
 // Hook to calculate TVL for a pool

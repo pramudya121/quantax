@@ -205,8 +205,12 @@ export default function Liquidity() {
   } = useApprovePair();
 
   // Check if approvals needed for add liquidity
-  const amountABigInt = amountA ? parseUnits(amountA, tokenA?.decimals || 18) : 0n;
-  const amountBBigInt = amountB ? parseUnits(amountB, tokenB?.decimals || 18) : 0n;
+  const amountABigInt = useMemo(() => {
+    try { return amountA ? parseUnits(amountA, tokenA?.decimals ?? 18) : 0n; } catch { return 0n; }
+  }, [amountA, tokenA?.decimals]);
+  const amountBBigInt = useMemo(() => {
+    try { return amountB ? parseUnits(amountB, tokenB?.decimals ?? 18) : 0n; } catch { return 0n; }
+  }, [amountB, tokenB?.decimals]);
   const needsApprovalA = tokenA && !tokenA.isNative && amountABigInt > 0n && allowanceA !== undefined && allowanceA < amountABigInt;
   const needsApprovalB = tokenB && !tokenB.isNative && amountBBigInt > 0n && allowanceB !== undefined && allowanceB < amountBBigInt;
 
@@ -258,7 +262,7 @@ export default function Liquidity() {
   // Watch router success (add/remove liquidity)
   useEffect(() => {
     if (router.isSuccess && router.hash) {
-      const txType = activeTab === 'add' ? 'add_liquidity' : 'remove_liquidity';
+      const txType: 'add_liquidity' | 'remove_liquidity' = activeTab === 'add' ? 'add_liquidity' : 'remove_liquidity';
       toast.success(activeTab === 'add' ? 'Liquidity Added!' : 'Liquidity Removed!', {
         description: `Transaction confirmed on-chain`,
         action: {
@@ -268,7 +272,7 @@ export default function Liquidity() {
       });
       addTransaction({
         hash: router.hash,
-        type: txType as any,
+        type: txType,
         status: 'success',
         details: {
           tokenA: tokenA?.symbol,
@@ -299,8 +303,8 @@ export default function Liquidity() {
     if (reserveA === 0n || reserveB === 0n) return ''; // New pool, no ratio to calc
     
     try {
-      const inputDecimals = isTokenA ? (tokenA?.decimals || 18) : (tokenB?.decimals || 18);
-      const outputDecimals = isTokenA ? (tokenB?.decimals || 18) : (tokenA?.decimals || 18);
+      const inputDecimals = isTokenA ? (tokenA?.decimals ?? 18) : (tokenB?.decimals ?? 18);
+      const outputDecimals = isTokenA ? (tokenB?.decimals ?? 18) : (tokenA?.decimals ?? 18);
       const inputBigInt = parseUnits(inputAmount, inputDecimals);
       
       let optimalAmount: bigint;
@@ -357,15 +361,16 @@ export default function Liquidity() {
 
   const priceRatio = useMemo(() => {
     if (reserveA === 0n || reserveB === 0n) return null;
-    const resA = parseFloat(formatUnits(reserveA, tokenA?.decimals || 18));
-    const resB = parseFloat(formatUnits(reserveB, tokenB?.decimals || 18));
+    const resA = parseFloat(formatUnits(reserveA, tokenA?.decimals ?? 18));
+    const resB = parseFloat(formatUnits(reserveB, tokenB?.decimals ?? 18));
     return { aPerB: resA / resB, bPerA: resB / resA };
   }, [reserveA, reserveB, tokenA, tokenB]);
 
   const poolShare = useMemo(() => {
     if (!amountA || !amountB || reserveA === 0n) return null;
     const inputA = parseFloat(amountA);
-    const currentA = parseFloat(formatUnits(reserveA, tokenA?.decimals || 18));
+    const currentA = parseFloat(formatUnits(reserveA, tokenA?.decimals ?? 18));
+    if (!Number.isFinite(inputA) || !Number.isFinite(currentA) || inputA <= 0 || currentA <= 0) return null;
     return ((inputA / (currentA + inputA)) * 100).toFixed(2);
   }, [amountA, amountB, reserveA, tokenA]);
 
@@ -530,7 +535,7 @@ export default function Liquidity() {
       aria-label="Liquidity Management"
     >
 
-    <SEO title="Provide Liquidity — QUANTAX" description="Add or remove liquidity on QUANTAX pools and earn 0.3% trading fees from every swap." path="/liquidity" />
+    <SEO title="Provide Liquidity — QUANTAX" description="Add or remove liquidity in QUANTAX pools. Fee terms depend on the deployed contracts." path="/liquidity" />
       <Spotlight className="hidden md:block" />
       <GlowingStarsBackground starCount={30} className="opacity-20" />
       <ParticleField particleCount={30} colorScheme="dragon" className="opacity-30" />
@@ -557,7 +562,7 @@ export default function Liquidity() {
             Manage Liquidity
           </h1>
           <TextGenerateEffect 
-            words="Provide liquidity and earn 0.3% on every trade. Auto-calculation ensures perfect token ratios."
+            words="Provide liquidity to on-chain pools. Review each pool and confirm contract terms before depositing."
             className="text-sm md:text-base text-muted-foreground font-normal"
           />
           <motion.div
@@ -567,7 +572,7 @@ export default function Liquidity() {
             className="inline-flex items-center gap-1.5 mt-4 px-3 py-1 rounded-full bg-success/10 text-success text-xs"
           >
             <Shield className="w-3 h-3" aria-hidden="true" />
-            <span className="uppercase tracking-[0.14em]">Secure & Audited</span>
+            <span className="uppercase tracking-[0.14em]">Wallet confirmation required</span>
           </motion.div>
         </header>
 
@@ -619,7 +624,7 @@ export default function Liquidity() {
                       </h3>
                       <span className="text-xs text-muted-foreground flex items-center gap-1 bg-muted/50 px-2 py-1 rounded-full">
                         <Info className="w-3 h-3" />
-                        Earn 0.3% fees
+                        Contract-defined fees
                       </span>
                     </div>
 
@@ -978,14 +983,14 @@ export default function Liquidity() {
                               {tokenA && <img src={tokenA.logoURI} alt={tokenA.symbol} className="w-5 h-5 rounded-full" />}
                               <span className="text-sm">{tokenA?.symbol}</span>
                             </div>
-                            <span className="font-medium">~{(parseFloat(formatUnits(reserveA, tokenA?.decimals || 18)) * (removePercent / 100) * parseFloat(formatEther(lpBalance)) / parseFloat(formatEther(lpTotalSupply))).toFixed(4)}</span>
+                            <span className="font-medium">~{(parseFloat(formatUnits(reserveA, tokenA?.decimals ?? 18)) * (removePercent / 100) * parseFloat(formatEther(lpBalance)) / parseFloat(formatEther(lpTotalSupply))).toFixed(4)}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2">
                               {tokenB && <img src={tokenB.logoURI} alt={tokenB.symbol} className="w-5 h-5 rounded-full" />}
                               <span className="text-sm">{tokenB?.symbol}</span>
                             </div>
-                            <span className="font-medium">~{(parseFloat(formatUnits(reserveB, tokenB?.decimals || 18)) * (removePercent / 100) * parseFloat(formatEther(lpBalance)) / parseFloat(formatEther(lpTotalSupply))).toFixed(4)}</span>
+                            <span className="font-medium">~{(parseFloat(formatUnits(reserveB, tokenB?.decimals ?? 18)) * (removePercent / 100) * parseFloat(formatEther(lpBalance)) / parseFloat(formatEther(lpTotalSupply))).toFixed(4)}</span>
                           </div>
                         </div>
                       </motion.div>
