@@ -14,6 +14,7 @@ import { PoolCard } from '@/components/pools/PoolCard';
 import { PoolStats } from '@/components/pools/PoolStats';
 import { cn } from '@/lib/utils';
 import { formatUnits } from 'viem';
+import { getTokenPrice } from '@/lib/pricing';
 
 export default function Pools() {
   const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
@@ -36,8 +37,8 @@ export default function Pools() {
 
   const totalTVL = useMemo(() => {
     return pools.reduce((acc, pool) => {
-      const price0 = prices[pool.token0Symbol] || 0;
-      const price1 = prices[pool.token1Symbol] || 0;
+      const price0 = getTokenPrice(prices, pool.token0Address);
+      const price1 = getTokenPrice(prices, pool.token1Address);
       const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
       const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
       return acc + value0 + value1;
@@ -46,8 +47,8 @@ export default function Pools() {
 
   const filteredPools = useMemo(() => {
     const computeTvl = (pool: typeof pools[number]) => {
-      const p0 = prices[pool.token0Symbol] || 0;
-      const p1 = prices[pool.token1Symbol] || 0;
+      const p0 = getTokenPrice(prices, pool.token0Address);
+      const p1 = getTokenPrice(prices, pool.token1Address);
       const v0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * p0;
       const v1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * p1;
       return v0 + v1;

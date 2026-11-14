@@ -6,6 +6,7 @@ import { useAccount, useBalance, useReadContracts, useChainId } from 'wagmi';
 import { formatEther, formatUnits } from 'viem';
 import { useTokenBalance } from '@/hooks/useContract';
 import { getTokenList, getContracts } from '@/config/contracts';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { BorderBeam } from '@/components/ui/magic/BorderBeam';
@@ -21,6 +22,7 @@ import { SendTokenModal } from '@/components/portfolio/SendTokenModal';
 import { PortfolioAllocationChart } from '@/components/portfolio/AllocationChart';
 import { PAIR_ABI, ERC20_ABI } from '@/config/abis';
 import { cn } from '@/lib/utils';
+import { getTokenPrice } from '@/lib/pricing';
 
 type PortfolioTab = 'overview' | 'assets' | 'lp' | 'history';
 
@@ -33,8 +35,12 @@ const TABS: { id: PortfolioTab; label: string; icon: React.ReactNode }[] = [
 
 export default function Portfolio() {
   const { address, isConnected } = useAccount();
-  const { data: opnBalance, refetch: refetchOpn, isLoading } = useBalance({ address });
   const chainId = useChainId();
+  const { data: opnBalance, refetch: refetchOpn, isLoading } = useBalance({
+    address,
+    chainId: QMS_CHAIN_ID,
+    query: { enabled: chainId === QMS_CHAIN_ID && !!address },
+  });
   const C = getContracts(chainId);
   const chainTokens = useMemo(() => getTokenList(chainId), [chainId]);
   const erc20Tokens = useMemo(() => chainTokens.filter((t) => !t.isNative), [chainTokens]);
@@ -48,7 +54,7 @@ export default function Portfolio() {
       functionName: 'balanceOf',
       args: address ? [address] : undefined,
     })),
-    query: { enabled: !!address && erc20Tokens.length > 0, refetchInterval: 30_000 },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!address && erc20Tokens.length > 0, refetchInterval: 30_000 },
   });
 
   const { transactions } = useTransactionHistory();
@@ -68,7 +74,7 @@ export default function Portfolio() {
       functionName: 'balanceOf',
       args: address ? [address] : undefined,
     })),
-    query: { enabled: pools.length > 0 && !!address },
+    query: { enabled: chainId === QMS_CHAIN_ID && pools.length > 0 && !!address },
   });
 
   const lpPositions = useMemo(() => {
@@ -85,8 +91,8 @@ export default function Portfolio() {
         const res1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18));
         const myToken0 = res0 * (share / 100);
         const myToken1 = res1 * (share / 100);
-        const price0 = prices[pool.token0Symbol] || 0;
-        const price1 = prices[pool.token1Symbol] || 0;
+        const price0 = getTokenPrice(prices, pool.token0Address);
+        const price1 = getTokenPrice(prices, pool.token1Address);
         const value = (myToken0 * price0) + (myToken1 * price1);
         return [{ ...pool, lpBalance: balance, lpBalanceFormatted: balanceFormatted, share, myToken0, myToken1, value }];
       });
@@ -103,7 +109,7 @@ export default function Portfolio() {
         name: nativeToken.name,
         balance: opnBalance ? formatEther(opnBalance.value) : '0',
         logo: nativeToken.logoURI,
-        price: prices[nativeToken.symbol] || 1,
+        price: getTokenPrice(prices, nativeToken.address, C.WETH),
         address: 'native',
         isNative: true,
         decimals: nativeToken.decimals,
@@ -116,14 +122,14 @@ export default function Portfolio() {
         name: t.name,
         balance: raw ? formatUnits(raw, t.decimals) : '0',
         logo: t.logoURI,
-        price: prices[t.symbol] || 0,
+        price: getTokenPrice(prices, t.address),
         address: t.address,
         isNative: false,
         decimals: t.decimals,
       });
     });
     return list;
-  }, [nativeToken, erc20Tokens, tokenBalances.data, opnBalance, prices]);
+  }, [nativeToken, erc20Tokens, tokenBalances.data, opnBalance, prices, C.WETH]);
 
   const totalTokenValue = tokens.reduce((acc, token) => acc + parseFloat(token.balance) * token.price, 0);
   const totalLPValue = lpPositions.reduce((acc, lp) => acc + lp.value, 0);

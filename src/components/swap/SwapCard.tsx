@@ -484,12 +484,12 @@ export function SwapCard() {
   // Values are WQMS spot estimates, not fiat prices.
   const fromWqmsValue = useMemo(() => {
     if (!fromToken || !fromAmount) return 0;
-    return parseFloat(fromAmount) * getPrice(fromToken.symbol);
+    return parseFloat(fromAmount) * getPrice(fromToken.address);
   }, [fromToken, fromAmount, getPrice]);
 
   const toWqmsValue = useMemo(() => {
     if (!toToken || !toAmount) return 0;
-    return parseFloat(toAmount) * getPrice(toToken.symbol);
+    return parseFloat(toAmount) * getPrice(toToken.address);
   }, [toToken, toAmount, getPrice]);
 
   // High slippage warning

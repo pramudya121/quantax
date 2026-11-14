@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useChainId } from 'wagmi';
 import { formatUnits } from 'viem';
-import { getTokenList } from '@/config/contracts';
+import { getContracts, getTokenList } from '@/config/contracts';
+import { getTokenPrice } from '@/lib/pricing';
 import { Link } from 'react-router-dom';
 import { TokenDetails } from '@/components/analytics/TokenDetails';
 import { TokenIcon } from '@/components/ui/TokenIcon';
@@ -77,8 +78,8 @@ export default function Analytics() {
 
   const totalTVL = useMemo(() => {
     return pools.reduce((acc, pool) => {
-      const price0 = prices[pool.token0Symbol] || 0;
-      const price1 = prices[pool.token1Symbol] || 0;
+      const price0 = getTokenPrice(prices, pool.token0Address);
+      const price1 = getTokenPrice(prices, pool.token1Address);
       const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
       const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
       return acc + value0 + value1;
@@ -99,8 +100,8 @@ export default function Analytics() {
   const topPools = useMemo(() => {
     return pools
       .map(pool => {
-        const price0 = prices[pool.token0Symbol] || 0;
-        const price1 = prices[pool.token1Symbol] || 0;
+        const price0 = getTokenPrice(prices, pool.token0Address);
+        const price1 = getTokenPrice(prices, pool.token1Address);
         const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
         const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
         const tvl = value0 + value1;
@@ -112,39 +113,67 @@ export default function Analytics() {
       .sort((a, b) => b.tvl - a.tvl);
   }, [pools, prices, volStats]);
 
-  // Token analytics: aggregate liquidity per token
+  // Aggregate by contract address so a spoofed symbol cannot inherit another token's quote.
   const tokenAnalytics = useMemo(() => {
-    const tokenMap: Record<string, { symbol: string; logo: string; totalLiquidity: number; poolCount: number; price: number }> = {};
-    
-    pools.forEach(pool => {
-      const price0 = prices[pool.token0Symbol] || 0;
-      const price1 = prices[pool.token1Symbol] || 0;
-      const val0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
-      const val1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
-      
-      if (!tokenMap[pool.token0Symbol]) {
-        tokenMap[pool.token0Symbol] = { symbol: pool.token0Symbol, logo: pool.token0?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price0 };
-      }
-      tokenMap[pool.token0Symbol].totalLiquidity += val0;
-      if (pool.reserve0 > 0n) tokenMap[pool.token0Symbol].poolCount++;
+    type TokenAnalyticsEntry = {
+      address: string;
+      symbol: string;
+      logo: string;
+      totalLiquidity: number;
+      poolCount: number;
+      price: number;
+    };
+    const tokenMap: Record<string, TokenAnalyticsEntry> = {};
 
-      if (!tokenMap[pool.token1Symbol]) {
-        tokenMap[pool.token1Symbol] = { symbol: pool.token1Symbol, logo: pool.token1?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price1 };
-      }
-      tokenMap[pool.token1Symbol].totalLiquidity += val1;
-      if (pool.reserve1 > 0n) tokenMap[pool.token1Symbol].poolCount++;
+    const addToken = (
+      address: string,
+      symbol: string,
+      logo: string,
+      price: number,
+      liquidity: number,
+      hasLiquidity: boolean,
+    ) => {
+      const key = address.toLowerCase();
+      const entry = tokenMap[key] ?? {
+        address,
+        symbol,
+        logo: logo || '/tokens/qms.svg',
+        totalLiquidity: 0,
+        poolCount: 0,
+        price,
+      };
+      entry.totalLiquidity += liquidity;
+      entry.poolCount += hasLiquidity ? 1 : 0;
+      entry.price = price;
+      tokenMap[key] = entry;
+    };
+
+    pools.forEach(pool => {
+      const price0 = getTokenPrice(prices, pool.token0Address);
+      const price1 = getTokenPrice(prices, pool.token1Address);
+      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
+      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
+      const hasLiquidity = pool.reserve0 > 0n && pool.reserve1 > 0n;
+      addToken(pool.token0Address, pool.token0Symbol, pool.token0?.logoURI || '', price0, value0, hasLiquidity);
+      addToken(pool.token1Address, pool.token1Symbol, pool.token1?.logoURI || '', price1, value1, hasLiquidity);
     });
 
-    // Add tokens not yet in pools
-    tokenList.forEach(t => {
-      const sym = t.symbol;
-      if (!tokenMap[sym]) {
-        tokenMap[sym] = { symbol: sym, logo: t.logoURI, totalLiquidity: 0, poolCount: 0, price: prices[sym] || 0 };
+    tokenList.forEach(token => {
+      const key = token.address.toLowerCase();
+      if (!tokenMap[key]) {
+        tokenMap[key] = {
+          address: token.address,
+          symbol: token.symbol,
+          logo: token.logoURI,
+          totalLiquidity: 0,
+          poolCount: 0,
+          price: getTokenPrice(prices, token.address, getContracts(chainId).WETH),
+        };
       }
     });
 
     return Object.values(tokenMap).sort((a, b) => b.totalLiquidity - a.totalLiquidity);
-  }, [pools, prices, tokenList]);
+  }, [pools, prices, tokenList, chainId]);
 
   const chartPools = topPools.filter(p => p.tvl > 0).slice(0, 8);
   const maxTVL = Math.max(...chartPools.map(p => p.tvl), 1);
@@ -305,7 +334,7 @@ export default function Analytics() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
                     {tokenList.map((token, i) => (
                       <motion.div
-                        key={token.symbol}
+                      key={token.address}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 + i * 0.05 }}
@@ -314,7 +343,7 @@ export default function Analytics() {
                         <TokenIcon src={token.logoURI} symbol={token.symbol} size={32} fallbackSrc="/tokens/qms.svg" className="border border-border mb-2" />
                         <span className="text-xs font-bold">{token.symbol}</span>
                         <span className="text-[10px] text-muted-foreground">
-                          {prices[token.symbol] > 0 ? `${prices[token.symbol].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} WQMS est.` : 'No pool quote'}
+                          {getTokenPrice(prices, token.address, getContracts(chainId).WETH) > 0 ? `${getTokenPrice(prices, token.address, getContracts(chainId).WETH).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} WQMS est.` : 'No pool quote'}
                         </span>
                       </motion.div>
                     ))}

@@ -35,6 +35,7 @@ import { getFarmingContract } from '@/config/farming';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { getTokenByAddress } from '@/config/contracts';
 import { QMS_CHAIN_ID, getExplorerUrl } from '@/config/chains';
+import { getTokenPrice } from '@/lib/pricing';
 
 function TokenLogo({ address, symbol, size = 32 }: { address: string; symbol: string; size?: number }) {
   const meta = getTokenByAddress(address);
@@ -140,8 +141,8 @@ function FarmCard({
   }, [onPositionChange, pool.pid, staked, pending]);
 
   // Derived numbers
-  const stakingPrice = prices[pool.stakingSymbol] ?? 0;
-  const rewardPrice = prices[pool.rewardSymbol] ?? 0;
+  const stakingPrice = getTokenPrice(prices, pool.stakingToken);
+  const rewardPrice = getTokenPrice(prices, pool.rewardToken);
   const apr = calculateAPR(pool, stakingPrice, rewardPrice);
   const totalStakedNum = Number(formatUnits(pool.totalStaked, pool.stakingDecimals));
   const userStakedNum = Number(formatUnits(staked, pool.stakingDecimals));
@@ -454,8 +455,8 @@ export default function Farming() {
     let activePools = 0;
     let bestApr = 0;
     for (const p of pools) {
-      const stakeP = prices[p.stakingSymbol] ?? 0;
-      const rewardP = prices[p.rewardSymbol] ?? 0;
+      const stakeP = getTokenPrice(prices, p.stakingToken);
+      const rewardP = getTokenPrice(prices, p.rewardToken);
       const staked = Number(formatUnits(p.totalStaked, p.stakingDecimals));
       totalTvl += staked * stakeP;
       if (p.totalStaked > 0n) activePools += 1;

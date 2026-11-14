@@ -37,7 +37,7 @@ export function PriceHistoryChart({ pools, logs, latestBlock, isLoading }: Props
 
     return poolLogs.map(l => {
       // price = token1 per token0 by default
-      const isToken0In = l.tokenInSymbol === pool.token0Symbol;
+      const isToken0In = l.tokenInAddress.toLowerCase() === pool.token0Address.toLowerCase();
       const rawPrice = isToken0In
         ? (l.amountIn > 0 ? l.amountOut / l.amountIn : 0)
         : (l.amountOut > 0 ? l.amountIn / l.amountOut : 0);

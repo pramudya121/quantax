@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, X, Loader2, CheckCircle, AlertCircle, ChevronDown } from 'lucide-react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendTransaction } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useSendTransaction, useChainId } from 'wagmi';
 import { formatUnits, isAddress, parseUnits } from 'viem';
 import { isValidAmount as isValidAmountInput } from '@/lib/security';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ERC20_ABI } from '@/config/abis';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { cn } from '@/lib/utils';
 
 interface TokenOption {
@@ -28,6 +29,8 @@ interface SendTokenModalProps {
 
 export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendTokenModalProps) {
   const { address } = useAccount();
+  const chainId = useChainId();
+  const isQmsNetwork = chainId === QMS_CHAIN_ID;
   const [selectedToken, setSelectedToken] = useState<TokenOption | null>(tokens[0] || null);
 
   // Sync selection with initialSymbol whenever modal opens / token list changes
@@ -80,10 +83,10 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
   }, [selectedToken, balanceUnits]);
   const isValidRecipient = recipient && isAddress(recipient);
   const hasEnoughBalance = amountUnits !== null && amountUnits > 0n && spendableBalanceUnits !== null && amountUnits <= spendableBalanceUnits;
-  const canSend = Boolean(isValidRecipient && hasEnoughBalance && !isPending && selectedToken);
+  const canSend = Boolean(isQmsNetwork && address && isValidRecipient && hasEnoughBalance && !isPending && selectedToken);
 
   const handleSend = async () => {
-    if (!canSend || !selectedToken || amountUnits === null) return;
+    if (!isQmsNetwork || !address || !canSend || !selectedToken || amountUnits === null) return;
 
     try {
       if (selectedToken.isNative) {
@@ -282,6 +285,12 @@ export function SendTokenModal({ isOpen, onClose, tokens, initialSymbol }: SendT
                   <AlertCircle className="w-4 h-4 text-destructive shrink-0" />
                   <p className="text-xs text-destructive">{(error as Error).message?.slice(0, 100)}</p>
                 </div>
+              )}
+
+              {!isQmsNetwork && (
+                <p role="alert" className="mb-3 text-xs text-destructive">
+                  Switch to QMS Testnet before sending assets.
+                </p>
               )}
 
               {/* Send Button */}

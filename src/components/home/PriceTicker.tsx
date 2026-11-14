@@ -11,10 +11,10 @@ function formatQuote(value: number) {
 }
 
 export function PriceTicker() {
-  const { prices, isLoading } = useTokenPrices();
+  const { getPrice, isLoading } = useTokenPrices();
   const quotedTokens = getTokenList()
-    .filter((token) => Number.isFinite(prices[token.symbol]) && prices[token.symbol] > 0)
-    .map((token) => token.symbol);
+    .map((token) => ({ token, price: getPrice(token.address) }))
+    .filter(({ price }) => Number.isFinite(price) && price > 0);
 
   return (
     <div aria-label="Live token quotes denominated in WQMS" className="overflow-hidden border-b border-border/50 bg-background/50 py-2 backdrop-blur-sm">
@@ -22,11 +22,11 @@ export function PriceTicker() {
         <p className="px-4 py-2 text-center text-xs text-muted-foreground" role="status">Loading on-chain quotes…</p>
       ) : quotedTokens.length > 0 ? (
         <Marquee pauseOnHover speed={30}>
-          {quotedTokens.map((symbol) => (
-            <div key={symbol} className="mx-2 flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-4 py-2">
-              <TokenIcon src={getTokenList().find((token) => token.symbol === symbol)?.logoURI} symbol={symbol} alt={symbol} size={20} />
-              <span className="font-semibold">{symbol}</span>
-              <span className="text-muted-foreground">{formatQuote(prices[symbol])} WQMS</span>
+          {quotedTokens.map(({ token, price }) => (
+            <div key={token.address} className="mx-2 flex items-center gap-2 rounded-lg border border-border/50 bg-muted/30 px-4 py-2">
+              <TokenIcon src={token.logoURI} symbol={token.symbol} alt={token.symbol} size={20} />
+              <span className="font-semibold">{token.symbol}</span>
+              <span className="text-muted-foreground">{formatQuote(price)} WQMS</span>
             </div>
           ))}
         </Marquee>

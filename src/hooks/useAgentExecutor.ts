@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import { useAccount, usePublicClient, useWriteContract, useChainId } from 'wagmi';
-import { erc20Abi, parseUnits, type Address } from 'viem';
+import { erc20Abi, parseUnits, type Address, type PublicClient } from 'viem';
 import { ROUTER_ABI, WETH_ABI } from '@/config/abis';
 import { getContracts, getTokenBySymbol } from '@/config/contracts';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { FARMING_ABI, getFarmingContract } from '@/config/farming';
 import type { AgentAction } from '@/components/chat/agentTools';
 
@@ -12,6 +13,15 @@ function resolveToken(symbol: string) {
   const t = getTokenBySymbol(symbol);
   if (!t) throw new Error(`Unknown token: ${symbol}`);
   return t;
+}
+
+async function readTokenDecimals(client: PublicClient, token: Address): Promise<number> {
+  const raw = await client.readContract({ address: token, abi: erc20Abi, functionName: 'decimals' });
+  const decimals = Number(raw);
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 255) {
+    throw new Error('Token precision is unavailable; transaction canceled.');
+  }
+  return decimals;
 }
 
 /** Executes an agent action on-chain and returns the tx hash. */
@@ -33,7 +43,8 @@ export function useAgentExecutor() {
         const hash = await (writeContractAsync as any)({
           address: token, abi: erc20Abi, functionName: 'approve', args: [spender, amount],
         });
-        await publicClient.waitForTransactionReceipt({ hash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash });
+        if (receipt.status !== 'success') throw new Error('Token approval transaction reverted.');
       }
     },
     [address, publicClient, writeContractAsync],
@@ -42,6 +53,8 @@ export function useAgentExecutor() {
   const execute = useCallback(
     async (action: AgentAction): Promise<string> => {
       if (!address) throw new Error('Wallet not connected');
+      if (chainId !== QMS_CHAIN_ID) throw new Error('Switch to QMS Testnet before executing this action.');
+      if (!publicClient) throw new Error('QMS Testnet RPC client is unavailable.');
       const deadline = BigInt(Math.floor(Date.now() / 1000) + DEADLINE_SECS);
 
       switch (action.type) {
@@ -65,9 +78,8 @@ export function useAgentExecutor() {
           const from = resolveToken(action.fromSymbol);
           const to = resolveToken(action.toSymbol);
           const amountIn = parseUnits(action.amount, from.decimals);
-          // Clamp slippage to a safe range [0.01%, 50%] to prevent MEV sandwich
-          // attacks from AI-emitted values like 100% (which would yield minOut = 0).
-          const slippage = Math.min(Math.max(action.slippage ?? 0.5, 0.01), 50);
+          // Agent-generated swaps must not permit the extremely loose manual slippage ceiling.
+          const slippage = Math.min(Math.max(action.slippage ?? 0.5, 0.01), 5);
 
           // QMS <-> WQMS: route to wrap/unwrap
           if (from.isNative && to.symbol === 'WQMS') return execute({ type: 'wrap', amount: action.amount });
@@ -209,12 +221,7 @@ export function useAgentExecutor() {
           })) as any;
           const stakingToken = info[0] as Address;
           // Detect decimals
-          let decimals = 18;
-          try {
-            decimals = Number(await publicClient.readContract({
-              address: stakingToken, abi: erc20Abi, functionName: 'decimals',
-            }));
-          } catch {}
+          const decimals = await readTokenDecimals(publicClient, stakingToken);
           const amount = parseUnits(action.amount, decimals);
           await ensureAllowance(stakingToken, FARM, amount);
           const hash = await (writeContractAsync as any)({
@@ -229,12 +236,7 @@ export function useAgentExecutor() {
             functionName: 'poolInfo', args: [BigInt(action.pid)],
           })) as any;
           const stakingToken = info[0] as Address;
-          let decimals = 18;
-          try {
-            decimals = Number(await publicClient.readContract({
-              address: stakingToken, abi: erc20Abi, functionName: 'decimals',
-            }));
-          } catch {}
+          const decimals = await readTokenDecimals(publicClient, stakingToken);
           const amount = parseUnits(action.amount, decimals);
           const hash = await (writeContractAsync as any)({
             address: FARM, abi: FARMING_ABI,

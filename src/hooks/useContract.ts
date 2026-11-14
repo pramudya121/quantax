@@ -2,7 +2,17 @@
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useReadContracts, useAccount, useChainId } from 'wagmi';
 import { parseEther, formatEther, parseUnits, formatUnits, encodeFunctionData } from 'viem';
 import { getContracts } from '@/config/contracts';
+import { QMS_CHAIN_ID } from '@/config/chains';
+import { toast } from 'sonner';
 import { ROUTER_ABI, FACTORY_ABI, WETH_ABI, ERC20_ABI, PAIR_ABI, MULTICALL_ABI } from '@/config/abis';
+
+function writeOnQms(writeContract: (request: any) => void, chainId: number, request: any) {
+  if (chainId !== QMS_CHAIN_ID) {
+    toast.error('Switch to QMS Testnet before submitting a transaction.');
+    return;
+  }
+  writeContract(request);
+}
 
 // ============= ROUTER HOOKS =============
 export function useRouter() {
@@ -18,7 +28,7 @@ export function useRouter() {
     deadline: bigint, 
     value: bigint
   ) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'swapExactETHForTokens',
@@ -35,7 +45,7 @@ export function useRouter() {
     to: `0x${string}`,
     deadline: bigint
   ) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'swapExactTokensForETH',
@@ -51,7 +61,7 @@ export function useRouter() {
     to: `0x${string}`,
     deadline: bigint
   ) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'swapExactTokensForTokens',
@@ -69,7 +79,7 @@ export function useRouter() {
     to: `0x${string}`,
     deadline: bigint
   ) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'addLiquidity',
@@ -86,7 +96,7 @@ export function useRouter() {
     deadline: bigint,
     value: bigint
   ) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'addLiquidityETH',
@@ -105,7 +115,7 @@ export function useRouter() {
     to: `0x${string}`,
     deadline: bigint
   ) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'removeLiquidity',
@@ -121,7 +131,7 @@ export function useRouter() {
     to: `0x${string}`,
     deadline: bigint
   ) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.ROUTER,
       abi: ROUTER_ABI,
       functionName: 'removeLiquidityETH',
@@ -154,7 +164,7 @@ export function useFactory() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const createPair = (tokenA: `0x${string}`, tokenB: `0x${string}`) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.FACTORY,
       abi: FACTORY_ABI,
       functionName: 'createPair',
@@ -173,7 +183,7 @@ export function useGetPair(tokenA: `0x${string}` | undefined, tokenB: `0x${strin
     abi: FACTORY_ABI as any,
     functionName: 'getPair',
     args: tokenA && tokenB ? [tokenA, tokenB] : undefined,
-    query: { enabled: !!tokenA && !!tokenB },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!tokenA && !!tokenB },
   });
   return { ...result, data: result.data as `0x${string}` | undefined };
 }
@@ -186,7 +196,7 @@ export function useAllPairs(index: number | undefined) {
     abi: FACTORY_ABI as any,
     functionName: 'allPairs',
     args: index !== undefined ? [BigInt(index)] : undefined,
-    query: { enabled: index !== undefined },
+    query: { enabled: chainId === QMS_CHAIN_ID && index !== undefined },
   });
   return { ...result, data: result.data as `0x${string}` | undefined };
 }
@@ -197,24 +207,27 @@ export function useAllPairsLength() {
   const result = useReadContract({ 
     address: C.FACTORY as `0x${string}`, 
     abi: FACTORY_ABI as any, 
-    functionName: 'allPairsLength' 
+    functionName: 'allPairsLength',
+    query: { enabled: chainId === QMS_CHAIN_ID },
   });
   return { ...result, data: result.data as bigint | undefined };
 }
 
 // ============= PAIR HOOKS =============
 export function usePairReserves(pairAddress: `0x${string}` | undefined) {
+  const chainId = useChainId();
   const result = useReadContract({
     address: pairAddress,
     abi: PAIR_ABI as any,
     functionName: 'getReserves',
-    query: { enabled: !!pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
   });
   return { ...result, data: result.data as [bigint, bigint, number] | undefined };
 }
 
 export function usePairTokens(pairAddress: `0x${string}` | undefined) {
-  const enabled = !!pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000';
+  const chainId = useChainId();
+  const enabled = chainId === QMS_CHAIN_ID && !!pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000';
   
   const token0Result = useReadContract({
     address: pairAddress,
@@ -238,22 +251,24 @@ export function usePairTokens(pairAddress: `0x${string}` | undefined) {
 }
 
 export function usePairTotalSupply(pairAddress: `0x${string}` | undefined) {
+  const chainId = useChainId();
   const result = useReadContract({
     address: pairAddress,
     abi: PAIR_ABI as any,
     functionName: 'totalSupply',
-    query: { enabled: !!pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
   });
   return { ...result, data: result.data as bigint | undefined };
 }
 
 export function usePairBalance(pairAddress: `0x${string}` | undefined, userAddress: `0x${string}` | undefined) {
+  const chainId = useChainId();
   const result = useReadContract({
     address: pairAddress,
     abi: PAIR_ABI as any,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
-    query: { enabled: !!pairAddress && !!userAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!pairAddress && !!userAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
   });
   return { ...result, data: result.data as bigint | undefined };
 }
@@ -269,7 +284,7 @@ export function usePairAllowance(
     abi: PAIR_ABI as any,
     functionName: 'allowance',
     args: ownerAddress ? [ownerAddress, C.ROUTER as `0x${string}`] : undefined,
-    query: { enabled: !!pairAddress && !!ownerAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!pairAddress && !!ownerAddress && pairAddress !== '0x0000000000000000000000000000000000000000' },
   });
   return { ...result, data: result.data as bigint | undefined };
 }
@@ -281,7 +296,7 @@ export function useApprovePair() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const approve = (pairAddress: `0x${string}`, amount: bigint) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: pairAddress,
       abi: PAIR_ABI,
       functionName: 'approve',
@@ -301,6 +316,7 @@ export function useRouterWETH() {
     address: C.ROUTER as `0x${string}`,
     abi: ROUTER_ABI as any,
     functionName: 'WETH',
+    query: { enabled: chainId === QMS_CHAIN_ID },
   });
   return { ...result, data: result.data as `0x${string}` | undefined };
 }
@@ -313,7 +329,7 @@ export function useGetAmountsOut(amountIn: bigint | undefined, path: `0x${string
     abi: ROUTER_ABI as any,
     functionName: 'getAmountsOut',
     args: amountIn && amountIn > 0n ? [amountIn, path] : undefined,
-    query: { enabled: !!amountIn && amountIn > 0n && path.length >= 2 },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!amountIn && amountIn > 0n && path.length >= 2 },
   });
   return { ...result, data: result.data as bigint[] | undefined };
 }
@@ -326,7 +342,7 @@ export function useGetAmountsIn(amountOut: bigint | undefined, path: `0x${string
     abi: ROUTER_ABI as any,
     functionName: 'getAmountsIn',
     args: amountOut && amountOut > 0n ? [amountOut, path] : undefined,
-    query: { enabled: !!amountOut && amountOut > 0n && path.length >= 2 },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!amountOut && amountOut > 0n && path.length >= 2 },
   });
   return { ...result, data: result.data as bigint[] | undefined };
 }
@@ -339,7 +355,7 @@ export function useWETH() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   
   const deposit = (value: bigint) => {
-    (writeContract as any)({ 
+    writeOnQms(writeContract as any, chainId, {
       address: C.WETH, 
       abi: WETH_ABI, 
       functionName: 'deposit', 
@@ -348,7 +364,7 @@ export function useWETH() {
   };
   
   const withdraw = (amount: bigint) => {
-    (writeContract as any)({ 
+    writeOnQms(writeContract as any, chainId, {
       address: C.WETH, 
       abi: WETH_ABI, 
       functionName: 'withdraw', 
@@ -361,12 +377,13 @@ export function useWETH() {
 
 // ============= ERC20 HOOKS =============
 export function useTokenBalance(tokenAddress: `0x${string}` | undefined, userAddress: `0x${string}` | undefined) {
+  const chainId = useChainId();
   const result = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI as any,
     functionName: 'balanceOf',
     args: userAddress ? [userAddress] : undefined,
-    query: { enabled: !!tokenAddress && !!userAddress },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!tokenAddress && !!userAddress },
   });
   return { ...result, data: result.data as bigint | undefined };
 }
@@ -376,22 +393,24 @@ export function useTokenAllowance(
   ownerAddress: `0x${string}` | undefined, 
   spenderAddress: `0x${string}` | undefined
 ) {
+  const chainId = useChainId();
   const result = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI as any,
     functionName: 'allowance',
     args: ownerAddress && spenderAddress ? [ownerAddress, spenderAddress] : undefined,
-    query: { enabled: !!tokenAddress && !!ownerAddress && !!spenderAddress },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!tokenAddress && !!ownerAddress && !!spenderAddress },
   });
   return { ...result, data: result.data as bigint | undefined };
 }
 
 export function useApprove() {
+  const chainId = useChainId();
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   
   const approve = (tokenAddress: `0x${string}`, spender: `0x${string}`, amount: bigint) => {
-    (writeContract as any)({ 
+    writeOnQms(writeContract as any, chainId, {
       address: tokenAddress, 
       abi: ERC20_ABI, 
       functionName: 'approve', 
@@ -403,11 +422,12 @@ export function useApprove() {
 }
 
 export function useTokenSymbol(tokenAddress: `0x${string}` | undefined) {
+  const chainId = useChainId();
   const result = useReadContract({
     address: tokenAddress,
     abi: ERC20_ABI as any,
     functionName: 'symbol',
-    query: { enabled: !!tokenAddress && tokenAddress !== '0x0000000000000000000000000000000000000000' },
+    query: { enabled: chainId === QMS_CHAIN_ID && !!tokenAddress && tokenAddress !== '0x0000000000000000000000000000000000000000' },
   });
   return { ...result, data: result.data as string | undefined };
 }
@@ -420,7 +440,7 @@ export function useMulticall() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const aggregate = (calls: { target: `0x${string}`; callData: `0x${string}` }[]) => {
-    (writeContract as any)({
+    writeOnQms(writeContract as any, chainId, {
       address: C.MULTICALL,
       abi: MULTICALL_ABI,
       functionName: 'aggregate',
@@ -432,6 +452,7 @@ export function useMulticall() {
 }
 
 export function useMulticallRead(calls: { address: `0x${string}`; abi: any; functionName: string; args?: any[] }[]) {
+  const chainId = useChainId();
   const results = useReadContracts({
     contracts: calls.map(call => ({
       address: call.address,
@@ -439,6 +460,7 @@ export function useMulticallRead(calls: { address: `0x${string}`; abi: any; func
       functionName: call.functionName,
       args: call.args,
     })),
+    query: { enabled: chainId === QMS_CHAIN_ID },
   });
   return results;
 }

@@ -32,8 +32,8 @@ export default function PairDetail() {
   const reserve1 = pool ? parseFloat(formatUnits(pool.reserve1, dec1)) : 0;
 
   const tvl = usePoolTVL(
-    pool?.token0Symbol ?? '',
-    pool?.token1Symbol ?? '',
+    pool?.token0Address ?? '',
+    pool?.token1Address ?? '',
     pool?.reserve0 ?? 0n,
     pool?.reserve1 ?? 0n,
     dec0,

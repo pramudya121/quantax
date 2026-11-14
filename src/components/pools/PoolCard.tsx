@@ -23,8 +23,8 @@ export function PoolCard({ pool, index, prices, volumeWQMS = 0, volumeScanComple
   const reserve0Formatted = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18));
   const reserve1Formatted = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18));
   const tvl = usePoolTVL(
-    pool.token0Symbol,
-    pool.token1Symbol,
+    pool.token0Address,
+    pool.token1Address,
     pool.reserve0,
     pool.reserve1,
     pool.token0?.decimals ?? 18,

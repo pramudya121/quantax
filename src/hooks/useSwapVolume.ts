@@ -34,6 +34,8 @@ export interface SwapEventLog {
   token1Symbol: string;
   tokenInSymbol: string;
   tokenOutSymbol: string;
+  tokenInAddress: Address;
+  tokenOutAddress: Address;
   amountIn: number;
   amountOut: number;
   volumeWQMS: number;
@@ -72,10 +74,12 @@ function parseSwapLogs(
     const decimals1 = pool.token1?.decimals ?? 18;
     const tokenInSymbol = isToken0In ? pool.token0Symbol : pool.token1Symbol;
     const tokenOutSymbol = isToken0In ? pool.token1Symbol : pool.token0Symbol;
+    const tokenInAddress = isToken0In ? pool.token0Address : pool.token1Address;
+    const tokenOutAddress = isToken0In ? pool.token1Address : pool.token0Address;
     const amountIn = Number(formatUnits(amountInRaw, isToken0In ? decimals0 : decimals1));
     const amountOut = Number(formatUnits(amountOutRaw, isToken0In ? decimals1 : decimals0));
-    const inputValue = amountIn * (prices[tokenInSymbol] || 0);
-    const outputValue = amountOut * (prices[tokenOutSymbol] || 0);
+    const inputValue = amountIn * (prices[tokenInAddress.toLowerCase()] || 0);
+    const outputValue = amountOut * (prices[tokenOutAddress.toLowerCase()] || 0);
     const volumeWQMS = inputValue > 0 ? inputValue : outputValue;
     if (!Number.isFinite(amountIn) || !Number.isFinite(amountOut)) return [];
 
@@ -85,6 +89,8 @@ function parseSwapLogs(
       token1Symbol: pool.token1Symbol,
       tokenInSymbol,
       tokenOutSymbol,
+      tokenInAddress,
+      tokenOutAddress,
       amountIn,
       amountOut,
       volumeWQMS: Number.isFinite(volumeWQMS) ? volumeWQMS : 0,
@@ -212,8 +218,8 @@ export function useSwapVolume(pools: LiquidityPool[], prices: Record<string, num
   }, [client, poolKey, refreshKey]);
 
   const pricedLogs = useMemo(() => logs.map(log => {
-    const inputValue = log.amountIn * (prices[log.tokenInSymbol] || 0);
-    const outputValue = log.amountOut * (prices[log.tokenOutSymbol] || 0);
+    const inputValue = log.amountIn * (prices[log.tokenInAddress.toLowerCase()] || 0);
+    const outputValue = log.amountOut * (prices[log.tokenOutAddress.toLowerCase()] || 0);
     const volumeWQMS = inputValue > 0 ? inputValue : outputValue;
     return { ...log, volumeWQMS: Number.isFinite(volumeWQMS) ? volumeWQMS : 0 };
   }), [logs, prices]);

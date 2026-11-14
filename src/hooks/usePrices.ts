@@ -1,15 +1,13 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useReadContracts, useChainId } from 'wagmi';
 import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { PAIR_ABI, FACTORY_ABI } from '@/config/abis';
+import { getTokenPrice } from '@/lib/pricing';
 import { formatUnits } from 'viem';
 
-// QMS and WQMS are shown at their 1:1 wrapper ratio. All other quotes
-// are derived from live pool reserves and denominated in WQMS, not USD.
-export const BASE_PRICES: Record<string, number> = {
-  QMS: 1.0,
-  WQMS: 1.0,
-};
+// Pool quotes are denominated in WQMS; this identity rate is not a fiat peg.
+const WQMS_IDENTITY_PRICE = 1;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -35,7 +33,11 @@ export function useTokenPrices() {
       args: [wrapped, token.address as `0x${string}`],
     })),
     // Pair addresses are immutable once created — cache aggressively.
-    query: { staleTime: 5 * 60_000, gcTime: 30 * 60_000 },
+    query: {
+      enabled: chainId === QMS_CHAIN_ID && wopnPairs.length > 0,
+      staleTime: 5 * 60_000,
+      gcTime: 30 * 60_000,
+    },
   });
 
   const pairTargets = useMemo(() => {
@@ -57,7 +59,7 @@ export function useTokenPrices() {
     ]),
     // Refresh live reserve quotes every 15s while the page is visible.
     query: {
-      enabled: pairTargets.length > 0,
+      enabled: chainId === QMS_CHAIN_ID && pairTargets.length > 0,
       staleTime: 5_000,
       gcTime: 60_000,
       refetchInterval: 15_000,
@@ -66,7 +68,9 @@ export function useTokenPrices() {
   });
 
   const prices = useMemo(() => {
-    const priceMap: Record<string, number> = { ...BASE_PRICES };
+    const priceMap: Record<string, number> = {};
+    if (chainId !== QMS_CHAIN_ID) return priceMap;
+    priceMap[wrapped.toLowerCase()] = WQMS_IDENTITY_PRICE;
 
     if (!reserveQueries.data) return priceMap;
 
@@ -84,18 +88,22 @@ export function useTokenPrices() {
 
       const priceInWQMS = wopnReserve / tokenReserve;
       if (Number.isFinite(wopnReserve) && Number.isFinite(tokenReserve) && tokenReserve > 0 && Number.isFinite(priceInWQMS) && priceInWQMS > 0) {
-        // Pool quotes use WQMS as the unit; wrapped-native parity is not a USD peg.
-        priceMap[token.symbol] = priceInWQMS;
+        priceMap[token.address.toLowerCase()] = priceInWQMS;
       }
     }
 
     return priceMap;
-  }, [reserveQueries.data, pairTargets, wrapped]);
+  }, [chainId, reserveQueries.data, pairTargets, wrapped]);
+
+  const getPrice = useCallback(
+    (tokenAddress: string) => getTokenPrice(prices, tokenAddress, wrapped),
+    [prices, wrapped],
+  );
 
   return {
     prices,
-    getPrice: (symbol: string) => prices[symbol] || 0,
-    isLoading: pairQueries.isLoading || reserveQueries.isLoading,
+    getPrice,
+    isLoading: chainId === QMS_CHAIN_ID && (pairQueries.isLoading || reserveQueries.isLoading),
   };
 }
 
@@ -140,8 +148,8 @@ export function usePriceImpact(
 
 // Hook to calculate TVL for a pool
 export function usePoolTVL(
-  token0Symbol: string,
-  token1Symbol: string,
+  token0Address: string,
+  token1Address: string,
   reserve0: bigint,
   reserve1: bigint,
   token0Decimals: number = 18,
@@ -149,12 +157,12 @@ export function usePoolTVL(
   prices: Record<string, number>
 ) {
   return useMemo(() => {
-    const price0 = prices[token0Symbol] || 0;
-    const price1 = prices[token1Symbol] || 0;
+    const price0 = getTokenPrice(prices, token0Address);
+    const price1 = getTokenPrice(prices, token1Address);
 
     const value0 = parseFloat(formatUnits(reserve0, token0Decimals)) * price0;
     const value1 = parseFloat(formatUnits(reserve1, token1Decimals)) * price1;
 
     return value0 + value1;
-  }, [token0Symbol, token1Symbol, reserve0, reserve1, token0Decimals, token1Decimals, prices]);
+  }, [token0Address, token1Address, reserve0, reserve1, token0Decimals, token1Decimals, prices]);
 }

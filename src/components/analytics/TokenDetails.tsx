@@ -8,6 +8,7 @@ import type { TokenInfo } from "@/config/contracts";
 import type { LiquidityPool } from '@/hooks/useLiquidityPools';
 import { cn } from '@/lib/utils';
 import { TokenIcon } from '@/components/ui/TokenIcon';
+import { getTokenPrice } from '@/lib/pricing';
 
 interface Props {
   pools: LiquidityPool[];
@@ -79,8 +80,8 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
         const dec1 = p.token1?.decimals ?? 18;
         const r0 = parseFloat(formatUnits(p.reserve0, dec0));
         const r1 = parseFloat(formatUnits(p.reserve1, dec1));
-        const price0 = prices[p.token0Symbol] || 0;
-        const price1 = prices[p.token1Symbol] || 0;
+        const price0 = getTokenPrice(prices, p.token0Address);
+        const price1 = getTokenPrice(prices, p.token1Address);
         tokenPools.push({
           pool: p,
           isToken0,
@@ -92,7 +93,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
         });
       }
 
-      // Prefer the WQMS pair as price source (WQMS anchors $1), else the deepest pool.
+      // Prefer a direct WQMS quote; otherwise show the deepest pool's raw ratio without converting it to WQMS.
       const wopnPair = tokenPools.find(
         p =>
           p.quoteAddress.toLowerCase() === C.WETH.toLowerCase() &&
@@ -106,7 +107,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
       out.push({
         symbol,
         meta,
-        price: prices[symbol] || 0,
+        price: getTokenPrice(prices, addr),
         tokenPools,
         priceSource: wopnPair || deepest || null,
         totalLiquidity: tokenPools.reduce((acc, p) => acc + p.tvl, 0),
