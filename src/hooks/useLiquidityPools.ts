@@ -96,7 +96,7 @@ export function useLiquidityPools() {
     // Auto-refresh reserves every 45s with a short cache to avoid RPC spam.
     query: {
       enabled: chainId === QMS_CHAIN_ID && pairAddresses.length > 0,
-      staleTime: 20_000,
+      staleTime: 10_000,
       gcTime: 60_000,
       refetchInterval: 15_000,
       refetchIntervalInBackground: false,
@@ -136,7 +136,7 @@ export function useLiquidityPools() {
       const symbol = symbolCallsResult.data[i * 3]?.result as string | undefined;
       const name = symbolCallsResult.data[i * 3 + 1]?.result as string | undefined;
       const decimals = symbolCallsResult.data[i * 3 + 2]?.result as number | undefined;
-      if (symbol) {
+      if (symbol && typeof decimals === 'number' && Number.isInteger(decimals) && decimals >= 0 && decimals <= 255) {
         // On-chain WQMS contract is a WETH9 fork and reports "WETH"/"Wrapped Ether".
         // Normalize to QMS-native branding everywhere it surfaces.
         const isWrapped = addresses[i].toLowerCase() === wrapped || symbol === 'WETH';
@@ -145,8 +145,7 @@ export function useLiquidityPools() {
         symbolMap.set(addresses[i].toLowerCase(), {
           symbol: normalizedSymbol,
           name: isWrapped ? normalizedName : (name || symbol),
-          // Preserve 0-decimal tokens; only fall back when the read failed.
-          decimals: typeof decimals === 'number' ? decimals : 18,
+          decimals,
         });
       }
     }
@@ -195,6 +194,9 @@ export function useLiquidityPools() {
 
         const token0Info = resolveTokenInfo(token0Address, token0Data);
         const token1Info = resolveTokenInfo(token1Address, token1Data);
+        // Keep unreadable custom-token metadata out of numeric analytics rather than
+        // silently assuming 18 decimals and displaying a fabricated reserve/TVL.
+        if (!token0Info || !token1Info) continue;
 
         const normalizeSym = (s?: string) => (s === 'WETH' ? wrappedSymbol : s || 'Unknown');
 

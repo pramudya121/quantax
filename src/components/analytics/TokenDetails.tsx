@@ -134,7 +134,7 @@ export function TokenDetails({ pools, prices, isLoading = false }: Props) {
           "text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0",
           showSkeleton ? "bg-muted text-muted-foreground animate-pulse" : "bg-success/20 text-success"
         )}>
-          {showSkeleton ? 'Loading…' : 'On-Chain · Auto-refresh 45s'}
+          {showSkeleton ? 'Loading…' : 'On-Chain · Auto-refresh 15s'}
         </span>
       </div>
 

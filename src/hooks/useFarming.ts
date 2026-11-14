@@ -45,9 +45,13 @@ async function fetchTokenMeta(client: any, addr: Address, chainId?: number) {
       client.readContract({ address: addr, abi: erc20Abi, functionName: 'symbol' }),
       client.readContract({ address: addr, abi: erc20Abi, functionName: 'decimals' }),
     ]);
-    return { symbol: String(symbol), decimals: Number(decimals) };
+    const normalizedDecimals = Number(decimals);
+    if (typeof symbol !== 'string' || !symbol.trim() || !Number.isInteger(normalizedDecimals) || normalizedDecimals < 0 || normalizedDecimals > 255) {
+      return null;
+    }
+    return { symbol, decimals: normalizedDecimals };
   } catch {
-    return { symbol: '???', decimals: 18 };
+    return null;
   }
 }
 
@@ -157,41 +161,53 @@ export function useFarmingPools() {
           return;
         }
 
-        // The new contract ABI has no poolLength() getter. Pool IDs are contiguous,
-        // so discover them by reading poolInfo until the first missing pool.
+        // The contract has no poolLength getter. Read bounded contiguous batches so
+        // discovery stays responsive without launching hundreds of RPC requests.
         const found: FarmPool[] = [];
-        for (let pid = 0; pid < 200; pid += 1) {
+        const poolBatchSize = 10;
+        for (let startPid = 0; startPid < 200; startPid += poolBatchSize) {
           if (cancelled) return;
-          const info = await readWithRetry(() =>
-            client.readContract({
-              address: FARMING_CONTRACT,
-              abi: FARMING_ABI,
-              functionName: 'poolInfo',
-              args: [BigInt(pid)],
-            })
+          const batch = await Promise.all(
+            Array.from({ length: poolBatchSize }, (_, offset) => startPid + offset).map(async pid => ({
+              pid,
+              info: await readWithRetry(() =>
+                client.readContract({
+                  address: FARMING_CONTRACT,
+                  abi: FARMING_ABI,
+                  functionName: 'poolInfo',
+                  args: [BigInt(pid)],
+                })
+              ),
+            })),
           );
-          if (!info) break;
-          const [stakingToken, rewardToken, lastRewardBlock, accRewardPerShare, rewardPerBlock, totalStaked] =
-            info as readonly [Address, Address, bigint, bigint, bigint, bigint];
-          const [sMeta, rMeta] = await Promise.all([
-            fetchTokenMeta(client, stakingToken, chainId),
-            fetchTokenMeta(client, rewardToken, chainId),
-          ]);
-          found.push({
-            pid,
-            stakingToken,
-            rewardToken,
-            stakingSymbol: sMeta.symbol,
-            rewardSymbol: rMeta.symbol,
-            stakingDecimals: sMeta.decimals,
-            rewardDecimals: rMeta.decimals,
-            rewardPerBlock,
-            totalStaked,
-            lastRewardBlock,
-            accRewardPerShare,
+          const firstMissing = batch.findIndex(({ info }) => !info);
+          const validBatch = firstMissing === -1 ? batch : batch.slice(0, firstMissing);
+          const poolData = validBatch.map(({ pid, info }) => {
+            const [stakingToken, rewardToken, lastRewardBlock, accRewardPerShare, rewardPerBlock, totalStaked] =
+              info as readonly [Address, Address, bigint, bigint, bigint, bigint];
+            return { pid, stakingToken, rewardToken, lastRewardBlock, accRewardPerShare, rewardPerBlock, totalStaked };
           });
+          const enriched = await Promise.all(poolData.map(async pool => {
+            const [sMeta, rMeta] = await Promise.all([
+              fetchTokenMeta(client, pool.stakingToken, chainId),
+              fetchTokenMeta(client, pool.rewardToken, chainId),
+            ]);
+            // Do not invent symbols or decimals when an unknown token cannot be read.
+            if (!sMeta || !rMeta) return null;
+            return {
+              ...pool,
+              stakingSymbol: sMeta.symbol,
+              rewardSymbol: rMeta.symbol,
+              stakingDecimals: sMeta.decimals,
+              rewardDecimals: rMeta.decimals,
+            };
+          }));
+          found.push(...enriched.filter((pool): pool is FarmPool => pool !== null));
+          if (firstMissing !== -1) break;
         }
         if (!cancelled) setPools(found);
+      } catch {
+        if (!cancelled) setPools([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -238,7 +254,8 @@ export function useUserFarmInfo(pid: number | null) {
         ]);
         if (!cancelled) setInfo({ amount: u[0], rewardDebt: u[1], pending });
       } catch {
-        if (!cancelled) setInfo({ amount: 0n, rewardDebt: 0n, pending: 0n });
+        // Unknown is not the same as an on-chain zero balance.
+        if (!cancelled) setInfo(null);
       }
     };
     fetchInfo();
@@ -251,6 +268,16 @@ export function useUserFarmInfo(pid: number | null) {
   }, [client, pid, address, chainId, refreshKey]);
 
   return { info, refresh };
+}
+
+function assertValidPoolId(pid: number) {
+  if (!Number.isSafeInteger(pid) || pid < 0 || pid >= 200) {
+    throw new Error('Invalid farming pool ID');
+  }
+}
+
+function assertPositiveAmount(amount: bigint) {
+  if (amount <= 0n) throw new Error('Amount must be greater than zero');
 }
 
 export function useFarmingActions() {
@@ -338,7 +365,19 @@ export function useFarmingActions() {
   const deposit = useCallback(
     async (pid: number, amount: bigint, stakingToken: Address) => {
       try {
+        assertValidPoolId(pid);
+        assertPositiveAmount(amount);
+        if (!/^0x[a-fA-F0-9]{40}$/.test(stakingToken)) throw new Error('Invalid staking token address');
         await guard('farm-deposit');
+        const poolInfo = await client.readContract({
+          address: FARMING_CONTRACT,
+          abi: FARMING_ABI,
+          functionName: 'poolInfo',
+          args: [BigInt(pid)],
+        }) as readonly [Address, Address, bigint, bigint, bigint, bigint];
+        if (poolInfo[0].toLowerCase() !== stakingToken.toLowerCase()) {
+          throw new Error('Selected staking token does not match this farm');
+        }
         toast.loading('Approving...', { id: 'farm-deposit' });
         await ensureAllowance(stakingToken, amount);
         toast.loading('Depositing...', { id: 'farm-deposit' });
@@ -364,6 +403,8 @@ export function useFarmingActions() {
   const withdraw = useCallback(
     async (pid: number, amount: bigint) => {
       try {
+        assertValidPoolId(pid);
+        assertPositiveAmount(amount);
         await guard('farm-withdraw');
         toast.loading('Withdrawing...', { id: 'farm-withdraw' });
         const hash = await writeContractAsync({
@@ -389,6 +430,7 @@ export function useFarmingActions() {
     async (pid: number) => {
       // deposit(pid, 0) harvests pending reward
       try {
+        assertValidPoolId(pid);
         await guard('farm-harvest');
         toast.loading('Harvesting...', { id: 'farm-harvest' });
         const hash = await writeContractAsync({
@@ -413,6 +455,7 @@ export function useFarmingActions() {
   const emergencyWithdraw = useCallback(
     async (pid: number) => {
       try {
+        assertValidPoolId(pid);
         await guard('farm-emergency');
         toast.loading('Emergency withdrawing...', { id: 'farm-emergency' });
         const hash = await writeContractAsync({
@@ -438,6 +481,10 @@ export function useFarmingActions() {
   const addPool = useCallback(
     async (stakingToken: Address, rewardToken: Address, rewardPerBlock: bigint) => {
       try {
+        if (!/^0x[a-fA-F0-9]{40}$/.test(stakingToken) || !/^0x[a-fA-F0-9]{40}$/.test(rewardToken)) {
+          throw new Error('Invalid token contract address');
+        }
+        assertPositiveAmount(rewardPerBlock);
         await guard('farm-add');
         toast.loading('Adding pool...', { id: 'farm-add' });
         await client.simulateContract({
@@ -478,6 +525,8 @@ export function useFarmingActions() {
   const updateRewardPerBlock = useCallback(
     async (pid: number, rewardPerBlock: bigint) => {
       try {
+        assertValidPoolId(pid);
+        assertPositiveAmount(rewardPerBlock);
         await guard('farm-upd');
         toast.loading('Updating reward...', { id: 'farm-upd' });
         const hash = await writeContractAsync({
@@ -522,6 +571,7 @@ export function useFarmingActions() {
   const updatePool = useCallback(
     async (pid: number) => {
       try {
+        assertValidPoolId(pid);
         await guard('farm-updp');
         toast.loading('Updating pool...', { id: 'farm-updp' });
         const hash = await writeContractAsync({
@@ -546,6 +596,9 @@ export function useFarmingActions() {
   const transferOwnership = useCallback(
     async (newOwner: Address) => {
       try {
+        if (!/^0x[a-fA-F0-9]{40}$/.test(newOwner) || /^0x0{40}$/i.test(newOwner)) {
+          throw new Error('Invalid owner address');
+        }
         await guard('farm-own');
         toast.loading('Transferring ownership...', { id: 'farm-own' });
         const hash = await writeContractAsync({
