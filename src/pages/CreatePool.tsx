@@ -15,6 +15,7 @@ import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { toast } from 'sonner';
 import { formatUnits, parseUnits, formatEther, parseEther } from 'viem';
 import { cn } from '@/lib/utils';
+import { validatePreTx } from '@/lib/inputValidation';
 
 const NATIVE_GAS_RESERVE = 0.01;
 
@@ -70,8 +71,12 @@ export default function CreatePool() {
 
   const pairExists = pairAddress && pairAddress !== '0x0000000000000000000000000000000000000000';
   
-  const amountABigInt = amountA ? parseUnits(amountA, tokenA?.decimals || 18) : 0n;
-  const amountBBigInt = amountB ? parseUnits(amountB, tokenB?.decimals || 18) : 0n;
+  const amountABigInt = useMemo(() => {
+    try { return amountA ? parseUnits(amountA, tokenA?.decimals ?? 18) : 0n; } catch { return 0n; }
+  }, [amountA, tokenA?.decimals]);
+  const amountBBigInt = useMemo(() => {
+    try { return amountB ? parseUnits(amountB, tokenB?.decimals ?? 18) : 0n; } catch { return 0n; }
+  }, [amountB, tokenB?.decimals]);
   
   const needsApprovalA = tokenA && !tokenA.isNative && allowanceA !== undefined && amountABigInt > 0n && allowanceA < amountABigInt;
   const needsApprovalB = tokenB && !tokenB.isNative && allowanceB !== undefined && amountBBigInt > 0n && allowanceB < amountBBigInt;
@@ -174,19 +179,38 @@ export default function CreatePool() {
   };
 
   const handleApproveA = () => {
-    if (!tokenA || tokenA.isNative) return;
+    if (!tokenA || tokenA.isNative || amountABigInt <= 0n) return;
     toast.loading(`Approving ${tokenA.symbol}...`, { id: 'approve-a' });
-    approveA(tokenA.address as `0x${string}`, C.ROUTER, parseUnits('999999999', tokenA.decimals));
+    approveA(tokenA.address as `0x${string}`, C.ROUTER, amountABigInt);
   };
 
   const handleApproveB = () => {
-    if (!tokenB || tokenB.isNative) return;
+    if (!tokenB || tokenB.isNative || amountBBigInt <= 0n) return;
     toast.loading(`Approving ${tokenB.symbol}...`, { id: 'approve-b' });
-    approveB(tokenB.address as `0x${string}`, C.ROUTER, parseUnits('999999999', tokenB.decimals));
+    approveB(tokenB.address as `0x${string}`, C.ROUTER, amountBBigInt);
   };
 
   const handleAddLiquidity = () => {
     if (!address || !tokenA || !tokenB || !amountA || !amountB) return;
+
+    const amountChecks = [
+      { token: tokenA, amount: amountA, balance: getBalanceA() },
+      { token: tokenB, amount: amountB, balance: getBalanceB() },
+    ];
+    for (const check of amountChecks) {
+      const validation = validatePreTx({
+        amount: check.amount,
+        decimals: check.token.decimals,
+        balance: check.balance,
+        isNative: check.token.isNative,
+        gasReserve: NATIVE_GAS_RESERVE,
+        symbol: check.token.symbol,
+      });
+      if (!validation.ok) {
+        toast.error(validation.title || 'Cannot Add Liquidity', { description: validation.error });
+        return;
+      }
+    }
 
     toast.loading('Adding initial liquidity...', { id: 'add-liq' });
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 1800);
@@ -200,8 +224,8 @@ export default function CreatePool() {
       router.addLiquidityETH(
         token.address as `0x${string}`,
         tokenAmount,
-        (tokenAmount * 95n) / 100n,
-        (ethAmount * 95n) / 100n,
+        (tokenAmount * 995n) / 1000n,
+        (ethAmount * 995n) / 1000n,
         address,
         deadline,
         ethAmount
@@ -213,8 +237,8 @@ export default function CreatePool() {
         tokenB.address as `0x${string}`,
         amountABigInt,
         amountBBigInt,
-        (amountABigInt * 95n) / 100n,
-        (amountBBigInt * 95n) / 100n,
+        (amountABigInt * 995n) / 1000n,
+        (amountBBigInt * 995n) / 1000n,
         address,
         deadline
       );
@@ -228,7 +252,7 @@ export default function CreatePool() {
   return (
     <div className="container mx-auto px-4 py-8 pb-24 lg:pb-8 max-w-2xl relative">
 
-    <SEO title="Create Pool — QUANTAX" description="Launch a new liquidity pool on QUANTAX. Set the initial price and bootstrap trading on QMS Testnet." path="/create-pool" />
+    <SEO title="Create Pool — QUANTAX" description="Launch a new liquidity pool on QUANTAX. Set initial token amounts and bootstrap trading on QMS Testnet." path="/create-pool" />
       <Spotlight className="hidden md:block" />
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -501,7 +525,7 @@ export default function CreatePool() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-primary">•</span>
-                You'll earn 0.3% of all trades on this pair
+                Fee terms depend on the deployed router and must be verified on-chain.
               </li>
             </ul>
           </div>

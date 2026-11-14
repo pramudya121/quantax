@@ -10,8 +10,8 @@
    },
    { 
      icon: <Shield className="w-6 h-6" />, 
-     title: 'Battle-Tested Security', 
-     description: 'Audited smart contracts with reentrancy guards and comprehensive validation' 
+title: 'Wallet Safeguards',
+     description: 'Exact approvals and input validation; smart-contract risk remains'
    },
    { 
      icon: <TrendingUp className="w-6 h-6" />, 
@@ -21,7 +21,7 @@
    { 
      icon: <Users className="w-6 h-6" />, 
      title: 'Earn Rewards', 
-     description: 'Provide liquidity and earn 0.3% on every trade in your pools' 
+     description: 'Provide liquidity and receive any swap fees configured by the deployed contracts'
    },
    { 
      icon: <BarChart3 className="w-6 h-6" />, 

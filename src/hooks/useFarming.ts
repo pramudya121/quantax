@@ -1,7 +1,7 @@
 // ============= Full file contents =============
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useAccount, usePublicClient, useWriteContract, useReadContract, useChainId } from 'wagmi';
+import { useAccount, usePublicClient, useWriteContract, useReadContract, useChainId, useWatchContractEvent } from 'wagmi';
 import { parseUnits, formatUnits, erc20Abi, type Address } from 'viem';
 import { getFarmingContract, FARMING_ABI } from '@/config/farming';
 import { QMS_CHAIN_ID, getExplorerUrl } from '@/config/chains';
@@ -94,12 +94,46 @@ export function useFarmingPools() {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
-  // Auto-refresh every 30s so pools added by the owner appear without a
-  // manual reload.
+  useWatchContractEvent({
+    address: FARMING_CONTRACT,
+    abi: FARMING_ABI,
+    eventName: 'PoolAdded',
+    enabled: chainId === QMS_CHAIN_ID,
+    onLogs: refresh,
+  });
+  useWatchContractEvent({
+    address: FARMING_CONTRACT,
+    abi: FARMING_ABI,
+    eventName: 'RewardPerBlockUpdated',
+    enabled: chainId === QMS_CHAIN_ID,
+    onLogs: refresh,
+  });
+  useWatchContractEvent({
+    address: FARMING_CONTRACT,
+    abi: FARMING_ABI,
+    eventName: 'Deposit',
+    enabled: chainId === QMS_CHAIN_ID,
+    onLogs: refresh,
+  });
+  useWatchContractEvent({
+    address: FARMING_CONTRACT,
+    abi: FARMING_ABI,
+    eventName: 'Withdraw',
+    enabled: chainId === QMS_CHAIN_ID,
+    onLogs: refresh,
+  });
+  useWatchContractEvent({
+    address: FARMING_CONTRACT,
+    abi: FARMING_ABI,
+    eventName: 'EmergencyWithdraw',
+    enabled: chainId === QMS_CHAIN_ID,
+    onLogs: refresh,
+  });
+
   useEffect(() => {
-    const id = setInterval(() => setRefreshKey((k) => k + 1), 30_000);
+    const id = setInterval(refresh, 60_000);
     return () => clearInterval(id);
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     if (!client) return;

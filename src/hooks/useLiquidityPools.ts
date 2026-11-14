@@ -32,7 +32,8 @@ export function useLiquidityPools() {
   // Clear stale pools immediately when the user switches network.
   useEffect(() => {
     setPools([]);
-    setIsLoading(true);
+    setIsLoading(chainId === QMS_CHAIN_ID);
+    setError(null);
   }, [chainId]);
 
   // Get total number of pairs (cheap call, can refresh more often)
@@ -41,6 +42,7 @@ export function useLiquidityPools() {
     abi: FACTORY_ABI,
     functionName: 'allPairsLength',
     query: {
+      enabled: chainId === QMS_CHAIN_ID,
       staleTime: 30_000,
       gcTime: 5 * 60_000,
       refetchInterval: 60_000,
@@ -54,13 +56,14 @@ export function useLiquidityPools() {
     address: C.FACTORY,
     abi: FACTORY_ABI,
     eventName: 'PairCreated',
+    enabled: chainId === QMS_CHAIN_ID,
     onLogs: () => {
       refetchLength();
     },
   });
 
   // Get all pair addresses
-  const pairCount = Number(pairsLength || 0);
+  const pairCount = chainId === QMS_CHAIN_ID ? Number(pairsLength || 0) : 0;
   const pairIndices = Array.from({ length: pairCount }, (_, i) => i);
 
   const pairAddressesResult = useReadContracts({
@@ -71,7 +74,11 @@ export function useLiquidityPools() {
       args: [BigInt(index)],
     })),
     // Pair addresses by index are immutable — cache for the session.
-    query: { enabled: pairCount > 0, staleTime: 10 * 60_000, gcTime: 30 * 60_000 },
+    query: {
+      enabled: chainId === QMS_CHAIN_ID && pairCount > 0,
+      staleTime: 10 * 60_000,
+      gcTime: 30 * 60_000,
+    },
   });
 
   const pairAddresses = (pairAddressesResult.data || [])
@@ -88,10 +95,10 @@ export function useLiquidityPools() {
     ]),
     // Auto-refresh reserves every 45s with a short cache to avoid RPC spam.
     query: {
-      enabled: pairAddresses.length > 0,
+      enabled: chainId === QMS_CHAIN_ID && pairAddresses.length > 0,
       staleTime: 20_000,
       gcTime: 60_000,
-      refetchInterval: 45_000,
+      refetchInterval: 15_000,
       refetchIntervalInBackground: false,
     },
   });
@@ -114,7 +121,11 @@ export function useLiquidityPools() {
       { address, abi: ERC20_ABI, functionName: 'decimals' },
     ]),
     // Token metadata (symbol/name/decimals) is immutable — cache for the session.
-    query: { enabled: tokenAddresses.size > 0, staleTime: 30 * 60_000, gcTime: 60 * 60_000 },
+    query: {
+      enabled: chainId === QMS_CHAIN_ID && tokenAddresses.size > 0,
+      staleTime: 30 * 60_000,
+      gcTime: 60 * 60_000,
+    },
   });
 
   // Build symbol map

@@ -16,6 +16,7 @@ import { useAllPairsLength } from '@/hooks/useContract';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { formatUnits } from 'viem';
+import { getTokenPrice } from '@/lib/pricing';
 
 export function HeroSection() {
   const { data: pairsCount } = useAllPairsLength();
@@ -25,10 +26,10 @@ export function HeroSection() {
   // Calculate real TVL from on-chain data
   const totalTVL = useMemo(() => {
     return pools.reduce((acc, pool) => {
-      const price0 = prices[pool.token0Symbol] || 0;
-      const price1 = prices[pool.token1Symbol] || 0;
-      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18)) * price0;
-      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
+      const price0 = getTokenPrice(prices, pool.token0Address);
+      const price1 = getTokenPrice(prices, pool.token1Address);
+      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
+      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
       return acc + value0 + value1;
     }, 0);
   }, [pools, prices]);
@@ -119,11 +120,11 @@ export function HeroSection() {
 
             {/* Stats - Real On-Chain Data */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-lg">
-              {[
-                { value: Number(pairsCount || 0) || pools.length, label: 'TOTAL POOLS', prefix: '', color: 'text-primary', compact: false },
-                { value: totalTVL, label: 'ON-CHAIN TVL', prefix: '$', color: 'text-primary', compact: true },
-                { value: activePools, label: 'ACTIVE POOLS', prefix: '', color: 'text-primary', compact: false },
-              ].map((stat, idx) => (
+              {([
+                { value: Number(pairsCount || 0) || pools.length, label: 'TOTAL POOLS', prefix: '', suffix: '', color: 'text-primary', compact: false },
+                { value: totalTVL, label: 'QUOTED TVL', prefix: '', suffix: ' WQMS est.', color: 'text-primary', compact: true },
+                { value: activePools, label: 'ACTIVE POOLS', prefix: '', suffix: '', color: 'text-primary', compact: false },
+              ] as { value: number; label: string; prefix: string; suffix: string; color: string; compact: boolean }[]).map((stat, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
@@ -137,7 +138,8 @@ export function HeroSection() {
                     {stat.prefix}
                     {stat.compact && stat.value >= 1_000_000
                       ? `${(stat.value / 1_000_000).toFixed(1)}M`
-                      : <NumberTicker value={stat.value} decimalPlaces={stat.prefix === '$' ? 2 : 0} />}
+                      : <NumberTicker value={stat.value} decimalPlaces={stat.compact ? 2 : 0} />}
+                    {stat.suffix}
                   </p>
                 </motion.div>
               ))}

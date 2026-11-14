@@ -3,20 +3,29 @@
  * Centralizes all user input validation with strict bounds
  */
 import { z } from 'zod';
+import { parseUnits } from 'viem';
 
 // Swap amount schema
 export const swapAmountSchema = z.string()
   .refine(val => val === '' || /^\d*\.?\d*$/.test(val), 'Invalid number format')
   .refine(val => {
     if (val === '') return true;
-    const num = parseFloat(val);
-    return !isNaN(num) && num >= 0;
-  }, 'Amount must be non-negative')
+    try {
+      const normalized = val.startsWith('.') ? `0${val}` : val;
+      return parseUnits(normalized, 18) >= 0n;
+    } catch {
+      return false;
+    }
+  }, 'Amount must be a valid non-negative decimal')
   .refine(val => {
     if (val === '') return true;
-    const num = parseFloat(val);
-    return num <= 1e18; // Reasonable upper bound
-  }, 'Amount exceeds maximum')
+    try {
+      const normalized = val.startsWith('.') ? `0${val}` : val;
+      return parseUnits(normalized, 18) <= parseUnits('1000000000000000000', 18);
+    } catch {
+      return false;
+    }
+  }, 'Amount exceeds maximum or supported precision')
   .refine(val => {
     if (val === '' || !val.includes('.')) return true;
     return val.split('.')[1].length <= 18; // Max 18 decimals
@@ -88,19 +97,22 @@ export function calculateMinOutput(amount: bigint, slippagePercent: number): big
  * Safe approval amount - approve exact amount + 10% buffer instead of MAX_UINT256
  */
 export function getSafeApprovalAmount(requiredAmount: bigint): bigint {
-  // Add 10% buffer to avoid re-approval on minor price changes
-  return (requiredAmount * 110n) / 100n;
+  // Approve only the amount required for this transaction.
+  return requiredAmount;
 }
 
 /**
  * Validate that amount doesn't exceed balance
  */
-export function isAmountWithinBalance(amount: string, balance: string): boolean {
-  if (!amount || !balance) return true;
-  const amountNum = parseFloat(amount);
-  const balanceNum = parseFloat(balance);
-  if (isNaN(amountNum) || isNaN(balanceNum)) return true;
-  return amountNum <= balanceNum;
+export function isAmountWithinBalance(amount: string, balance: string, decimals = 18): boolean {
+  if (!amount || !balance || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(amount) || !/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(balance) || !Number.isInteger(decimals) || decimals < 0 || decimals > 255) return false;
+  try {
+    const normalizedAmount = amount.startsWith('.') ? `0${amount}` : amount;
+    const normalizedBalance = balance.startsWith('.') ? `0${balance}` : balance;
+    return parseUnits(normalizedAmount, decimals) <= parseUnits(normalizedBalance, decimals);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -141,9 +153,8 @@ export function validatePreTx(params: {
   if (!amount || amount.trim() === '') {
     return { ok: false, title: 'Enter Amount', error: 'Please enter an amount to continue.' };
   }
-  const num = parseFloat(amount);
-  if (isNaN(num) || num <= 0) {
-    return { ok: false, title: 'Invalid Amount', error: 'Amount must be a positive number.' };
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 255) {
+    return { ok: false, title: 'Invalid Token', error: 'Token precision is unavailable.' };
   }
   const parseCheck = swapAmountSchema.safeParse(amount);
   if (!parseCheck.success) {
@@ -152,24 +163,43 @@ export function validatePreTx(params: {
   if (amount.includes('.') && amount.split('.')[1].length > decimals) {
     return { ok: false, title: 'Too Many Decimals', error: `${symbol} supports at most ${decimals} decimals.` };
   }
+  const normalizedAmount = amount.startsWith('.') ? `0${amount}` : amount;
+  let amountUnits: bigint;
+  try {
+    amountUnits = parseUnits(normalizedAmount, decimals);
+  } catch {
+    return { ok: false, title: 'Invalid Amount', error: 'Amount cannot be represented at this token precision.' };
+  }
+  if (amountUnits <= 0n) {
+    return { ok: false, title: 'Invalid Amount', error: 'Amount must be greater than zero.' };
+  }
   if (balance !== undefined) {
-    const bal = parseFloat(balance);
-    if (!isNaN(bal)) {
-      if (isNative) {
-        if (num + gasReserve > bal) {
-          return {
-            ok: false,
-            title: 'Insufficient Balance',
-            error: `Keep at least ${gasReserve} QMS for gas. Available: ${(Math.max(bal - gasReserve, 0)).toFixed(4)}.`,
-          };
-        }
-      } else if (num > bal) {
+    let balanceUnits: bigint;
+    try {
+      balanceUnits = parseUnits(balance.startsWith('.') ? `0${balance}` : balance, decimals);
+    } catch {
+      return { ok: false, title: 'Balance Unavailable', error: 'Refresh the token balance before submitting this transaction.' };
+    }
+    if (isNative) {
+      let gasReserveUnits: bigint;
+      try {
+        gasReserveUnits = parseUnits(gasReserve.toString(), decimals);
+      } catch {
+        return { ok: false, title: 'Gas Reserve Unavailable', error: 'The required gas reserve could not be validated.' };
+      }
+      if (amountUnits + gasReserveUnits > balanceUnits) {
         return {
           ok: false,
           title: 'Insufficient Balance',
-          error: `You only have ${bal.toFixed(6)} ${symbol}.`,
+          error: `Amount exceeds your spendable balance after reserving ${gasReserve} QMS for gas.`,
         };
       }
+    } else if (amountUnits > balanceUnits) {
+      return {
+        ok: false,
+        title: 'Insufficient Balance',
+        error: `You only have ${balance} ${symbol}.`,
+      };
     }
   }
   if (needsApproval && requiredAllowance !== undefined && currentAllowance !== undefined && currentAllowance < requiredAllowance) {

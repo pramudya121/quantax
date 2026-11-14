@@ -135,7 +135,7 @@ export function useTokenSafety(address: `0x${string}` | undefined): TokenSafetyR
         name,
         symbol,
         decimals,
-        totalSupply: totalSupply !== undefined ? formatUnits(totalSupply, decimals || 18) : undefined,
+        totalSupply: totalSupply !== undefined ? formatUnits(totalSupply, decimals ?? 18) : undefined,
       },
       isLoading: false,
     };

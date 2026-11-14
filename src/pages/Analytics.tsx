@@ -1,7 +1,7 @@
 import { SEO } from '@/components/seo/SEO';
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BarChart3, TrendingUp, DollarSign, Activity, Users, Layers, Droplets, ExternalLink, RefreshCw, Coins, ArrowUpRight, Percent, ArrowRightLeft, Zap } from 'lucide-react';
+import { BarChart3, TrendingUp, Activity, Layers, Droplets, ExternalLink, RefreshCw, Coins, ArrowUpRight, ArrowRightLeft, Zap } from 'lucide-react';
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { useSwapVolume } from '@/hooks/useSwapVolume';
@@ -13,7 +13,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useChainId } from 'wagmi';
 import { formatUnits } from 'viem';
-import { getTokenList } from '@/config/contracts';
+import { getContracts, getTokenList } from '@/config/contracts';
+import { getTokenPrice } from '@/lib/pricing';
 import { Link } from 'react-router-dom';
 import { TokenDetails } from '@/components/analytics/TokenDetails';
 import { TokenIcon } from '@/components/ui/TokenIcon';
@@ -68,18 +69,19 @@ function StatCard({ icon: Icon, label, value, prefix = '', suffix = '', delay = 
 }
 
 export default function Analytics() {
-  const tokenList = getTokenList(useChainId());
+  const chainId = useChainId();
+  const tokenList = useMemo(() => getTokenList(chainId), [chainId]);
   const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
-  const { logs: swapLogs, stats: volStats, isLoading: volLoading, refetch: refetchVol, latestBlock } = useSwapVolume(pools, prices);
+  const { logs: swapLogs, stats: volStats, isLoading: volLoading, volumeScanComplete, refetch: refetchVol, latestBlock } = useSwapVolume(pools, prices);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
 
   const totalTVL = useMemo(() => {
     return pools.reduce((acc, pool) => {
-      const price0 = prices[pool.token0Symbol] || 0;
-      const price1 = prices[pool.token1Symbol] || 0;
-      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18)) * price0;
-      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
+      const price0 = getTokenPrice(prices, pool.token0Address);
+      const price1 = getTokenPrice(prices, pool.token1Address);
+      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
+      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
       return acc + value0 + value1;
     }, 0);
   }, [pools, prices]);
@@ -98,65 +100,91 @@ export default function Analytics() {
   const topPools = useMemo(() => {
     return pools
       .map(pool => {
-        const price0 = prices[pool.token0Symbol] || 0;
-        const price1 = prices[pool.token1Symbol] || 0;
-        const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18)) * price0;
-        const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
+        const price0 = getTokenPrice(prices, pool.token0Address);
+        const price1 = getTokenPrice(prices, pool.token1Address);
+        const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
+        const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
         const tvl = value0 + value1;
-        const reserve0F = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18));
-        const reserve1F = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18));
+        const reserve0F = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18));
+        const reserve1F = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18));
         const volume = volStats.perPool[pool.pairAddress] || 0;
         return { ...pool, tvl, reserve0F, reserve1F, volume };
       })
       .sort((a, b) => b.tvl - a.tvl);
   }, [pools, prices, volStats]);
 
-  // Token analytics: aggregate liquidity per token
+  // Aggregate by contract address so a spoofed symbol cannot inherit another token's quote.
   const tokenAnalytics = useMemo(() => {
-    const tokenMap: Record<string, { symbol: string; logo: string; totalLiquidity: number; poolCount: number; price: number }> = {};
-    
-    pools.forEach(pool => {
-      const price0 = prices[pool.token0Symbol] || 0;
-      const price1 = prices[pool.token1Symbol] || 0;
-      const val0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals || 18)) * price0;
-      const val1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals || 18)) * price1;
-      
-      if (!tokenMap[pool.token0Symbol]) {
-        tokenMap[pool.token0Symbol] = { symbol: pool.token0Symbol, logo: pool.token0?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price0 };
-      }
-      tokenMap[pool.token0Symbol].totalLiquidity += val0;
-      if (pool.reserve0 > 0n) tokenMap[pool.token0Symbol].poolCount++;
+    type TokenAnalyticsEntry = {
+      address: string;
+      symbol: string;
+      logo: string;
+      totalLiquidity: number;
+      poolCount: number;
+      price: number;
+    };
+    const tokenMap: Record<string, TokenAnalyticsEntry> = {};
 
-      if (!tokenMap[pool.token1Symbol]) {
-        tokenMap[pool.token1Symbol] = { symbol: pool.token1Symbol, logo: pool.token1?.logoURI || '/tokens/qms.svg', totalLiquidity: 0, poolCount: 0, price: price1 };
-      }
-      tokenMap[pool.token1Symbol].totalLiquidity += val1;
-      if (pool.reserve1 > 0n) tokenMap[pool.token1Symbol].poolCount++;
+    const addToken = (
+      address: string,
+      symbol: string,
+      logo: string,
+      price: number,
+      liquidity: number,
+      hasLiquidity: boolean,
+    ) => {
+      const key = address.toLowerCase();
+      const entry = tokenMap[key] ?? {
+        address,
+        symbol,
+        logo: logo || '/tokens/qms.svg',
+        totalLiquidity: 0,
+        poolCount: 0,
+        price,
+      };
+      entry.totalLiquidity += liquidity;
+      entry.poolCount += hasLiquidity ? 1 : 0;
+      entry.price = price;
+      tokenMap[key] = entry;
+    };
+
+    pools.forEach(pool => {
+      const price0 = getTokenPrice(prices, pool.token0Address);
+      const price1 = getTokenPrice(prices, pool.token1Address);
+      const value0 = parseFloat(formatUnits(pool.reserve0, pool.token0?.decimals ?? 18)) * price0;
+      const value1 = parseFloat(formatUnits(pool.reserve1, pool.token1?.decimals ?? 18)) * price1;
+      const hasLiquidity = pool.reserve0 > 0n && pool.reserve1 > 0n;
+      addToken(pool.token0Address, pool.token0Symbol, pool.token0?.logoURI || '', price0, value0, hasLiquidity);
+      addToken(pool.token1Address, pool.token1Symbol, pool.token1?.logoURI || '', price1, value1, hasLiquidity);
     });
 
-    // Add tokens not yet in pools
-    tokenList.forEach(t => {
-      const sym = t.symbol;
-      if (!tokenMap[sym]) {
-        tokenMap[sym] = { symbol: sym, logo: t.logoURI, totalLiquidity: 0, poolCount: 0, price: prices[sym] || 0 };
+    tokenList.forEach(token => {
+      const key = token.address.toLowerCase();
+      if (!tokenMap[key]) {
+        tokenMap[key] = {
+          address: token.address,
+          symbol: token.symbol,
+          logo: token.logoURI,
+          totalLiquidity: 0,
+          poolCount: 0,
+          price: getTokenPrice(prices, token.address, getContracts(chainId).WETH),
+        };
       }
     });
 
     return Object.values(tokenMap).sort((a, b) => b.totalLiquidity - a.totalLiquidity);
-  }, [pools, prices]);
+  }, [pools, prices, tokenList, chainId]);
 
   const chartPools = topPools.filter(p => p.tvl > 0).slice(0, 8);
   const maxTVL = Math.max(...chartPools.map(p => p.tvl), 1);
 
-  const stats = [
-    { icon: DollarSign, label: 'Total Value Locked', value: totalTVL, prefix: '$', isOnChain: true },
-    { icon: ArrowRightLeft, label: 'Volume (recent)', value: volStats.totalVolume, prefix: '$', isOnChain: true },
-    { icon: Zap, label: 'Swaps (recent)', value: volStats.swapCount, isOnChain: true },
-    { icon: Users, label: 'Unique Traders', value: volStats.uniqueTraders, isOnChain: true },
+  const stats: StatCardProps[] = [
+    { icon: Droplets, label: 'TVL (WQMS estimate)', value: totalTVL, suffix: ' WQMS', isOnChain: true },
+    { icon: ArrowRightLeft, label: volumeScanComplete ? 'Recent pool-event volume' : 'Partial indexed volume', value: volStats.totalVolumeWQMS, suffix: ' WQMS est.', isOnChain: volumeScanComplete },
+    { icon: Zap, label: 'Indexed pool swap events', value: volStats.swapCount, isOnChain: volumeScanComplete },
     { icon: Layers, label: 'Total Pools', value: pairCount, isOnChain: true },
     { icon: Activity, label: 'Active Pools', value: activePools, isOnChain: true },
-    { icon: Coins, label: 'Listed Tokens', value: tokenList.length, isOnChain: true },
-    { icon: Percent, label: 'Est. Fees Earned', value: volStats.estimatedFees, prefix: '$', isOnChain: true },
+    { icon: Coins, label: 'Configured Tokens', value: tokenList.length, isOnChain: false },
   ];
 
   return (
@@ -182,11 +210,11 @@ export default function Analytics() {
         </div>
         
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
-          {isLoading ? (
-            [...Array(8)].map((_, i) => <StatCardSkeleton key={i} />)
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
+{isLoading || volLoading ? (
+                    [...Array(6)].map((_, i) => <StatCardSkeleton key={i} />)
           ) : (
-            stats.map((s: any, i) => (
+            stats.map((s, i) => (
               <StatCard key={s.label} icon={s.icon} label={s.label} value={s.value} prefix={s.prefix} suffix={s.suffix} isOnChain={s.isOnChain} delay={i * 0.06} />
             ))
           )}
@@ -240,7 +268,7 @@ export default function Analytics() {
                               className="flex-1 bg-gradient-to-t from-primary to-secondary rounded-t-lg relative group cursor-pointer min-w-0"
                             >
                               <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-popover border border-border px-2 py-1 rounded text-[10px] whitespace-nowrap z-10 pointer-events-none">
-                                {pool.token0Symbol}/{pool.token1Symbol}: ${pool.tvl.toFixed(2)}
+                                {pool.token0Symbol}/{pool.token1Symbol}: {pool.tvl.toFixed(2)} WQMS est.
                               </div>
                             </motion.div>
                           );
@@ -283,7 +311,7 @@ export default function Analytics() {
                           <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
                         </div>
                         <span className="text-xs font-medium flex-1">{pool.token0Symbol}/{pool.token1Symbol}</span>
-                        <span className="text-xs font-bold text-success">${pool.tvl.toFixed(2)}</span>
+                        <span className="text-xs font-bold text-success">{pool.tvl.toFixed(2)} WQMS est.</span>
                       </motion.div>
                     ))}
                     {topPools.filter(p => p.tvl > 0).length === 0 && (
@@ -306,7 +334,7 @@ export default function Analytics() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
                     {tokenList.map((token, i) => (
                       <motion.div
-                        key={token.symbol}
+                      key={token.address}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.2 + i * 0.05 }}
@@ -315,7 +343,7 @@ export default function Analytics() {
                         <TokenIcon src={token.logoURI} symbol={token.symbol} size={32} fallbackSrc="/tokens/qms.svg" className="border border-border mb-2" />
                         <span className="text-xs font-bold">{token.symbol}</span>
                         <span className="text-[10px] text-muted-foreground">
-                          ${(prices[token.symbol] || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {getTokenPrice(prices, token.address, getContracts(chainId).WETH) > 0 ? `${getTokenPrice(prices, token.address, getContracts(chainId).WETH).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 })} WQMS est.` : 'No pool quote'}
                         </span>
                       </motion.div>
                     ))}
@@ -370,7 +398,7 @@ export default function Analytics() {
                                 {pool.reserve1F.toLocaleString(undefined, { maximumFractionDigits: 2 })}
                               </td>
                               <td className="py-2.5 px-3 text-right text-xs font-medium">
-                                {pool.tvl > 0 ? `$${pool.tvl.toFixed(2)}` : '-'}
+                                {pool.tvl > 0 ? `${pool.tvl.toFixed(2)} WQMS est.` : '—'}
                               </td>
                               <td className="py-2.5 px-3 text-right hidden md:table-cell">
                                 <span className={cn(
@@ -424,10 +452,10 @@ export default function Analytics() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">
-                          ${token.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: token.price < 1 ? 4 : 2 })}
+                          {token.price > 0 ? `${token.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: token.price < 1 ? 4 : 2 })} WQMS est.` : 'No pool quote'}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          TVL: ${token.totalLiquidity.toFixed(2)}
+                          TVL: {token.totalLiquidity.toFixed(2)} WQMS est.
                         </p>
                       </div>
                     </motion.div>
@@ -447,11 +475,11 @@ export default function Analytics() {
                       Recent Swaps
                     </h2>
                     <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
-                      Live on-chain Swap events across all pools
+                      Live pool Swap events; one transaction can emit multiple events
                     </p>
                   </div>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/20 text-success shrink-0">
-                    {swapLogs.length} swaps
+                    {swapLogs.length} pool events
                   </span>
                 </div>
 
@@ -470,8 +498,8 @@ export default function Analytics() {
                         <tr className="border-b border-border">
                           <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Pool</th>
                           <th className="text-left py-2 px-3 text-xs font-medium text-muted-foreground">Swap</th>
-                          <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground">Value</th>
-                          <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Trader</th>
+                          <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground">Est. Volume</th>
+                          <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground hidden sm:table-cell">Pair caller (may be router)</th>
                           <th className="text-right py-2 px-3 text-xs font-medium text-muted-foreground">Tx</th>
                         </tr>
                       </thead>
@@ -497,7 +525,7 @@ export default function Analytics() {
                               </div>
                             </td>
                             <td className="py-2.5 px-3 text-right text-xs font-medium text-success">
-                              {log.volumeUSD > 0 ? `$${log.volumeUSD.toFixed(2)}` : '—'}
+                              {log.volumeWQMS > 0 ? `${log.volumeWQMS.toFixed(2)} WQMS est.` : '—'}
                             </td>
                             <td className="py-2.5 px-3 text-right hidden sm:table-cell">
                               <a

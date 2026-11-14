@@ -1,57 +1,43 @@
+import { AlertTriangle, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { AlertTriangle, AlertCircle, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PriceImpactWarningProps {
-  priceImpact: number;
-  severity: 'low' | 'medium' | 'high';
+  priceImpact: number | null;
+  severity: 'low' | 'medium' | 'high' | 'unknown';
 }
 
 export function PriceImpactWarning({ priceImpact, severity }: PriceImpactWarningProps) {
-  if (severity === 'low' || priceImpact < 1) return null;
-
-  const config = {
-    medium: {
-      icon: AlertCircle,
-      bg: 'bg-warning/10',
-      border: 'border-warning/30',
-      text: 'text-warning',
-      title: 'Moderate Price Impact',
-      description: 'This trade will move the price. Consider trading a smaller amount.',
-    },
-    high: {
-      icon: AlertTriangle,
-      bg: 'bg-destructive/10',
-      border: 'border-destructive/30',
-      text: 'text-destructive',
-      title: 'High Price Impact',
-      description: 'This trade has very high price impact. You may receive significantly less than expected.',
-    },
-  };
-
-  const currentConfig = severity === 'high' ? config.high : config.medium;
-  const { icon: Icon, bg, border, text, title, description } = currentConfig;
+  const isUnknown = priceImpact === null || severity === 'unknown';
+  const Icon = isUnknown || severity === 'low' ? Info : AlertTriangle;
 
   return (
     <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: 'auto' }}
-      exit={{ opacity: 0, height: 0 }}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      role="status"
+      aria-live="polite"
       className={cn(
-        'rounded-xl p-4 border',
-        bg,
-        border
+        'flex items-start gap-2 rounded-xl border p-3 text-xs',
+        isUnknown && 'border-border bg-muted/40 text-muted-foreground',
+        !isUnknown && severity === 'high' && 'border-destructive/30 bg-destructive/10 text-destructive',
+        !isUnknown && severity === 'medium' && 'border-warning/30 bg-warning/10 text-warning',
+        !isUnknown && severity === 'low' && 'border-border bg-muted/40 text-muted-foreground',
       )}
     >
-      <div className="flex items-start gap-3">
-        <Icon className={cn('w-5 h-5 mt-0.5 flex-shrink-0', text)} />
-        <div className="flex-1">
-          <p className={cn('font-semibold text-sm', text)}>{title}</p>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-          <div className={cn('mt-2 text-lg font-bold', text)}>
-            ~{priceImpact.toFixed(2)}% price impact
-          </div>
-        </div>
+      <Icon aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+      <div className="flex flex-col gap-1">
+        <p className="font-semibold">
+          {isUnknown
+            ? 'Execution impact unavailable'
+            : `${priceImpact.toFixed(2)}% execution delta versus pool mid-price`}
+        </p>
+        <p className="leading-relaxed opacity-90">
+          {isUnknown
+            ? 'A reliable reserve baseline is unavailable for this route. The estimate is intentionally omitted; review the quoted output and wallet details before signing.'
+            : 'This estimate compares the router quote with the direct pool mid-price and includes the pool fee. Actual execution can change before confirmation.'}
+        </p>
       </div>
     </motion.div>
   );

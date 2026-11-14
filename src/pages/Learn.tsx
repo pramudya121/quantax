@@ -54,8 +54,7 @@ const GUIDES: Guide[] = [
       {
         heading: 'Where fees go',
         body: (
-          <>Every swap pays a <b>0.30% fee</b> that is added back to the pool reserves. Liquidity providers (LPs)
-            earn their share of those fees proportional to their pool ownership.</>
+<>A pool may charge swap fees according to its deployed contract configuration. Liquidity providers may receive a share of those fees; verify the rate and distribution on-chain before depositing.</>
         ),
       },
     ],
@@ -96,7 +95,7 @@ const GUIDES: Guide[] = [
     sections: [
       {
         heading: 'What LPs actually do',
-        body: <>You deposit equal <b>value</b> of two tokens into a pool. In return you receive LP tokens representing your share. Every swap through that pool pays a 0.30% fee, which grows the reserves — so your LP tokens redeem for slightly more over time.</>,
+        body: <>You deposit two tokens into a pool and receive LP tokens representing your share. Pool fees and reserve behavior depend on the deployed contract; impermanent loss and other risks can reduce the value you redeem.</>,
       },
       {
         heading: 'Ratio matters',

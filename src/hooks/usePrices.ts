@@ -1,16 +1,13 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useReadContracts, useChainId } from 'wagmi';
 import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
+import { QMS_CHAIN_ID } from '@/config/chains';
 import { PAIR_ABI, FACTORY_ABI } from '@/config/abis';
+import { getTokenPrice } from '@/lib/pricing';
 import { formatUnits } from 'viem';
 
-// Reference anchor only. Every other price is derived from real pool
-// reserves (token priced in WQMS). WQMS is treated as the $1 reference
-// unit — no invented fiat prices for tokens without a pool.
-export const BASE_PRICES: Record<string, number> = {
-  QMS: 1.0,
-  WQMS: 1.0,
-};
+// Pool quotes are denominated in WQMS; this identity rate is not a fiat peg.
+const WQMS_IDENTITY_PRICE = 1;
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -36,7 +33,11 @@ export function useTokenPrices() {
       args: [wrapped, token.address as `0x${string}`],
     })),
     // Pair addresses are immutable once created — cache aggressively.
-    query: { staleTime: 5 * 60_000, gcTime: 30 * 60_000 },
+    query: {
+      enabled: chainId === QMS_CHAIN_ID && wopnPairs.length > 0,
+      staleTime: 5 * 60_000,
+      gcTime: 30 * 60_000,
+    },
   });
 
   const pairTargets = useMemo(() => {
@@ -56,18 +57,20 @@ export function useTokenPrices() {
       { address: pairAddress, abi: PAIR_ABI, functionName: 'getReserves' },
       { address: pairAddress, abi: PAIR_ABI, functionName: 'token0' },
     ]),
-    // Auto-refresh prices every 45s; serve cached reserves for 20s to throttle RPCs.
+    // Refresh live reserve quotes every 15s while the page is visible.
     query: {
-      enabled: pairTargets.length > 0,
-      staleTime: 20_000,
+      enabled: chainId === QMS_CHAIN_ID && pairTargets.length > 0,
+      staleTime: 5_000,
       gcTime: 60_000,
-      refetchInterval: 45_000,
+      refetchInterval: 15_000,
       refetchIntervalInBackground: false,
     },
   });
 
   const prices = useMemo(() => {
-    const priceMap: Record<string, number> = { ...BASE_PRICES };
+    const priceMap: Record<string, number> = {};
+    if (chainId !== QMS_CHAIN_ID) return priceMap;
+    priceMap[wrapped.toLowerCase()] = WQMS_IDENTITY_PRICE;
 
     if (!reserveQueries.data) return priceMap;
 
@@ -83,92 +86,70 @@ export function useTokenPrices() {
       const wopnReserve = parseFloat(formatUnits(isToken0Wopn ? reserves[0] : reserves[1], 18));
       const tokenReserve = parseFloat(formatUnits(isToken0Wopn ? reserves[1] : reserves[0], token.decimals));
 
-      if (tokenReserve > 0) {
-        // Price in WQMS terms (WQMS = $1)
-        priceMap[token.symbol] = wopnReserve / tokenReserve;
+      const priceInWQMS = wopnReserve / tokenReserve;
+      if (Number.isFinite(wopnReserve) && Number.isFinite(tokenReserve) && tokenReserve > 0 && Number.isFinite(priceInWQMS) && priceInWQMS > 0) {
+        priceMap[token.address.toLowerCase()] = priceInWQMS;
       }
     }
 
     return priceMap;
-  }, [reserveQueries.data, pairTargets, wrapped]);
+  }, [chainId, reserveQueries.data, pairTargets, wrapped]);
+
+  const getPrice = useCallback(
+    (tokenAddress: string) => getTokenPrice(prices, tokenAddress, wrapped),
+    [prices, wrapped],
+  );
 
   return {
     prices,
-    getPrice: (symbol: string) => prices[symbol] || 0,
-    isLoading: pairQueries.isLoading || reserveQueries.isLoading,
+    getPrice,
+    isLoading: chainId === QMS_CHAIN_ID && (pairQueries.isLoading || reserveQueries.isLoading),
   };
 }
 
-// Hook to calculate price impact for a swap.
-// Uses the Uniswap V2 constant-product formula directly on reserves so the
-// result is bounded between 0 and 100, regardless of decimal mismatches or
-// noisy quote data.
+// Compare the router's current quoted output with the direct pool mid-price.
+// If a trustworthy reserve baseline or quote is unavailable, report unknown
+// instead of inventing a size-based impact estimate.
 export function usePriceImpact(
   fromToken: TokenInfo | null,
   toToken: TokenInfo | null,
   fromAmount: string,
-  _toAmount: string,
+  quotedAmount: string,
   reserves?: [bigint, bigint],
   token0Address?: string
 ) {
   const chainId = useChainId();
   const wrappedNative = getContracts(chainId).WETH;
   return useMemo(() => {
+    const unknown = { priceImpact: null, severity: 'unknown' as const };
     const severityOf = (impact: number) =>
       impact > 10 ? ('high' as const) : impact > 3 ? ('medium' as const) : ('low' as const);
 
-    if (!fromToken || !toToken || !fromAmount) {
-      return { priceImpact: 0, severity: 'low' as const };
-    }
+    if (!fromToken || !toToken || !fromAmount || !quotedAmount || !reserves || !token0Address) return unknown;
 
-    const inputAmount = parseFloat(fromAmount);
-    if (!Number.isFinite(inputAmount) || inputAmount <= 0) {
-      return { priceImpact: 0, severity: 'low' as const };
-    }
+    const inputAmount = Number(fromAmount);
+    const outputAmount = Number(quotedAmount);
+    if (!Number.isFinite(inputAmount) || inputAmount <= 0 || !Number.isFinite(outputAmount) || outputAmount <= 0) return unknown;
+    if (reserves[0] <= 0n || reserves[1] <= 0n) return unknown;
 
-    // Direct-pair AMM formula (preferred): impact = 1 - midOut / amountOut*
-    // where midOut = amountIn * reserveOut / reserveIn (no fee, no slippage)
-    // and amountOut* = amountIn*997 * reserveOut / (reserveIn*1000 + amountIn*997)
-    if (reserves && reserves[0] > 0n && reserves[1] > 0n && token0Address) {
-      const fromAddr = (fromToken.isNative ? wrappedNative : fromToken.address).toLowerCase();
-      const isFromToken0 = token0Address.toLowerCase() === fromAddr;
+    const fromAddr = (fromToken.isNative ? wrappedNative : fromToken.address).toLowerCase();
+    const isFromToken0 = token0Address.toLowerCase() === fromAddr;
+    const reserveIn = Number(formatUnits(isFromToken0 ? reserves[0] : reserves[1], fromToken.decimals));
+    const reserveOut = Number(formatUnits(isFromToken0 ? reserves[1] : reserves[0], toToken.decimals));
+    if (!Number.isFinite(reserveIn) || !Number.isFinite(reserveOut) || reserveIn <= 0 || reserveOut <= 0) return unknown;
 
-      const reserveIn = parseFloat(formatUnits(
-        isFromToken0 ? reserves[0] : reserves[1],
-        fromToken.decimals,
-      ));
-      const reserveOut = parseFloat(formatUnits(
-        isFromToken0 ? reserves[1] : reserves[0],
-        toToken.decimals,
-      ));
+    const midPriceOutput = inputAmount * (reserveOut / reserveIn);
+    if (!Number.isFinite(midPriceOutput) || midPriceOutput <= 0 || outputAmount > midPriceOutput) return unknown;
 
-      if (reserveIn > 0 && reserveOut > 0) {
-        const amountInWithFee = inputAmount * 0.997;
-        const numerator = amountInWithFee * reserveOut;
-        const denominator = reserveIn + amountInWithFee;
-        const amountOut = numerator / denominator;
-        const midOut = inputAmount * (reserveOut / reserveIn);
-
-        if (midOut > 0 && amountOut > 0 && amountOut <= midOut) {
-          const impact = ((midOut - amountOut) / midOut) * 100;
-          const clamped = Math.max(0, Math.min(impact, 99.99));
-          return { priceImpact: clamped, severity: severityOf(clamped) };
-        }
-        // If amountOut > midOut something is off (stale reserves) — treat as low impact.
-        return { priceImpact: 0, severity: 'low' as const };
-      }
-    }
-
-    // Multi-hop / unknown reserves fallback: conservative size-based estimate.
-    const estimatedImpact = Math.min(inputAmount * 0.05, 10);
-    return { priceImpact: estimatedImpact, severity: severityOf(estimatedImpact) };
-  }, [fromToken, toToken, fromAmount, reserves, token0Address, wrappedNative]);
+    const impact = Math.max(0, Math.min(((midPriceOutput - outputAmount) / midPriceOutput) * 100, 99.99));
+    return { priceImpact: impact, severity: severityOf(impact) };
+  }, [fromToken, toToken, fromAmount, quotedAmount, reserves, token0Address, wrappedNative]);
 }
 
 // Hook to calculate TVL for a pool
 export function usePoolTVL(
-  token0Symbol: string,
-  token1Symbol: string,
+  token0Address: string,
+  token1Address: string,
   reserve0: bigint,
   reserve1: bigint,
   token0Decimals: number = 18,
@@ -176,12 +157,12 @@ export function usePoolTVL(
   prices: Record<string, number>
 ) {
   return useMemo(() => {
-    const price0 = prices[token0Symbol] || 0;
-    const price1 = prices[token1Symbol] || 0;
+    const price0 = getTokenPrice(prices, token0Address);
+    const price1 = getTokenPrice(prices, token1Address);
 
     const value0 = parseFloat(formatUnits(reserve0, token0Decimals)) * price0;
     const value1 = parseFloat(formatUnits(reserve1, token1Decimals)) * price1;
 
     return value0 + value1;
-  }, [token0Symbol, token1Symbol, reserve0, reserve1, token0Decimals, token1Decimals, prices]);
+  }, [token0Address, token1Address, reserve0, reserve1, token0Decimals, token1Decimals, prices]);
 }
