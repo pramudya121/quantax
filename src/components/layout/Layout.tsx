@@ -1,17 +1,9 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { useLiveSwapNotifications } from '@/hooks/useLiveSwapNotifications';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-
-// Defer decorative backgrounds — pure visuals, not part of the critical path.
-const WaveBackground = lazy(() =>
-  import('@/components/ui/WaveBackground').then(m => ({ default: m.WaveBackground }))
-);
-const StarCometOverlay = lazy(() =>
-  import('@/components/ui/StarCometOverlay').then(m => ({ default: m.StarCometOverlay }))
-);
 
 interface LayoutProps {
   children: ReactNode;
@@ -49,16 +41,11 @@ export function Layout({ children }: LayoutProps) {
   }, [showBot]);
 
   return (
-    <div className="min-h-screen relative flex flex-col" style={{ background: 'hsl(0 0% 3%)' }}>
-      <Suspense fallback={null}>
-        <WaveBackground />
-        <StarCometOverlay starCount={100} cometCount={8} />
-      </Suspense>
-
-
-
+    <div className="wave-bg min-h-screen relative flex flex-col overflow-x-clip">
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-60" style={{ backgroundImage: 'var(--gradient-mesh)' }} />
       <Header />
-      <main className="relative z-10 pt-20 pb-12 flex-1">
+      <main id="main-content" tabIndex={-1} className="relative z-10 flex-1 pb-12 pt-20 focus:outline-none">
         {children}
       </main>
       <Footer />
