@@ -47,9 +47,9 @@ function StatCard({ icon: Icon, label, value, prefix = '', suffix = '', delay = 
       transition={{ delay }}
       className="relative overflow-hidden"
     >
-      <div className="stat-card relative">
+      <div className="stat-card relative min-w-0 p-3 md:p-4">
         <BorderBeam size={100} duration={10} delay={delay * 2} />
-        <div className="flex items-start justify-between mb-2">
+        <div className="mb-2 flex items-start justify-between gap-2">
           <div className="p-1.5 md:p-2 rounded-xl bg-primary/10">
             <Icon className="w-4 h-4 md:w-5 md:h-5 text-primary" />
           </div>
@@ -59,9 +59,9 @@ function StatCard({ icon: Icon, label, value, prefix = '', suffix = '', delay = 
             </span>
           )}
         </div>
-        <p className="text-[10px] md:text-xs text-muted-foreground mb-1 tracking-[0.14em] uppercase">{label}</p>
-        <p className="font-mono-display text-lg md:text-2xl font-bold">
-          <NumberTicker value={value} prefix={prefix} suffix={suffix} delay={delay} decimalPlaces={value < 100 ? 2 : 0} />
+        <p className="mb-1 min-h-7 text-[9px] leading-tight tracking-[0.1em] text-muted-foreground uppercase md:min-h-0 md:text-xs">{label}</p>
+        <p className="font-mono-display break-words text-base font-bold leading-tight tabular-nums md:text-2xl">
+          <NumberTicker value={value} prefix={prefix} suffix={suffix} delay={delay} decimalPlaces={Number.isInteger(value) ? 0 : value < 100 ? 2 : 0} />
         </p>
       </div>
     </motion.div>
@@ -195,18 +195,24 @@ export default function Analytics() {
       
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 max-w-6xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-6">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.1 }}
-            className="ember-pill inline-flex items-center gap-2 mb-4"
-          >
-            <BarChart3 className="w-4 h-4 text-primary" />
-            <span className="text-[10px] md:text-xs font-semibold tracking-[0.18em] uppercase">Protocol Analytics</span>
-          </motion.div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold gradient-text mb-2 tracking-tight">Analytics</h1>
-          <p className="text-sm md:text-base text-muted-foreground">Real-time on-chain protocol statistics from QMS Testnet</p>
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="ember-pill mb-2 inline-flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-primary" />
+              <span className="text-[10px] md:text-xs font-semibold tracking-[0.16em] uppercase">Protocol Analytics</span>
+            </div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold gradient-text tracking-tight">Analytics</h1>
+            <p className="mt-1 text-xs md:text-sm text-muted-foreground">On-chain market activity and liquidity</p>
+          </div>
+          <div className="flex items-center gap-2 self-start rounded-xl border border-border/60 bg-muted/30 px-3 py-2 sm:self-auto">
+            <span className="relative flex size-2 shrink-0">
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-40" />
+              <span className="relative inline-flex size-2 rounded-full bg-success" />
+            </span>
+            <span className="text-[11px] font-medium">QMS Testnet</span>
+            <span className="h-3 border-l border-border/70" />
+            <span className="text-[10px] text-muted-foreground">{latestBlock ? `Block ${latestBlock.toLocaleString()}` : 'Connecting…'}</span>
+          </div>
         </div>
         
         {/* Stats Grid */}
@@ -221,23 +227,28 @@ export default function Analytics() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-1 mb-6 p-1 rounded-xl bg-muted/50 border border-border/50">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 md:px-4 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-all flex-1 justify-center",
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-md"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              )}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
-          <Button variant="ghost" size="sm" aria-label="Refresh analytics data" onClick={() => { refetch(); refetchVol(); }} disabled={isLoading || volLoading} className="ml-1 shrink-0">
+        <div className="mb-5 flex items-center gap-2">
+          <nav aria-label="Analytics sections" className="flex min-w-0 flex-1 items-center gap-1 rounded-xl border border-border/50 bg-muted/40 p-1">
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                aria-current={activeTab === tab.id ? 'page' : undefined}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex min-h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg px-1.5 sm:px-3 text-[10px] sm:text-xs font-medium transition-colors",
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                {tab.icon}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sr-only sm:hidden">{tab.label}</span>
+              </button>
+            ))}
+          </nav>
+          <Button variant="outline" size="icon" aria-label="Refresh analytics data" onClick={() => { refetch(); refetchVol(); }} disabled={isLoading || volLoading} className="size-10 shrink-0 rounded-xl">
             <RefreshCw className={cn("w-3.5 h-3.5", (isLoading || volLoading) && "animate-spin")} />
           </Button>
         </div>
@@ -248,46 +259,50 @@ export default function Analytics() {
             <motion.div key="overview" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }} className="space-y-4">
               <PriceHistoryChart pools={pools} logs={swapLogs} latestBlock={latestBlock} isLoading={volLoading} />
               <div className="grid md:grid-cols-2 gap-4">
-                {/* TVL Bar Chart */}
-                <div className="glass-card p-4 md:p-5">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm md:text-base font-semibold">Pool TVL Distribution</h2>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/20 text-success">Live</span>
+                {/* TVL Distribution */}
+                <section className="glass-card p-4 md:p-5" aria-labelledby="pool-tvl-heading">
+                  <div className="mb-4 flex items-start justify-between gap-3">
+                    <div>
+                      <h2 id="pool-tvl-heading" className="text-sm md:text-base font-semibold">Pool liquidity</h2>
+                      <p className="mt-1 text-[10px] text-muted-foreground">Top pools by estimated TVL</p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-success/10 px-2 py-1 text-[9px] font-medium text-success">On-chain</span>
                   </div>
                   {chartPools.length > 0 ? (
-                    <>
-                      <div className="h-40 md:h-48 flex items-end gap-1.5">
-                        {chartPools.map((pool, i) => {
-                          const pct = maxTVL > 0 ? (pool.tvl / maxTVL) * 100 : 0;
-                          return (
-                            <motion.div
-                              key={pool.pairAddress}
-                              initial={{ height: 0 }}
-                              animate={{ height: `${Math.max(pct, 5)}%` }}
-                              transition={{ delay: 0.3 + i * 0.08, duration: 0.5 }}
-                              className="flex-1 bg-gradient-to-t from-primary to-secondary rounded-t-lg relative group cursor-pointer min-w-0"
+                    <div className="flex flex-col gap-3">
+                      {chartPools.map((pool, i) => {
+                        const pct = maxTVL > 0 ? (pool.tvl / maxTVL) * 100 : 0;
+                        return (
+                          <div key={pool.pairAddress} className="flex flex-col gap-1.5" aria-label={`${pool.token0Symbol}/${pool.token1Symbol} pool TVL`}>
+                            <div className="flex items-center justify-between gap-2 text-[11px]">
+                              <span className="min-w-0 truncate font-medium">{pool.token0Symbol}/{pool.token1Symbol}</span>
+                              <span className="shrink-0 font-mono tabular-nums text-muted-foreground">{pool.tvl.toLocaleString(undefined, { maximumFractionDigits: 2 })} WQMS</span>
+                            </div>
+                            <div
+                              role="meter"
+                              aria-label={`${pool.token0Symbol}/${pool.token1Symbol} relative TVL`}
+                              aria-valuemin={0}
+                              aria-valuemax={100}
+                              aria-valuenow={Math.round(pct)}
+                              className="h-1.5 overflow-hidden rounded-full bg-muted/70"
                             >
-                              <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-popover border border-border px-2 py-1 rounded text-[10px] whitespace-nowrap z-10 pointer-events-none">
-                                {pool.token0Symbol}/{pool.token1Symbol}: {pool.tvl.toFixed(2)} WQMS est.
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                      <div className="flex justify-between mt-3 text-[8px] md:text-[10px] text-muted-foreground overflow-hidden">
-                        {chartPools.map(p => (
-                          <span key={p.pairAddress} className="truncate px-0.5 text-center flex-1 min-w-0">
-                            {p.token0Symbol}/{p.token1Symbol}
-                          </span>
-                        ))}
-                      </div>
-                    </>
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ delay: 0.15 + i * 0.05, duration: 0.45 }}
+                                className="h-full rounded-full bg-gradient-to-r from-primary to-secondary"
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   ) : (
-                    <div className="h-40 flex items-center justify-center text-muted-foreground text-sm">
+                    <div className="flex min-h-32 items-center justify-center text-center text-xs text-muted-foreground">
                       No active pools with liquidity
                     </div>
                   )}
-                </div>
+                </section>
 
                 {/* Top Pools Quick View */}
                 <div className="glass-card p-4 md:p-5">
@@ -360,7 +375,50 @@ export default function Analytics() {
                   <h2 className="text-sm md:text-base font-semibold">All Pools</h2>
                   <span className="text-xs text-muted-foreground">{pools.length} pools on-chain</span>
                 </div>
-                <div className="overflow-x-auto -mx-4 md:mx-0">
+                <div className="grid gap-2 sm:hidden">
+                  {isLoading ? (
+                    [...Array(4)].map((_, i) => <TableRowSkeleton key={i} columns={2} />)
+                  ) : topPools.length > 0 ? (
+                    topPools.map((pool, i) => {
+                      const hasLiq = pool.reserve0 > 0n && pool.reserve1 > 0n;
+                      return (
+                        <article key={pool.pairAddress} className="rounded-xl border border-border/50 bg-muted/20 p-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 shrink-0 text-[10px] text-muted-foreground">{i + 1}</span>
+                            <div className="flex -space-x-1 shrink-0">
+                              <TokenIcon src={pool.token0?.logoURI} symbol={pool.token0Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
+                              <TokenIcon src={pool.token1?.logoURI} symbol={pool.token1Symbol} size={20} fallbackSrc="/tokens/qms.svg" className="border border-background" />
+                            </div>
+                            <span className="min-w-0 flex-1 truncate text-xs font-semibold">{pool.token0Symbol}/{pool.token1Symbol}</span>
+                            <span className={cn("shrink-0 rounded-full px-2 py-1 text-[9px] font-medium", hasLiq ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}>
+                              {hasLiq ? 'Active' : 'Empty'}
+                            </span>
+                          </div>
+                          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/40 pt-2.5 text-[10px]">
+                            <div>
+                              <p className="text-muted-foreground">Reserve 0</p>
+                              <p className="mt-0.5 truncate font-mono tabular-nums">{pool.reserve0F.toLocaleString(undefined, { maximumFractionDigits: 2 })} {pool.token0Symbol}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Reserve 1</p>
+                              <p className="mt-0.5 truncate font-mono tabular-nums">{pool.reserve1F.toLocaleString(undefined, { maximumFractionDigits: 2 })} {pool.token1Symbol}</p>
+                            </div>
+                            <div className="col-span-2 flex items-center justify-between gap-2">
+                              <span className="text-muted-foreground">Estimated TVL</span>
+                              <span className="font-semibold tabular-nums">{pool.tvl > 0 ? `${pool.tvl.toFixed(2)} WQMS` : '—'}</span>
+                            </div>
+                          </div>
+                          <a href={`https://testnet.qmsscan.io/address/${pool.pairAddress}`} target="_blank" rel="noopener noreferrer" aria-label={`View ${pool.token0Symbol}/${pool.token1Symbol} on explorer`} className="mt-2 inline-flex min-h-9 items-center gap-1 text-[10px] font-medium text-primary hover:underline">
+                            View on explorer <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </article>
+                      );
+                    })
+                  ) : (
+                    <p className="py-8 text-center text-sm text-muted-foreground">No pools found on-chain</p>
+                  )}
+                </div>
+                <div className="hidden overflow-x-auto -mx-4 md:mx-0 sm:block">
                   <table className="w-full min-w-[500px]">
                     <thead>
                       <tr className="border-b border-border">
