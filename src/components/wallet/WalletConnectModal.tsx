@@ -358,7 +358,10 @@ export function WalletConnectModal({ isOpen, onClose }: WalletConnectModalProps)
               {/* Footer */}
               <div className="px-5 py-3 border-t border-white/5 text-center shrink-0">
                 <p className="text-[10px] text-muted-foreground/70 leading-relaxed">
-                  Connect only a wallet you control. QuantaX never asks for your recovery phrase or private keys.
+                  By connecting a wallet, you agree to QuantaX{' '}
+                  <a href="#" className="text-foreground hover:text-primary transition-colors">Terms of Service</a>
+                  {' '}and acknowledge the{' '}
+                  <a href="#" className="text-foreground hover:text-primary transition-colors">Privacy Policy</a>.
                 </p>
               </div>
             </div>

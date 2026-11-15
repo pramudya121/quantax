@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Flame, ExternalLink, Github, Twitter, MessageCircle } from 'lucide-react';
 import quantaxLogo from '@/assets/quantax-logo.jpg';
 
 const footerLinks = {
@@ -16,7 +17,9 @@ const footerLinks = {
     { name: 'QMS Explorer', path: 'https://testnet.qmsscan.io', external: true },
   ],
   Community: [
-    { name: 'GitHub', path: 'https://github.com/pramudya121/quantax', external: true },
+    { name: 'Discord', path: '#', external: true },
+    { name: 'Twitter', path: '#', external: true },
+    { name: 'GitHub', path: '#', external: true },
   ],
 };
 
@@ -29,21 +32,41 @@ export function Footer() {
       <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-12">
           {/* Brand */}
-          <div className="col-span-2 lg:col-span-2">
+          <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3 mb-4">
               <img src={quantaxLogo} alt="QuantaX" className="h-10 w-10 rounded-xl" />
               <span className="text-xl font-bold gradient-text">QUANTAX</span>
             </Link>
             <p className="text-sm text-muted-foreground max-w-xs mb-6">
-              A community-built exchange on QMS Testnet for swapping tokens and managing liquidity on-chain.
+              The premier decentralized exchange on QMS Testnet. Swap, provide liquidity, and earn with the power of the dragon.
             </p>
+            <div className="flex items-center gap-3">
+              {[
+                { icon: Twitter, label: 'Twitter' },
+                { icon: MessageCircle, label: 'Discord' },
+                { icon: Github, label: 'GitHub' },
+              ].map(({ icon: Icon, label }) => (
+                <motion.a
+                  key={label}
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="p-2.5 rounded-xl bg-muted/50 border border-border/50 hover:border-primary/50 hover:bg-primary/10 transition-colors"
+                  aria-label={label}
+                >
+                  <Icon className="w-4 h-4 text-muted-foreground" />
+                </motion.a>
+              ))}
+            </div>
           </div>
 
           {/* Links */}
           {Object.entries(footerLinks).map(([title, links]) => (
             <div key={title}>
               <h4 className="text-sm font-semibold mb-4 text-foreground">{title}</h4>
-              <ul className="flex flex-col gap-2.5">
+              <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.name}>
                     {link.external ? (
@@ -77,8 +100,8 @@ export function Footer() {
             © {new Date().getFullYear()} QuantaX. Built on QMS Testnet.
           </p>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="size-2 rounded-full bg-success" aria-hidden="true" />
-            <span>QMS Testnet</span>
+            <Flame className="w-3 h-3 text-primary" />
+            <span>Powered by Dragon Fire</span>
           </div>
         </div>
       </div>

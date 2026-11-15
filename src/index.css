@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Syne:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,56 +8,81 @@
 
 @layer base {
   :root {
-    --background: 205 24% 6%;
-    --foreground: 180 10% 94%;
-    --card: 200 20% 9%;
-    --card-foreground: 180 10% 94%;
-    --popover: 200 20% 10%;
-    --popover-foreground: 180 10% 94%;
-    --primary: 162 68% 48%;
-    --primary-foreground: 205 28% 8%;
-    --secondary: 190 62% 46%;
-    --secondary-foreground: 205 28% 8%;
-    --muted: 200 16% 14%;
-    --muted-foreground: 195 10% 63%;
-    --accent: 190 38% 17%;
-    --accent-foreground: 162 58% 78%;
-    --destructive: 0 72% 58%;
+    /* Core Dragon Colors - Crimson & Obsidian */
+    --background: 0 0% 4%;
+    --foreground: 0 0% 98%;
+    
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 98%;
+    
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    
+    /* Dragon Red - Primary */
+    --primary: 0 85% 50%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Ember Glow */
+    --secondary: 15 90% 55%;
+    --secondary-foreground: 0 0% 100%;
+    
+    /* Dark surfaces */
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 65%;
+    
+    /* Accent - Golden ember */
+    --accent: 35 100% 50%;
+    --accent-foreground: 0 0% 5%;
+    
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 195 15% 19%;
-    --input: 200 18% 12%;
-    --ring: 162 68% 48%;
-    --radius: 0.875rem;
-    --dragon-crimson: 162 68% 48%;
-    --dragon-ember: 190 62% 46%;
-    --dragon-gold: 38 88% 58%;
-    --dragon-obsidian: 205 24% 6%;
-    --dragon-smoke: 200 16% 14%;
-    --dragon-ash: 195 10% 34%;
-    --success: 152 62% 46%;
-    --success-foreground: 205 28% 8%;
-    --warning: 38 88% 58%;
-    --info: 195 75% 56%;
-    --gradient-dragon: linear-gradient(115deg, hsl(162 68% 48%), hsl(190 62% 46%));
-    --gradient-ember: linear-gradient(180deg, hsl(162 68% 48%), hsl(190 62% 30%));
-    --gradient-card: linear-gradient(180deg, hsl(200 20% 10%), hsl(205 24% 7%));
-    --gradient-glow: radial-gradient(ellipse at center, hsl(162 68% 48% / 0.12) 0%, transparent 70%);
-    --gradient-mesh: radial-gradient(at 20% 10%, hsl(162 68% 48% / 0.09) 0px, transparent 45%),
-                     radial-gradient(at 85% 25%, hsl(190 62% 46% / 0.07) 0px, transparent 50%),
-                     radial-gradient(at 50% 95%, hsl(162 68% 48% / 0.06) 0px, transparent 55%);
-    --gradient-aurora: conic-gradient(from 180deg at 50% 50%, hsl(162 68% 48% / 0.12), hsl(190 62% 46% / 0.1), hsl(162 68% 48% / 0.08), hsl(162 68% 48% / 0.12));
-    --shadow-dragon: 0 0 40px -20px hsl(162 68% 48% / 0.4);
-    --shadow-card: 0 12px 36px -18px hsl(205 60% 2% / 0.7);
-    --shadow-glow: 0 0 32px hsl(162 68% 48% / 0.16);
-    --shadow-ember-strong: 0 12px 40px -20px hsl(162 68% 48% / 0.35);
-    --sidebar-background: 205 24% 6%;
-    --sidebar-foreground: 180 10% 94%;
-    --sidebar-primary: 162 68% 48%;
-    --sidebar-primary-foreground: 205 28% 8%;
-    --sidebar-accent: 200 16% 14%;
-    --sidebar-accent-foreground: 180 10% 94%;
-    --sidebar-border: 195 15% 19%;
-    --sidebar-ring: 162 68% 48%;
+    
+    /* Borders & inputs */
+    --border: 0 0% 18%;
+    --input: 0 0% 15%;
+    --ring: 0 85% 50%;
+    
+    --radius: 0.75rem;
+    
+    /* Dragon-specific tokens */
+    --dragon-crimson: 0 85% 50%;
+    --dragon-ember: 15 90% 55%;
+    --dragon-gold: 35 100% 50%;
+    --dragon-obsidian: 0 0% 4%;
+    --dragon-smoke: 0 0% 12%;
+    --dragon-ash: 0 0% 25%;
+    
+    /* Success/Info states */
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 35 100% 50%;
+    --info: 200 80% 50%;
+    
+    /* Gradients - richer dragon palette */
+    --gradient-dragon: linear-gradient(135deg, hsl(0, 90%, 55%) 0%, hsl(15, 95%, 58%) 45%, hsl(35, 100%, 55%) 100%);
+    --gradient-ember: linear-gradient(180deg, hsl(0, 90%, 55%) 0%, hsl(0, 85%, 28%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0, 0%, 10%) 0%, hsl(0, 0%, 6%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(0, 85%, 50%, 0.18) 0%, transparent 70%);
+    --gradient-mesh: radial-gradient(at 20% 10%, hsl(0, 90%, 50%, 0.18) 0px, transparent 45%),
+                     radial-gradient(at 85% 25%, hsl(35, 100%, 50%, 0.12) 0px, transparent 50%),
+                     radial-gradient(at 50% 95%, hsl(15, 95%, 55%, 0.18) 0px, transparent 55%);
+    --gradient-aurora: conic-gradient(from 180deg at 50% 50%, hsl(0,90%,55%,0.25), hsl(15,95%,58%,0.2), hsl(35,100%,55%,0.18), hsl(0,90%,55%,0.25));
+
+    /* Shadows */
+    --shadow-dragon: 0 0 60px -15px hsl(0, 85%, 50%, 0.5);
+    --shadow-card: 0 4px 24px -4px hsl(0, 0%, 0%, 0.5);
+    --shadow-glow: 0 0 40px 0px hsl(0, 85%, 50%, 0.25);
+    --shadow-ember-strong: 0 10px 50px -10px hsl(0, 90%, 50%, 0.55), 0 0 80px -20px hsl(35, 100%, 55%, 0.35);
+
+    /* Sidebar */
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 85% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 15%;
+    --sidebar-ring: 0 85% 50%;
   }
 
 }
@@ -69,7 +94,6 @@
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
-    font-optical-sizing: auto;
     scroll-behavior: smooth;
   }
 
@@ -107,18 +131,24 @@
     color: hsl(var(--foreground));
   }
 
+  /* === Global Black + Red Neon for all form controls === */
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
   textarea,
   select {
-    color: hsl(var(--foreground));
-    transition: border-color 160ms ease, box-shadow 160ms ease;
+    background-color: hsl(0 0% 3%) !important;
+    border: 1.5px solid hsl(0 90% 55% / 0.45) !important;
+    color: hsl(var(--foreground)) !important;
+    box-shadow: 0 0 10px hsl(0 90% 55% / 0.18), inset 0 0 12px hsl(0 90% 55% / 0.04);
+    transition: border-color .2s, box-shadow .2s;
   }
+  input:focus, textarea:focus, select:focus,
   input:focus-visible, textarea:focus-visible, select:focus-visible {
-    outline: 2px solid hsl(var(--ring) / 0.65);
-    outline-offset: 2px;
+    outline: none !important;
+    border-color: hsl(0 90% 60%) !important;
+    box-shadow: 0 0 22px hsl(0 90% 55% / 0.55), inset 0 0 16px hsl(0 90% 55% / 0.08) !important;
   }
   input::placeholder, textarea::placeholder {
-    color: hsl(var(--muted-foreground));
+    color: hsl(0 0% 55%);
   }
 }
 
@@ -126,7 +156,7 @@
   /* Dragon button variants */
   .btn-dragon {
     @apply relative overflow-hidden bg-gradient-to-r from-primary via-secondary to-accent text-primary-foreground font-semibold px-6 py-3 rounded-xl transition-all duration-300;
-    box-shadow: 0 8px 24px -16px hsl(var(--primary) / 0.65);
+    box-shadow: 0 0 30px -10px hsl(var(--primary) / 0.5);
   }
 
   .btn-dragon:hover {
@@ -145,17 +175,25 @@
 
   /* Glass card effect — Global Black + Red Neon */
   .glass-card {
-    @apply rounded-2xl border border-border/70 bg-card/80;
-    box-shadow: var(--shadow-card);
+    @apply rounded-2xl;
+    background: hsl(0 0% 3%);
+    border: 1.5px solid hsl(0 90% 55% / 0.55);
+    box-shadow:
+      0 0 18px hsl(0 90% 55% / 0.35),
+      0 0 40px hsl(0 90% 55% / 0.18),
+      inset 0 0 22px hsl(0 90% 55% / 0.06);
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-200;
+    @apply glass-card transition-all duration-300;
   }
 
   .glass-card-hover:hover {
-    border-color: hsl(var(--primary) / 0.38);
-    box-shadow: 0 16px 40px -20px hsl(162 68% 48% / 0.24);
+    border-color: hsl(0 90% 60% / 0.9);
+    box-shadow:
+      0 0 28px hsl(0 90% 55% / 0.55),
+      0 0 60px hsl(0 90% 55% / 0.28),
+      inset 0 0 28px hsl(0 90% 55% / 0.1);
   }
 
   /* Dragon glow effects */
@@ -170,8 +208,10 @@
   /* Wave background animation - richer ambient mesh */
   .wave-bg {
     background:
-      radial-gradient(ellipse 70% 45% at 50% 0%, hsl(190 62% 46% / 0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 70% 50% at 50% 100%, hsl(162 68% 48% / 0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 50% at 50% 120%, hsl(0, 85%, 22%, 0.35) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 15% 75%, hsl(0, 85%, 32%, 0.22) 0%, transparent 45%),
+      radial-gradient(ellipse 55% 35% at 85% 85%, hsl(15, 90%, 28%, 0.22) 0%, transparent 45%),
+      radial-gradient(ellipse 40% 25% at 70% 10%, hsl(35, 100%, 45%, 0.10) 0%, transparent 50%),
       hsl(var(--background));
   }
 
@@ -189,7 +229,7 @@
 
   /* Premium brand wordmark */
   .brand-wordmark {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: 'Syne', 'Inter', sans-serif;
     font-weight: 800;
     letter-spacing: 0.08em;
     background: var(--gradient-dragon);
@@ -202,7 +242,7 @@
   }
 
   .font-display {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: 'Syne', 'Inter', sans-serif;
     letter-spacing: -0.01em;
   }
 
@@ -213,12 +253,15 @@
 
   /* Token input — black + red neon */
   .token-input {
-    @apply rounded-xl border border-border bg-background/70 p-4 transition-colors duration-200;
+    @apply rounded-xl p-4 transition-all duration-200;
+    background: hsl(0 0% 3%);
+    border: 1.5px solid hsl(0 90% 55% / 0.45);
+    box-shadow: 0 0 14px hsl(0 90% 55% / 0.22), inset 0 0 16px hsl(0 90% 55% / 0.05);
   }
 
   .token-input:focus-within {
-    border-color: hsl(var(--primary) / 0.6);
-    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+    border-color: hsl(0 90% 60%);
+    box-shadow: 0 0 24px hsl(0 90% 55% / 0.55), inset 0 0 18px hsl(0 90% 55% / 0.1);
   }
 
   /* Stat card */
@@ -283,18 +326,18 @@
 
   /* Unified premium page header block */
   .page-header {
-    @apply relative mb-8 md:mb-10;
+    @apply relative text-center mb-8 md:mb-10;
   }
   .page-header h1 {
-    @apply font-display text-3xl md:text-4xl lg:text-5xl font-semibold tracking-tight mb-3;
+    @apply font-display text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight mb-3;
   }
   .page-header p {
-    @apply text-sm md:text-base text-muted-foreground max-w-2xl;
+    @apply text-sm md:text-base text-muted-foreground max-w-xl mx-auto;
   }
   .page-header::after {
     content: '';
-    @apply absolute left-0 -bottom-3 h-px w-16;
-    background: hsl(var(--primary) / 0.7);
+    @apply absolute left-1/2 -translate-x-1/2 -bottom-2 w-24 h-px;
+    background: linear-gradient(90deg, transparent, hsl(var(--primary) / 0.8), transparent);
   }
 
   /* Premium reusable card hover ring */
@@ -398,7 +441,7 @@
       box-shadow: 0 0 20px -10px hsl(var(--primary) / 0.4);
     }
     to {
-    box-shadow: 0 10px 26px -14px hsl(var(--primary) / 0.65);
+      box-shadow: 0 0 40px -5px hsl(var(--primary) / 0.6);
     }
   }
 
