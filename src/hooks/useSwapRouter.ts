@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useReadContracts, useReadContract, useChainId } from 'wagmi';
 import { getContracts, getTokenList } from '@/config/contracts';
 import { FACTORY_ABI, ROUTER_ABI } from '@/config/abis';
+import { isSupportedChain } from '@/config/chains';
 
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
 
@@ -34,7 +35,7 @@ export function useFindRoutes(
 
   // Build list of candidate pairs to check
   const candidatePairs = useMemo(() => {
-    if (!fromAddr || !toAddr) return [];
+    if (!isSupportedChain(chainId) || !fromAddr || !toAddr) return [];
     const pairs: { tokenA: `0x${string}`; tokenB: `0x${string}`; label: string }[] = [];
 
     // Direct pair
@@ -48,7 +49,7 @@ export function useFindRoutes(
     }
 
     return pairs;
-  }, [fromAddr, toAddr, BRIDGE_TOKENS]);
+  }, [fromAddr, toAddr, BRIDGE_TOKENS, chainId]);
 
   // Batch getPair calls
   const { data: pairResults, isLoading } = useReadContracts({
@@ -58,7 +59,7 @@ export function useFindRoutes(
       functionName: 'getPair',
       args: [p.tokenA, p.tokenB],
     })),
-    query: { enabled: candidatePairs.length > 0 },
+    query: { enabled: isSupportedChain(chainId) && candidatePairs.length > 0 },
   });
 
   const routes = useMemo((): SwapRoute[] => {
