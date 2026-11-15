@@ -1,5 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 
+const SITE_URL = 'https://dragondex.lovable.app';
+
 interface SEOProps {
   title: string;
   description: string;
@@ -8,7 +10,7 @@ interface SEOProps {
 }
 
 export function SEO({ title, description, path, jsonLd }: SEOProps) {
-  const url = new URL(path, window.location.origin).toString();
+  const url = `${SITE_URL}${path}`;
   const lds = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 
   return (
