@@ -18,7 +18,8 @@ export function FloatingDock({ items, className }: FloatingDockProps) {
   const location = useLocation();
 
   return (
-    <motion.div
+    <motion.nav
+      aria-label="Quick navigation"
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className={cn(
@@ -37,6 +38,8 @@ export function FloatingDock({ items, className }: FloatingDockProps) {
           <Link
             key={item.href}
             to={item.href}
+            aria-label={item.title}
+            aria-current={isActive ? 'page' : undefined}
             className="relative group"
           >
             <motion.div
@@ -59,6 +62,6 @@ export function FloatingDock({ items, className }: FloatingDockProps) {
           </Link>
         );
       })}
-    </motion.div>
+    </motion.nav>
   );
 }

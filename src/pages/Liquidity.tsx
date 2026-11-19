@@ -22,7 +22,7 @@ import { cn } from '@/lib/utils';
 import { WalletConnectModal } from '@/components/wallet/WalletConnectModal';
 import { toast } from 'sonner';
 import { useWallet } from '@/hooks/useWallet';
-import { sanitizeAmountInput, getSafeDeadline, getSafeApprovalAmount, sanitizeSlippage, validatePreTx } from '@/lib/inputValidation';
+import { sanitizeAmountInput, getSafeDeadline, getSafeApprovalAmount, needsTokenApproval, sanitizeSlippage, validatePreTx } from '@/lib/inputValidation';
 import { SlippageDeadlineControls } from '@/components/tx/SlippageDeadlineControls';
 
 const MAX_UINT256 = 2n ** 256n - 1n; // Still needed for LP token approval only
@@ -100,12 +100,12 @@ export default function Liquidity() {
   };
   
   // Allowances for add liquidity
-  const { data: allowanceA, refetch: refetchAllowanceA } = useTokenAllowance(
+  const { data: allowanceA, isLoading: allowanceALoading, refetch: refetchAllowanceA } = useTokenAllowance(
     tokenA && !tokenA.isNative ? (tokenA.address as `0x${string}`) : undefined,
     address,
     C.ROUTER
   );
-  const { data: allowanceB, refetch: refetchAllowanceB } = useTokenAllowance(
+  const { data: allowanceB, isLoading: allowanceBLoading, refetch: refetchAllowanceB } = useTokenAllowance(
     tokenB && !tokenB.isNative ? (tokenB.address as `0x${string}`) : undefined,
     address,
     C.ROUTER
@@ -211,8 +211,8 @@ export default function Liquidity() {
   const amountBBigInt = useMemo(() => {
     try { return amountB ? parseUnits(amountB, tokenB?.decimals ?? 18) : 0n; } catch { return 0n; }
   }, [amountB, tokenB?.decimals]);
-  const needsApprovalA = tokenA && !tokenA.isNative && amountABigInt > 0n && allowanceA !== undefined && allowanceA < amountABigInt;
-  const needsApprovalB = tokenB && !tokenB.isNative && amountBBigInt > 0n && allowanceB !== undefined && allowanceB < amountBBigInt;
+  const needsApprovalA = tokenA && !tokenA.isNative && needsTokenApproval(amountABigInt, allowanceA);
+  const needsApprovalB = tokenB && !tokenB.isNative && needsTokenApproval(amountBBigInt, allowanceB);
 
   // Watch approve A success
   useEffect(() => {
@@ -824,9 +824,11 @@ export default function Liquidity() {
                               variant="outline" 
                               size="sm"
                               className="w-full"
-                              disabled={approveAPending || approveAConfirming}
+                              disabled={approveAPending || approveAConfirming || allowanceALoading}
                             >
-                              {approveAPending || approveAConfirming ? (
+                              {allowanceALoading ? (
+                                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Checking {tokenA?.symbol} allowance...</>
+                              ) : approveAPending || approveAConfirming ? (
                                 <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Approving {tokenA?.symbol}...</>
                               ) : (
                                 <>Approve {tokenA?.symbol}</>
@@ -839,9 +841,11 @@ export default function Liquidity() {
                               variant="outline" 
                               size="sm"
                               className="w-full"
-                              disabled={approveBPending || approveBConfirming}
+                              disabled={approveBPending || approveBConfirming || allowanceBLoading}
                             >
-                              {approveBPending || approveBConfirming ? (
+                              {allowanceBLoading ? (
+                                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Checking {tokenB?.symbol} allowance...</>
+                              ) : approveBPending || approveBConfirming ? (
                                 <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Approving {tokenB?.symbol}...</>
                               ) : (
                                 <>Approve {tokenB?.symbol}</>

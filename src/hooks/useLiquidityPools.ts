@@ -37,7 +37,12 @@ export function useLiquidityPools() {
   }, [chainId]);
 
   // Get total number of pairs (cheap call, can refresh more often)
-  const { data: pairsLength, refetch: refetchLength } = useReadContract({
+  const {
+    data: pairsLength,
+    isLoading: pairsLengthLoading,
+    error: pairsLengthError,
+    refetch: refetchLength,
+  } = useReadContract({
     address: C.FACTORY,
     abi: FACTORY_ABI,
     functionName: 'allPairsLength',
@@ -152,7 +157,35 @@ export function useLiquidityPools() {
   }
 
   useEffect(() => {
-    if (!tokenCallsResult.data || tokenCallsResult.isLoading) {
+    if (chainId !== QMS_CHAIN_ID) {
+      setPools([]);
+      setIsLoading(false);
+      setError(null);
+      return;
+    }
+
+    if (pairsLengthLoading || pairAddressesResult.isLoading || tokenCallsResult.isLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    const queryError = pairsLengthError || pairAddressesResult.error || tokenCallsResult.error;
+    if (queryError) {
+      setError(queryError instanceof Error ? queryError : new Error('Unable to read pool data from QMS Testnet.'));
+      setIsLoading(false);
+      return;
+    }
+
+    if (pairCount === 0) {
+      setPools([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
+    if (!tokenCallsResult.data) {
+      setError(new Error('Pool data is unavailable. Check your network connection and retry.'));
+      setIsLoading(false);
       return;
     }
 
@@ -221,7 +254,19 @@ export function useLiquidityPools() {
       setError(err as Error);
       setIsLoading(false);
     }
-  }, [tokenCallsResult.data, tokenCallsResult.isLoading, pairAddresses.length, symbolMap.size, chainId]);
+  }, [
+    tokenCallsResult.data,
+    tokenCallsResult.isLoading,
+    tokenCallsResult.error,
+    pairAddressesResult.isLoading,
+    pairAddressesResult.error,
+    pairsLengthLoading,
+    pairsLengthError,
+    pairCount,
+    pairAddresses.length,
+    symbolMap.size,
+    chainId,
+  ]);
 
   const refetch = () => {
     refetchLength();
@@ -233,7 +278,7 @@ export function useLiquidityPools() {
   return {
     pools,
     pairCount,
-    isLoading: isLoading || pairAddressesResult.isLoading || tokenCallsResult.isLoading,
+    isLoading: isLoading || pairsLengthLoading || pairAddressesResult.isLoading || tokenCallsResult.isLoading,
     error,
     refetch,
   };

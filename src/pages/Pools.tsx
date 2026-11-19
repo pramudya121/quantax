@@ -17,7 +17,7 @@ import { formatUnits } from 'viem';
 import { getTokenPrice } from '@/lib/pricing';
 
 export default function Pools() {
-  const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
+  const { pools, pairCount, isLoading, error, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
   const { stats: swapStats, isLoading: volumeLoading, volumeScanComplete } = useSwapVolume(pools, prices);
   const perPool = swapStats.perPool;
@@ -93,6 +93,15 @@ export default function Pools() {
           </p>
         </div>
 
+
+        {error && (
+          <div role="alert" className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
+            <span>Pool data could not be loaded. Check the network connection and retry.</span>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className={cn('mr-2 size-4', isLoading && 'animate-spin')} /> Retry
+            </Button>
+          </div>
+        )}
 
         {/* Stats */}
         <PoolStats

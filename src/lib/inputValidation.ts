@@ -101,6 +101,10 @@ export function getSafeApprovalAmount(requiredAmount: bigint): bigint {
   return requiredAmount;
 }
 
+export function needsTokenApproval(requiredAmount: bigint, allowance: bigint | undefined): boolean {
+  return requiredAmount > 0n && (allowance === undefined || allowance < requiredAmount);
+}
+
 /**
  * Validate that amount doesn't exceed balance
  */

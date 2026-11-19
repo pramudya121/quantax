@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAmountWithinBalance, validatePreTx } from '@/lib/inputValidation';
+import { isAmountWithinBalance, needsTokenApproval, validatePreTx } from '@/lib/inputValidation';
 import { isValidAmount } from '@/lib/security';
 import { getTokenPrice } from '@/lib/pricing';
 
@@ -18,6 +18,15 @@ describe('transaction amount validation', () => {
   it('reserves native QMS for gas before allowing a transaction', () => {
     expect(validatePreTx({ amount: '0.5', decimals: 18, balance: '0.5', isNative: true, gasReserve: 0.01 }).ok).toBe(false);
     expect(validatePreTx({ amount: '0.49', decimals: 18, balance: '0.5', isNative: true, gasReserve: 0.01 }).ok).toBe(true);
+  });
+});
+
+describe('token approval checks', () => {
+  it('requires approval when allowance is unknown and blocks zero-amount approvals', () => {
+    expect(needsTokenApproval(1n, undefined)).toBe(true);
+    expect(needsTokenApproval(1n, 0n)).toBe(true);
+    expect(needsTokenApproval(1n, 1n)).toBe(false);
+    expect(needsTokenApproval(0n, undefined)).toBe(false);
   });
 });
 
