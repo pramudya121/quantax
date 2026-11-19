@@ -17,7 +17,7 @@ import { RouteComparison } from './RouteComparison';
 import { useWallet } from '@/hooks/useWallet';
 import { usePriceImpact, useTokenPrices } from '@/hooks/usePrices';
 import { parseTransactionError, getErrorToastConfig } from '@/lib/transactionErrors';
-import { sanitizeAmountInput, sanitizeSlippage, getSafeDeadline, calculateMinOutput, getSafeApprovalAmount, validatePreTx } from '@/lib/inputValidation';
+import { sanitizeAmountInput, sanitizeSlippage, getSafeDeadline, calculateMinOutput, getSafeApprovalAmount, needsTokenApproval, validatePreTx } from '@/lib/inputValidation';
 import { WalletConnectModal } from '@/components/wallet/WalletConnectModal';
 import { SwapConfirmModal } from './SwapConfirmModal';
 import { useTransactionHistory } from '@/components/history/TransactionHistory';
@@ -143,7 +143,7 @@ export function SwapCard() {
   const { data: reserves, refetch: refetchReserves, isLoading: isReservesLoading } = usePairReserves(validPairAddress);
   const { token0: pairToken0 } = usePairTokens(validPairAddress);
 
-  const { data: allowance, refetch: refetchAllowance } = useTokenAllowance(
+  const { data: allowance, isLoading: isAllowanceLoading, refetch: refetchAllowance } = useTokenAllowance(
     fromToken && !fromToken.isNative ? (fromToken.address as `0x${string}`) : undefined,
     address,
     C.ROUTER
@@ -151,7 +151,7 @@ export function SwapCard() {
 
   const needsApproval = useMemo(() => {
     if (!fromToken || fromToken.isNative || !amountIn || isWrapUnwrap) return false;
-    return allowance !== undefined && allowance < amountIn;
+    return needsTokenApproval(amountIn, allowance);
   }, [fromToken, allowance, amountIn, isWrapUnwrap]);
 
   // Check if route has liquidity
@@ -534,7 +534,7 @@ export function SwapCard() {
                 <motion.button
                   whileHover={{ rotate: 180 }}
                   transition={{ duration: 0.3 }}
-                  onClick={() => { refetchPair(); if (validPairAddress) refetchReserves(); }}
+                  onClick={() => { refetchPair(); if (validPairAddress) refetchReserves(); if (fromToken && !fromToken.isNative) refetchAllowance(); }}
                   className="p-2 rounded-lg hover:bg-muted/80 transition-colors"
                   title="Refresh prices"
                   aria-label="Refresh prices"
@@ -875,10 +875,10 @@ export function SwapCard() {
                   <Button 
                     onClick={handleApprove} 
                     className="w-full btn-dragon h-11 sm:h-12 rounded-xl text-sm sticky-cta" 
-                    disabled={isApproving}
+                    disabled={isApproving || isAllowanceLoading}
                   >
-                    {isApproving ? (
-                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Approving {fromToken?.symbol}...</>
+                    {isApproving || isAllowanceLoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> {isAllowanceLoading ? 'Checking allowance...' : `Approving ${fromToken?.symbol}...`}</>
                     ) : (
                       <>Approve {fromToken?.symbol}</>
                     )}

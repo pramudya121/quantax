@@ -35,6 +35,7 @@ export function WalletButton() {
       <>
         <Button
           onClick={() => setShowWalletModal(true)}
+          aria-label={isConnecting ? 'Connecting wallet' : 'Connect wallet'}
           className="btn-dragon"
           disabled={isConnecting}
           size="sm"

@@ -71,7 +71,7 @@ function StatCard({ icon: Icon, label, value, prefix = '', suffix = '', delay = 
 export default function Analytics() {
   const chainId = useChainId();
   const tokenList = useMemo(() => getTokenList(chainId), [chainId]);
-  const { pools, pairCount, isLoading, refetch } = useLiquidityPools();
+  const { pools, pairCount, isLoading, error: poolsError, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
   const { logs: swapLogs, stats: volStats, isLoading: volLoading, volumeScanComplete, refetch: refetchVol, latestBlock } = useSwapVolume(pools, prices);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
@@ -211,10 +211,29 @@ export default function Analytics() {
             </span>
             <span className="text-[11px] font-medium">QMS Testnet</span>
             <span className="h-3 border-l border-border/70" />
-            <span className="text-[10px] text-muted-foreground">{latestBlock ? `Block ${latestBlock.toLocaleString()}` : 'Connecting…'}</span>
+            <span className="text-[10px] text-muted-foreground">
+              {latestBlock
+                ? `Block ${latestBlock.toLocaleString()}`
+                : isLoading
+                  ? 'Loading pools…'
+                  : pairCount === 0
+                    ? 'No pools indexed'
+                    : volLoading
+                      ? 'Scanning recent activity…'
+                      : 'Block data unavailable'}
+            </span>
           </div>
         </div>
         
+        {poolsError && (
+          <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm">
+            <span>Pool data could not be loaded. Check the network connection and retry.</span>
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className={cn('mr-2 size-4', isLoading && 'animate-spin')} /> Retry
+            </Button>
+          </div>
+        )}
+
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
 {isLoading || volLoading ? (
@@ -495,7 +514,7 @@ export default function Analytics() {
                 <div className="grid gap-2">
                   {tokenAnalytics.map((token, i) => (
                     <motion.div
-                      key={token.symbol}
+                      key={token.address.toLowerCase()}
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.04 }}
@@ -587,6 +606,7 @@ export default function Analytics() {
                             </td>
                             <td className="py-2.5 px-3 text-right hidden sm:table-cell">
                               <a
+                                aria-label={`View caller ${log.sender} on QMS Explorer`}
                                 href={`https://testnet.qmsscan.io/address/${log.sender}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -597,6 +617,7 @@ export default function Analytics() {
                             </td>
                             <td className="py-2.5 px-3 text-right">
                               <a
+                                aria-label={`View transaction ${log.txHash} on QMS Explorer`}
                                 href={`https://testnet.qmsscan.io/tx/${log.txHash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"

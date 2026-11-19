@@ -15,7 +15,7 @@ import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { toast } from 'sonner';
 import { formatUnits, parseUnits, formatEther, parseEther } from 'viem';
 import { cn } from '@/lib/utils';
-import { validatePreTx } from '@/lib/inputValidation';
+import { needsTokenApproval, validatePreTx } from '@/lib/inputValidation';
 
 const NATIVE_GAS_RESERVE = 0.01;
 
@@ -58,12 +58,12 @@ export default function CreatePool() {
   );
 
   // Get allowances
-  const { data: allowanceA, refetch: refetchAllowanceA } = useTokenAllowance(
+  const { data: allowanceA, isLoading: allowanceALoading, refetch: refetchAllowanceA } = useTokenAllowance(
     tokenA && !tokenA.isNative ? (tokenA.address as `0x${string}`) : undefined,
     address,
     C.ROUTER
   );
-  const { data: allowanceB, refetch: refetchAllowanceB } = useTokenAllowance(
+  const { data: allowanceB, isLoading: allowanceBLoading, refetch: refetchAllowanceB } = useTokenAllowance(
     tokenB && !tokenB.isNative ? (tokenB.address as `0x${string}`) : undefined,
     address,
     C.ROUTER
@@ -78,8 +78,8 @@ export default function CreatePool() {
     try { return amountB ? parseUnits(amountB, tokenB?.decimals ?? 18) : 0n; } catch { return 0n; }
   }, [amountB, tokenB?.decimals]);
   
-  const needsApprovalA = tokenA && !tokenA.isNative && allowanceA !== undefined && amountABigInt > 0n && allowanceA < amountABigInt;
-  const needsApprovalB = tokenB && !tokenB.isNative && allowanceB !== undefined && amountBBigInt > 0n && allowanceB < amountBBigInt;
+  const needsApprovalA = tokenA && !tokenA.isNative && needsTokenApproval(amountABigInt, allowanceA);
+  const needsApprovalB = tokenB && !tokenB.isNative && needsTokenApproval(amountBBigInt, allowanceB);
 
   const isSameUnderlyingPair = !!tokenAForPair && !!tokenBForPair && tokenAForPair.toLowerCase() === tokenBForPair.toLowerCase();
   const canProceed = tokenA && tokenB && !isSameUnderlyingPair;
@@ -404,8 +404,10 @@ export default function CreatePool() {
                 </h3>
                 
                 {needsApprovalA && (
-                  <Button onClick={handleApproveA} variant="outline" className="w-full" disabled={approvingA}>
-                    {approvingA ? (
+                  <Button onClick={handleApproveA} variant="outline" className="w-full" disabled={approvingA || allowanceALoading}>
+                    {allowanceALoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Checking {tokenA?.symbol} allowance...</>
+                    ) : approvingA ? (
                       <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Approving {tokenA?.symbol}...</>
                     ) : (
                       <>Approve {tokenA?.symbol}</>
@@ -414,8 +416,10 @@ export default function CreatePool() {
                 )}
 
                 {needsApprovalB && (
-                  <Button onClick={handleApproveB} variant="outline" className="w-full" disabled={approvingB}>
-                    {approvingB ? (
+                  <Button onClick={handleApproveB} variant="outline" className="w-full" disabled={approvingB || allowanceBLoading}>
+                    {allowanceBLoading ? (
+                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Checking {tokenB?.symbol} allowance...</>
+                    ) : approvingB ? (
                       <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Approving {tokenB?.symbol}...</>
                     ) : (
                       <>Approve {tokenB?.symbol}</>

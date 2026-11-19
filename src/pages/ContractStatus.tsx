@@ -72,7 +72,7 @@ function RowItem({ row, explorer }: { row: Row; explorer: string }) {
         )}
       </div>
       <div className="flex gap-2 shrink-0">
-        <Button size="sm" variant="outline" onClick={copy}>
+        <Button size="sm" variant="outline" onClick={copy} aria-label={`Copy ${row.name} contract address`}>
           <Copy className="w-3.5 h-3.5" />
         </Button>
         <a href={`${explorer}/address/${row.address}`} target="_blank" rel="noreferrer">
@@ -129,7 +129,7 @@ export default function ContractStatus() {
     <div className="container mx-auto px-4 py-10 max-w-5xl">
       <SEO
         title="Contract Status — QUANTAX"
-        description="Status implementasi smart contract QuantaX di QMS Testnet & QMS Testnet"
+        description="Status implementasi smart contract QuantaX di QMS Testnet"
         path="/status"
       />
 
@@ -141,7 +141,7 @@ export default function ContractStatus() {
           <h1 className="font-display text-3xl font-extrabold gradient-text">Contract Status</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          QuantaX kini multi-chain — aktif di{' '}
+          QuantaX saat ini aktif di{' '}
           {SUPPORTED_CHAINS.map((c, i) => (
             <span key={c.id}>
               <span className="text-primary font-semibold">{c.name}</span>
