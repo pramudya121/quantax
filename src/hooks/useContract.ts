@@ -18,7 +18,7 @@ function writeOnQms(writeContract: (request: any) => void, chainId: number, requ
 export function useRouter() {
   const chainId = useChainId();
   const C = getContracts(chainId);
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const swapExactETHForTokens = (
@@ -152,7 +152,8 @@ export function useRouter() {
     isPending, 
     isConfirming, 
     isSuccess, 
-    error 
+    error,
+    reset,
   };
 }
 
@@ -351,7 +352,7 @@ export function useGetAmountsIn(amountOut: bigint | undefined, path: `0x${string
 export function useWETH() {
   const chainId = useChainId();
   const C = getContracts(chainId);
-  const { writeContract, data: hash, isPending, error } = useWriteContract();
+  const { writeContract, data: hash, isPending, error, reset } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
   
   const deposit = (value: bigint) => {
@@ -372,7 +373,7 @@ export function useWETH() {
     });
   };
   
-  return { deposit, withdraw, hash, isPending, isConfirming, isSuccess, error };
+  return { deposit, withdraw, hash, isPending, isConfirming, isSuccess, error, reset };
 }
 
 // ============= ERC20 HOOKS =============
