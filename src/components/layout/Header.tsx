@@ -62,6 +62,7 @@ export function Header() {
                     onMouseEnter={() => prefetchRoute(item.path)}
                     onFocus={() => prefetchRoute(item.path)}
                     onTouchStart={() => prefetchRoute(item.path)}
+                    aria-current={location.pathname === item.path ? 'page' : undefined}
                     className={`nav-link flex items-center gap-2 ${location.pathname === item.path ? 'active' : ''}`}
                   >
                     <Icon className="w-4 h-4" />
@@ -82,6 +83,9 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="lg:hidden"
+                aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-primary-navigation"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -99,7 +103,7 @@ export function Header() {
               exit={{ opacity: 0, height: 0 }}
               className="lg:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl"
             >
-              <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+              <nav id="mobile-primary-navigation" aria-label="Mobile menu" className="container mx-auto px-4 py-4 flex flex-col gap-2">
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   return (
@@ -109,6 +113,7 @@ export function Header() {
                       onMouseEnter={() => prefetchRoute(item.path)}
                       onTouchStart={() => prefetchRoute(item.path)}
                       onClick={() => setMobileMenuOpen(false)}
+                      aria-current={location.pathname === item.path ? 'page' : undefined}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
                         location.pathname === item.path
                           ? 'bg-primary/10 text-primary'

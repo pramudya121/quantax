@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, AreaChart } from 'recharts';
+import { XAxis, YAxis, Tooltip, CartesianGrid, Area, AreaChart } from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
 import { TrendingUp, TrendingDown, ArrowLeftRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { LiquidityPool } from '@/hooks/useLiquidityPools';
@@ -76,22 +77,22 @@ export function PriceHistoryChart({ pools, logs, latestBlock, isLoading }: Props
   };
 
   return (
-    <div className="glass-card p-4 md:p-5">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-        <div>
-          <h2 className="text-sm md:text-base font-semibold flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-primary" />
-            Price History (on-chain)
+    <section className="glass-card min-w-0 p-4 md:p-5" aria-labelledby="price-history-heading">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <h2 id="price-history-heading" className="flex items-center gap-2 text-sm font-semibold md:text-base">
+            <TrendingUp className="w-4 h-4 shrink-0 text-primary" />
+            Recent execution prices
           </h2>
-          <p className="text-[10px] md:text-xs text-muted-foreground mt-0.5">
-            Derived from Swap events on the selected pair
+          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground md:text-xs">
+            Estimated from on-chain Swap events for the selected pool
           </p>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           <select
             value={activeAddress}
             onChange={(e) => setSelected(e.target.value)}
-            className="min-h-[36px] px-2.5 rounded-lg bg-muted/60 border border-border text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="min-h-10 min-w-0 flex-1 rounded-lg border border-border bg-muted/60 px-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 sm:w-44 sm:flex-none"
             aria-label="Select pool"
           >
             {activePools.length === 0 && <option value="">No active pools</option>}
@@ -102,8 +103,9 @@ export function PriceHistoryChart({ pools, logs, latestBlock, isLoading }: Props
             ))}
           </select>
           <button
+            type="button"
             onClick={() => setInverted(v => !v)}
-            className="min-h-[36px] min-w-[36px] px-2 rounded-lg bg-muted/60 border border-border hover:bg-muted transition-colors text-xs inline-flex items-center gap-1"
+            className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-muted/60 transition-colors hover:bg-muted"
             aria-label="Invert price direction"
             title="Invert price direction"
           >
@@ -141,37 +143,40 @@ export function PriceHistoryChart({ pools, logs, latestBlock, isLoading }: Props
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4 }}
-        className="h-52 md:h-64 -mx-2"
+        className="min-w-0"
       >
         {series.length < 2 ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground text-sm">
+          <div className="flex min-h-52 items-center justify-center px-4 text-center text-xs text-muted-foreground md:min-h-64">
             {isLoading ? 'Loading swap history…' : 'Not enough swap events yet to draw a chart.'}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={series} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
+          <ChartContainer
+            config={{ price: { label: 'Execution price', color: 'var(--chart-1)' } }}
+            className="h-52 w-full aspect-auto md:h-64"
+          >
+            <AreaChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: -12 }} accessibilityLayer>
               <defs>
                 <linearGradient id="priceFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <stop offset="0%" stopColor="var(--color-price)" stopOpacity={0.32} />
+                  <stop offset="100%" stopColor="var(--color-price)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }}
                 tickLine={false}
                 axisLine={false}
                 interval="preserveStartEnd"
                 minTickGap={24}
               />
               <YAxis
-                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }}
                 tickLine={false}
                 axisLine={false}
                 domain={['auto', 'auto']}
                 tickFormatter={fmt}
-                width={64}
+                width={54}
               />
               <Tooltip
                 contentStyle={{
@@ -186,7 +191,7 @@ export function PriceHistoryChart({ pools, logs, latestBlock, isLoading }: Props
               <Area
                 type="monotone"
                 dataKey="price"
-                stroke="hsl(var(--primary))"
+                stroke="var(--color-price)"
                 strokeWidth={2}
                 fill="url(#priceFill)"
                 dot={false}
@@ -194,9 +199,9 @@ export function PriceHistoryChart({ pools, logs, latestBlock, isLoading }: Props
                 animationDuration={400}
               />
             </AreaChart>
-          </ResponsiveContainer>
+          </ChartContainer>
         )}
       </motion.div>
-    </div>
+    </section>
   );
 }

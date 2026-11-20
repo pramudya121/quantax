@@ -58,7 +58,7 @@ export default function Portfolio() {
   });
 
   const { transactions } = useTransactionHistory();
-  const { pools, isLoading: poolsLoading } = useLiquidityPools();
+  const { pools, isLoading: poolsLoading, error: poolsError } = useLiquidityPools();
   const { prices } = useTokenPrices();
 
   const [activeTab, setActiveTab] = useState<PortfolioTab>('overview');
@@ -468,6 +468,10 @@ export default function Portfolio() {
                 <div className="glass-card p-6 text-center">
                   <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-primary" />
                   <p className="text-sm text-muted-foreground">Loading LP positions...</p>
+                </div>
+              ) : poolsError ? (
+                <div role="alert" className="glass-card p-6 text-center">
+                  <p className="text-sm text-muted-foreground">Could not load your LP positions. Token balances remain available; retry by refreshing the page.</p>
                 </div>
               ) : lpPositions.length > 0 ? (
                 <div className="grid gap-3 md:grid-cols-2">

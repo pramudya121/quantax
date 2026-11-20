@@ -18,7 +18,7 @@ import { useSwapVolume } from '@/hooks/useSwapVolume';
 
 export default function PairDetail() {
   const { address } = useParams<{ address: string }>();
-  const { pools, isLoading } = useLiquidityPools();
+  const { pools, isLoading, error, refetch } = useLiquidityPools();
   const { prices } = useTokenPrices();
 
   const pool = useMemo(
@@ -61,6 +61,20 @@ export default function PairDetail() {
       <div className="container mx-auto py-20 flex justify-center">
         <SEO title={seoTitle} description={seoDescription} path={pairPath} />
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-20 text-center" role="alert">
+        <Layers className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+        <h1 className="text-2xl font-bold mb-2">Pool data unavailable</h1>
+        <p className="text-muted-foreground mb-6">Could not read pool data from QMS Testnet. Check your connection and retry.</p>
+        <div className="flex justify-center gap-2">
+          <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+          <Link to="/pools"><Button variant="ghost">Back to Pools</Button></Link>
+        </div>
       </div>
     );
   }
