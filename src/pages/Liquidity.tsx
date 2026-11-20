@@ -489,6 +489,10 @@ export default function Liquidity() {
 
   const handleRemoveLiquidity = () => {
     if (!address || !tokenA || !tokenB || !lpBalance || !validPair) return;
+    if (lpAllowance === undefined) {
+      toast.error('Approval status belum siap', { description: 'Tunggu allowance LP terbaca sebelum menghapus likuiditas.' });
+      return;
+    }
 
     if (isSameUnderlyingPair) {
       toast.error('Pair tidak valid untuk remove liquidity');
@@ -1040,7 +1044,7 @@ export default function Liquidity() {
                         onClick={handleRemoveLiquidity}
                         className="w-full h-12 text-base sticky-cta"
                         variant="destructive"
-                        disabled={isLoading || !lpBalance || lpBalance === 0n || removePercent === 0 || !!needsLPApproval || isSameUnderlyingPair}
+                        disabled={isLoading || !validPair || !lpBalance || lpBalance === 0n || removePercent === 0 || lpAllowance === undefined || !!needsLPApproval || isSameUnderlyingPair}
 
                       >
                         {isLoading ? (

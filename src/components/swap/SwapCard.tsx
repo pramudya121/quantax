@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { TokenSelector } from './TokenSelector';
 import { PriceImpactWarning } from './PriceImpactWarning';
-import { SwapPriceChart } from './SwapPriceChart';
 import { getTokenList, TokenInfo, getContracts } from '@/config/contracts';
 import { useRouter, useApprove, useTokenBalance, useTokenAllowance, useGetPair, usePairReserves, usePairTokens, useWETH, useRouterWETH } from '@/hooks/useContract';
 import { useBestRoute } from '@/hooks/useSwapRouter';
@@ -815,15 +814,6 @@ export function SwapCard() {
                   )}
                 </AnimatePresence>
               </motion.div>
-            )}
-
-            {/* Price Chart */}
-            {fromToken && toToken && fromAmount && toAmount && parseFloat(toAmount) > 0 && (
-              <SwapPriceChart
-                fromSymbol={fromToken.symbol}
-                toSymbol={toToken.symbol}
-                currentPrice={parseFloat(toAmount) / parseFloat(fromAmount)}
-              />
             )}
 
             {/* Route Comparison Panel */}
