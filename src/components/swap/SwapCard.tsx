@@ -38,7 +38,12 @@ export function SwapCard() {
   const [showSettings, setShowSettings] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [lastSwapParams, setLastSwapParams] = useState<{ from: string; to: string } | null>(null);
+  const [lastSwapParams, setLastSwapParams] = useState<{
+    from: string;
+    to: string;
+    fromToken: TokenInfo;
+    toToken: TokenInfo;
+  } | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [autoSlippage, setAutoSlippage] = useState(true);
   const [processedHash, setProcessedHash] = useState<string | null>(null);
@@ -210,11 +215,13 @@ export function SwapCard() {
   useEffect(() => {
     if (router.isSuccess && router.hash && router.hash !== processedHash) {
       setProcessedHash(router.hash);
-      const savedFrom = fromAmount;
-      const savedTo = toAmount;
+      const savedFrom = lastSwapParams?.from ?? fromAmount;
+      const savedTo = lastSwapParams?.to ?? toAmount;
       toast.dismiss('swap');
+      const savedFromToken = lastSwapParams?.fromToken ?? fromToken;
+      const savedToToken = lastSwapParams?.toToken ?? toToken;
       toast.success('Swap Successful! 🔥', {
-        description: `Swapped ${savedFrom} ${fromToken?.symbol} → ${savedTo} ${toToken?.symbol}`,
+        description: `Swapped ${savedFrom} ${savedFromToken?.symbol} → ${savedTo} ${savedToToken?.symbol}`,
         action: {
           label: 'View',
           onClick: () => window.open(`https://testnet.qmsscan.io/tx/${router.hash}`, '_blank'),
@@ -224,23 +231,25 @@ export function SwapCard() {
         hash: router.hash,
         type: 'swap',
         status: 'success',
-        details: { fromToken: fromToken?.symbol, toToken: toToken?.symbol, fromAmount: savedFrom, toAmount: savedTo },
+        details: { fromToken: savedFromToken?.symbol, toToken: savedToToken?.symbol, fromAmount: savedFrom, toAmount: savedTo },
       });
       setFromAmount('');
       setToAmount('');
     }
-  }, [router.isSuccess, router.hash, processedHash]);
+  }, [router.isSuccess, router.hash, processedHash, lastSwapParams, fromAmount, toAmount, fromToken, toToken, addTransaction]);
 
   // Watch for wrap/unwrap success
   useEffect(() => {
     if (weth.isSuccess && weth.hash && weth.hash !== processedHash) {
       setProcessedHash(weth.hash);
-      const savedFrom = fromAmount;
-      const savedTo = toAmount;
+      const savedFrom = lastSwapParams?.from ?? fromAmount;
+      const savedTo = lastSwapParams?.to ?? toAmount;
+      const savedFromToken = lastSwapParams?.fromToken ?? fromToken;
+      const savedToToken = lastSwapParams?.toToken ?? toToken;
       toast.dismiss('swap');
       const action = isWrapping ? 'Wrapped' : 'Unwrapped';
       toast.success(`${action} Successfully! 🔥`, {
-        description: `${action} ${savedFrom} ${fromToken?.symbol} → ${savedTo} ${toToken?.symbol}`,
+        description: `${action} ${savedFrom} ${savedFromToken?.symbol} → ${savedTo} ${savedToToken?.symbol}`,
         action: {
           label: 'View',
           onClick: () => window.open(`https://testnet.qmsscan.io/tx/${weth.hash}`, '_blank'),
@@ -250,12 +259,12 @@ export function SwapCard() {
         hash: weth.hash,
         type: 'swap',
         status: 'success',
-        details: { fromToken: fromToken?.symbol, toToken: toToken?.symbol, fromAmount: savedFrom, toAmount: savedTo },
+        details: { fromToken: savedFromToken?.symbol, toToken: savedToToken?.symbol, fromAmount: savedFrom, toAmount: savedTo },
       });
       setFromAmount('');
       setToAmount('');
     }
-  }, [weth.isSuccess, weth.hash, processedHash]);
+  }, [weth.isSuccess, weth.hash, processedHash, lastSwapParams, fromAmount, toAmount, fromToken, toToken, isWrapping, addTransaction]);
 
   // Watch for errors with decoded revert reasons
   useEffect(() => {
@@ -384,7 +393,11 @@ export function SwapCard() {
     setTimeout(() => setCooldown(false), 3000);
 
     
-    setLastSwapParams({ from: fromAmount, to: toAmount });
+    const submittedFrom = fromToken;
+    const submittedTo = toToken;
+    setLastSwapParams({ from: fromAmount, to: toAmount, fromToken: submittedFrom, toToken: submittedTo });
+    if (isWrapUnwrap) weth.reset();
+    else router.reset();
     
     // Handle wrap/unwrap
     if (isWrapUnwrap) {
@@ -424,7 +437,7 @@ export function SwapCard() {
     } else {
       router.swapExactTokensForTokens(amountIn!, minOutput, swapPath, address, deadline);
     }
-  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, wethAddress, cooldown, fromBalance, needsApproval, allowance, hasLiquidity]);
+  }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, wethAddress, cooldown, fromBalance, needsApproval, allowance, hasLiquidity, router, weth]);
 
   const handleApprove = async () => {
     if (!fromToken || fromToken.isNative || !amountIn) return;
@@ -639,7 +652,7 @@ export function SwapCard() {
                     inputMode="decimal"
                     placeholder="0.0" 
                     value={fromAmount} 
-                    onChange={(e) => setFromAmount(sanitizeAmountInput(e.target.value))} 
+                    onChange={(e) => setFromAmount(sanitizeAmountInput(e.target.value, fromToken?.decimals ?? 18))}
                     className="text-xl sm:text-2xl font-bold bg-transparent border-none p-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/30" 
                   />
                   {fromWqmsValue > 0 && (
@@ -878,7 +891,7 @@ export function SwapCard() {
                 <Button 
                   onClick={() => setShowConfirm(true)} 
                   className={cn(
-                    "w-full h-11 sm:h-12 rounded-xl text-sm font-semibold sticky-cta",
+                    "w-full h-11 sm:h-12 rounded-xl text-sm font-semibold",
                     isHighImpact ? "bg-destructive hover:bg-destructive/90" : "btn-dragon"
                   )}
                   disabled={
@@ -941,12 +954,15 @@ export function SwapCard() {
       {/* Swap Confirmation Modal */}
       <SwapConfirmModal
         open={showConfirm}
-        onClose={() => setShowConfirm(false)}
+        onClose={() => {
+          setShowConfirm(false);
+          setLastSwapParams(null);
+        }}
         onConfirm={() => { handleSwap(); }}
-        fromToken={fromToken}
-        toToken={toToken}
-        fromAmount={fromAmount}
-        toAmount={toAmount}
+        fromToken={lastSwapParams?.fromToken ?? fromToken}
+        toToken={lastSwapParams?.toToken ?? toToken}
+        fromAmount={lastSwapParams?.from ?? fromAmount}
+        toAmount={lastSwapParams?.to ?? toAmount}
         rate={rate}
         minReceived={minReceived}
         slippage={slippage}
@@ -956,8 +972,8 @@ export function SwapCard() {
         isWrapping={isWrapping}
         isProcessing={isLoading}
         txHash={router.hash || weth.hash || undefined}
-        isSuccess={(router.isSuccess || weth.isSuccess) && !isLoading && !!(router.hash || weth.hash)}
-        isError={!!(router.error || weth.error) && !isLoading}
+        isSuccess={!!lastSwapParams && (router.isSuccess || weth.isSuccess) && !isLoading && !!(router.hash || weth.hash)}
+        isError={!!lastSwapParams && !!(router.error || weth.error) && !isLoading}
         errorMessage={router.error?.message || weth.error?.message}
       />
     </div>
