@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isAmountWithinBalance, needsTokenApproval, validatePreTx } from '@/lib/inputValidation';
+import { isAmountWithinBalance, needsTokenApproval, sanitizeAmountInput, validatePreTx } from '@/lib/inputValidation';
 import { isValidAmount } from '@/lib/security';
 import { getTokenPrice } from '@/lib/pricing';
 
@@ -13,6 +13,29 @@ describe('transaction amount validation', () => {
   it('accepts leading-decimal input only within token precision', () => {
     expect(isValidAmount('.5', 2)).toBe(true);
     expect(isValidAmount('1.001', 2)).toBe(false);
+  });
+
+  it('sanitizes input to the selected token precision, including zero and over-18 decimals', () => {
+    expect(sanitizeAmountInput('12.3456', 2)).toBe('12.34');
+    expect(sanitizeAmountInput('12.3456', 0)).toBe('12');
+    expect(sanitizeAmountInput('0.000000000000000000000001', 24)).toBe('0.000000000000000000000001');
+  });
+
+  it('validates transaction amounts against actual token precision', () => {
+    const amount = '0.000000000000000000000001';
+    expect(validatePreTx({ amount, decimals: 24, balance: amount }).ok).toBe(true);
+    expect(validatePreTx({ amount: '1.001', decimals: 2, balance: '10' }).ok).toBe(false);
+  });
+
+  it('fails closed when a transaction requires approval but allowance is unread', () => {
+    expect(validatePreTx({
+      amount: '1', decimals: 18, balance: '2', needsApproval: true,
+      requiredAllowance: 1n, currentAllowance: undefined,
+    }).ok).toBe(false);
+    expect(validatePreTx({
+      amount: '1', decimals: 18, balance: '2', needsApproval: true,
+      requiredAllowance: 1n, currentAllowance: 1n,
+    }).ok).toBe(true);
   });
 
   it('reserves native QMS for gas before allowing a transaction', () => {

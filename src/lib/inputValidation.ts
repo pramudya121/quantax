@@ -5,31 +5,10 @@
 import { z } from 'zod';
 import { parseUnits } from 'viem';
 
-// Swap amount schema
+// Keep syntax validation token-agnostic; precision is checked against the
+// selected token's on-chain decimals in validatePreTx.
 export const swapAmountSchema = z.string()
-  .refine(val => val === '' || /^\d*\.?\d*$/.test(val), 'Invalid number format')
-  .refine(val => {
-    if (val === '') return true;
-    try {
-      const normalized = val.startsWith('.') ? `0${val}` : val;
-      return parseUnits(normalized, 18) >= 0n;
-    } catch {
-      return false;
-    }
-  }, 'Amount must be a valid non-negative decimal')
-  .refine(val => {
-    if (val === '') return true;
-    try {
-      const normalized = val.startsWith('.') ? `0${val}` : val;
-      return parseUnits(normalized, 18) <= parseUnits('1000000000000000000', 18);
-    } catch {
-      return false;
-    }
-  }, 'Amount exceeds maximum or supported precision')
-  .refine(val => {
-    if (val === '' || !val.includes('.')) return true;
-    return val.split('.')[1].length <= 18; // Max 18 decimals
-  }, 'Too many decimal places');
+  .refine(val => val === '' || /^(?:\d+(?:\.\d*)?|\.\d+)$/.test(val), 'Invalid number format');
 
 // Slippage schema
 export const slippageSchema = z.number()
@@ -43,27 +22,20 @@ export const addressSchema = z.string()
 /**
  * Sanitize numeric input - only allow digits and single decimal point
  */
-export function sanitizeAmountInput(value: string): string {
-  // Remove anything that's not a digit or decimal point
+export function sanitizeAmountInput(value: string, decimals = 18): string {
+  const precision = Number.isInteger(decimals) && decimals >= 0 && decimals <= 255 ? decimals : 18;
   let sanitized = value.replace(/[^0-9.]/g, '');
-  
-  // Only allow one decimal point
-  const parts = sanitized.split('.');
-  if (parts.length > 2) {
-    sanitized = parts[0] + '.' + parts.slice(1).join('');
+  const decimalIndex = sanitized.indexOf('.');
+
+  if (precision === 0) {
+    if (decimalIndex >= 0) sanitized = sanitized.slice(0, decimalIndex);
+  } else if (decimalIndex >= 0) {
+    const whole = sanitized.slice(0, decimalIndex);
+    const fraction = sanitized.slice(decimalIndex + 1).replace(/\./g, '').slice(0, precision);
+    sanitized = `${whole}.${fraction}`;
   }
-  
-  // Prevent leading zeros (except "0." pattern)
-  if (sanitized.length > 1 && sanitized[0] === '0' && sanitized[1] !== '.') {
-    sanitized = sanitized.slice(1);
-  }
-  
-  // Limit to 18 decimal places
-  if (parts.length === 2 && parts[1].length > 18) {
-    sanitized = parts[0] + '.' + parts[1].slice(0, 18);
-  }
-  
-  return sanitized;
+
+  return sanitized.replace(/^0+(?=\d)/, '');
 }
 
 /**
@@ -206,11 +178,15 @@ export function validatePreTx(params: {
       };
     }
   }
-  if (needsApproval && requiredAllowance !== undefined && currentAllowance !== undefined && currentAllowance < requiredAllowance) {
+  if (needsApproval && (
+    requiredAllowance === undefined ||
+    currentAllowance === undefined ||
+    currentAllowance < requiredAllowance
+  )) {
     return {
       ok: false,
       title: 'Approval Required',
-      error: `Approve ${symbol} spending before continuing.`,
+      error: `Approve ${symbol} spending and wait for the allowance to update before continuing.`,
     };
   }
   return { ok: true };

@@ -639,7 +639,7 @@ export function SwapCard() {
                     inputMode="decimal"
                     placeholder="0.0" 
                     value={fromAmount} 
-                    onChange={(e) => setFromAmount(sanitizeAmountInput(e.target.value))} 
+                    onChange={(e) => setFromAmount(sanitizeAmountInput(e.target.value, fromToken?.decimals ?? 18))}
                     className="text-xl sm:text-2xl font-bold bg-transparent border-none p-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/30" 
                   />
                   {fromWqmsValue > 0 && (

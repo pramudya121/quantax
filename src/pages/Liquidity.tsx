@@ -299,13 +299,14 @@ export default function Liquidity() {
 
   // Auto-calculate the second token amount based on correctly-mapped reserves
   const calculateOptimalAmount = useCallback((inputAmount: string, isTokenA: boolean): string => {
-    if (!inputAmount || parseFloat(inputAmount) === 0) return '';
-    if (reserveA === 0n || reserveB === 0n) return ''; // New pool, no ratio to calc
-    
+    if (!inputAmount || reserveA === 0n || reserveB === 0n) return '';
+
     try {
       const inputDecimals = isTokenA ? (tokenA?.decimals ?? 18) : (tokenB?.decimals ?? 18);
       const outputDecimals = isTokenA ? (tokenB?.decimals ?? 18) : (tokenA?.decimals ?? 18);
-      const inputBigInt = parseUnits(inputAmount, inputDecimals);
+      const normalizedInput = inputAmount.startsWith('.') ? `0${inputAmount}` : inputAmount;
+      const inputBigInt = parseUnits(normalizedInput, inputDecimals);
+      if (inputBigInt === 0n) return '';
       
       let optimalAmount: bigint;
       if (isTokenA) {
@@ -316,7 +317,7 @@ export default function Liquidity() {
         optimalAmount = (inputBigInt * reserveA) / reserveB;
       }
       
-      return parseFloat(formatUnits(optimalAmount, outputDecimals)).toFixed(6);
+      return formatUnits(optimalAmount, outputDecimals);
     } catch {
       return '';
     }
@@ -336,7 +337,7 @@ export default function Liquidity() {
   }, [reserveA, reserveB]); // Only trigger when reserves change
 
   const handleAmountAChange = (value: string) => {
-    setAmountA(sanitizeAmountInput(value));
+    setAmountA(sanitizeAmountInput(value, tokenA?.decimals ?? 18));
     setLastEditedField('A');
     
     if (value && reserveA > 0n && reserveB > 0n) {
@@ -348,7 +349,7 @@ export default function Liquidity() {
   };
 
   const handleAmountBChange = (value: string) => {
-    setAmountB(sanitizeAmountInput(value));
+    setAmountB(sanitizeAmountInput(value, tokenB?.decimals ?? 18));
     setLastEditedField('B');
     
     if (value && reserveA > 0n && reserveB > 0n) {
@@ -435,11 +436,15 @@ export default function Liquidity() {
     const vA = validatePreTx({
       amount: amountA, decimals: tokenA.decimals, balance: getTokenADisplayBalance(),
       isNative: tokenA.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenA.symbol,
+      needsApproval: !tokenA.isNative && needsTokenApproval(amountABigInt, allowanceA),
+      requiredAllowance: amountABigInt, currentAllowance: allowanceA,
     });
     if (!vA.ok) { toast.error(vA.title || 'Cannot Add', { description: vA.error }); return; }
     const vB = validatePreTx({
       amount: amountB, decimals: tokenB.decimals, balance: getTokenBDisplayBalance(),
       isNative: tokenB.isNative, gasReserve: NATIVE_GAS_RESERVE, symbol: tokenB.symbol,
+      needsApproval: !tokenB.isNative && needsTokenApproval(amountBBigInt, allowanceB),
+      requiredAllowance: amountBBigInt, currentAllowance: allowanceB,
     });
     if (!vB.ok) { toast.error(vB.title || 'Cannot Add', { description: vB.error }); return; }
 
@@ -494,6 +499,16 @@ export default function Liquidity() {
       return;
     }
 
+    const amountToRemove = (lpBalance * BigInt(removePercent)) / 100n;
+    if (amountToRemove <= 0n) {
+      toast.error('Jumlah likuiditas tidak valid', { description: 'Pilih persentase likuiditas yang lebih besar dari nol.' });
+      return;
+    }
+    if (lpAllowance < amountToRemove) {
+      toast.error('Persetujuan LP diperlukan', { description: 'Setujui token LP sebelum menghapus likuiditas.' });
+      return;
+    }
+
     if (isSameUnderlyingPair) {
       toast.error('Pair tidak valid untuk remove liquidity');
       return;
@@ -505,7 +520,7 @@ export default function Liquidity() {
     }
 
     toast.loading('Removing liquidity...', { id: 'remove-liq' });
-    const liquidityToRemove = (lpBalance * BigInt(removePercent)) / 100n;
+    const liquidityToRemove = amountToRemove;
     const deadline = getSafeDeadline(deadlineMinutes);
 
     // Compute expected token amounts and apply slippage tolerance (MEV protection)
