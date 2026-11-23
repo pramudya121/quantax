@@ -5,7 +5,6 @@ import { BarChart3, TrendingUp, Activity, Layers, Droplets, ExternalLink, Refres
 import { useLiquidityPools } from '@/hooks/useLiquidityPools';
 import { useTokenPrices } from '@/hooks/usePrices';
 import { useSwapVolume } from '@/hooks/useSwapVolume';
-import { NumberTicker } from '@/components/ui/magic/NumberTicker';
 import { BorderBeam } from '@/components/ui/magic/BorderBeam';
 import { Spotlight } from '@/components/ui/magic/Spotlight';
 import { StatCardSkeleton, TableRowSkeleton } from '@/components/ui/loading/Skeleton';
@@ -61,7 +60,10 @@ function StatCard({ icon: Icon, label, value, prefix = '', suffix = '', delay = 
         </div>
         <p className="mb-1 min-h-7 text-[9px] leading-tight tracking-[0.1em] text-muted-foreground uppercase md:min-h-0 md:text-xs">{label}</p>
         <p className="font-mono-display break-words text-base font-bold leading-tight tabular-nums md:text-2xl">
-          <NumberTicker value={value} prefix={prefix} suffix={suffix} delay={delay} decimalPlaces={Number.isInteger(value) ? 0 : value < 100 ? 2 : 0} />
+          {prefix}{value.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: Number.isInteger(value) ? 0 : value < 100 ? 2 : 0,
+          })}{suffix}
         </p>
       </div>
     </motion.div>
@@ -75,6 +77,9 @@ export default function Analytics() {
   const { prices } = useTokenPrices();
   const { logs: swapLogs, stats: volStats, isLoading: volLoading, volumeScanComplete, refetch: refetchVol, latestBlock } = useSwapVolume(pools, prices);
   const [activeTab, setActiveTab] = useState<AnalyticsTab>('overview');
+  const [poolSearch, setPoolSearch] = useState('');
+  const [activityPage, setActivityPage] = useState(0);
+  const activityPageSize = 25;
 
   const totalTVL = useMemo(() => {
     return pools.reduce((acc, pool) => {
@@ -177,6 +182,16 @@ export default function Analytics() {
 
   const chartPools = topPools.filter(p => p.tvl > 0).slice(0, 8);
   const maxTVL = Math.max(...chartPools.map(p => p.tvl), 1);
+  const filteredPools = useMemo(() => {
+    const query = poolSearch.trim().toLowerCase();
+    if (!query) return topPools;
+    return topPools.filter(pool =>
+      `${pool.token0Symbol}/${pool.token1Symbol} ${pool.pairAddress}`.toLowerCase().includes(query),
+    );
+  }, [topPools, poolSearch]);
+  const activityPageCount = Math.ceil(swapLogs.length / activityPageSize);
+  const safeActivityPage = Math.min(activityPage, Math.max(activityPageCount - 1, 0));
+  const visibleActivity = swapLogs.slice(safeActivityPage * activityPageSize, (safeActivityPage + 1) * activityPageSize);
 
   const stats: StatCardProps[] = [
     { icon: Droplets, label: 'TVL (WQMS estimate)', value: totalTVL, suffix: ' WQMS', isOnChain: true },
@@ -205,10 +220,7 @@ export default function Analytics() {
             <p className="mt-1 text-xs md:text-sm text-muted-foreground">On-chain market activity and liquidity</p>
           </div>
           <div className="flex items-center gap-2 self-start rounded-xl border border-border/60 bg-muted/30 px-3 py-2 sm:self-auto">
-            <span className="relative flex size-2 shrink-0">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-40" />
-              <span className="relative inline-flex size-2 rounded-full bg-success" />
-            </span>
+            <span className={cn('size-2 shrink-0 rounded-full', poolsError ? 'bg-destructive' : isLoading ? 'bg-muted-foreground' : 'bg-success')} aria-hidden="true" />
             <span className="text-[11px] font-medium">QMS Testnet</span>
             <span className="h-3 border-l border-border/70" />
             <span className="text-[10px] text-muted-foreground">
@@ -390,15 +402,28 @@ export default function Analytics() {
           {activeTab === 'pools' && (
             <motion.div key="pools" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
               <div className="glass-card p-4 md:p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm md:text-base font-semibold">All Pools</h2>
-                  <span className="text-xs text-muted-foreground">{pools.length} pools on-chain</span>
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <h2 className="text-sm md:text-base font-semibold">All Pools</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">Live reserves from QMS Testnet, sorted by estimated TVL</p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{filteredPools.length}{filteredPools.length !== pools.length ? ` of ${pools.length}` : ''} pools on-chain</span>
                 </div>
+                <label className="mb-4 flex min-h-10 items-center gap-2 rounded-lg border border-border bg-muted/30 px-3">
+                  <span className="sr-only">Search pools by token or address</span>
+                  <input
+                    value={poolSearch}
+                    onChange={event => setPoolSearch(event.target.value)}
+                    placeholder="Search token pair or pool address"
+                    className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                    type="search"
+                  />
+                </label>
                 <div className="grid gap-2 sm:hidden">
                   {isLoading ? (
                     [...Array(4)].map((_, i) => <TableRowSkeleton key={i} columns={2} />)
-                  ) : topPools.length > 0 ? (
-                    topPools.map((pool, i) => {
+                  ) : filteredPools.length > 0 ? (
+                    filteredPools.map((pool, i) => {
                       const hasLiq = pool.reserve0 > 0n && pool.reserve1 > 0n;
                       return (
                         <article key={pool.pairAddress} className="rounded-xl border border-border/50 bg-muted/20 p-3">
@@ -434,7 +459,7 @@ export default function Analytics() {
                       );
                     })
                   ) : (
-                    <p className="py-8 text-center text-sm text-muted-foreground">No pools found on-chain</p>
+                    <p className="py-8 text-center text-sm text-muted-foreground">{poolSearch ? 'No pools match your search.' : 'No pools found on-chain.'}</p>
                   )}
                 </div>
                 <div className="hidden overflow-x-auto -mx-4 md:mx-0 sm:block">
@@ -453,8 +478,8 @@ export default function Analytics() {
                     <tbody>
                       {isLoading ? (
                         [...Array(4)].map((_, i) => <TableRowSkeleton key={i} columns={7} />)
-                      ) : topPools.length > 0 ? (
-                        topPools.map((pool, i) => {
+                      ) : filteredPools.length > 0 ? (
+                        filteredPools.map((pool, i) => {
                           const hasLiq = pool.reserve0 > 0n && pool.reserve1 > 0n;
                           return (
                             <tr key={pool.pairAddress} className="border-b border-border/30 hover:bg-muted/20 transition-colors">
@@ -494,7 +519,7 @@ export default function Analytics() {
                           );
                         })
                       ) : (
-                        <tr><td colSpan={7} className="py-8 text-center text-muted-foreground text-sm">No pools found on-chain</td></tr>
+                        <tr><td colSpan={7} className="py-8 text-center text-muted-foreground text-sm">{poolSearch ? 'No pools match your search.' : 'No pools found on-chain.'}</td></tr>
                       )}
                     </tbody>
                   </table>
@@ -555,10 +580,16 @@ export default function Analytics() {
                       Live pool Swap events; one transaction can emit multiple events
                     </p>
                   </div>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-success/20 text-success shrink-0">
-                    {swapLogs.length} pool events
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                    {swapLogs.length} indexed events
                   </span>
                 </div>
+
+                {!volumeScanComplete && (
+                  <p role="status" className="mb-3 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    Activity scan is partial or still running. Event totals and volume may not cover the full recent block window.
+                  </p>
+                )}
 
                 {volLoading && swapLogs.length === 0 ? (
                   <div className="space-y-2">
@@ -566,7 +597,7 @@ export default function Analytics() {
                   </div>
                 ) : swapLogs.length === 0 ? (
                   <div className="py-10 text-center text-muted-foreground text-sm">
-                    No recent swap activity detected on-chain
+                    {volumeScanComplete ? 'No swap events found in the scanned block window.' : 'No swap events are available yet; the block scan is incomplete.'}
                   </div>
                 ) : (
                   <div className="overflow-x-auto -mx-4 md:mx-0">
@@ -581,7 +612,7 @@ export default function Analytics() {
                         </tr>
                       </thead>
                       <tbody>
-                        {swapLogs.slice(0, 50).map((log, i) => (
+                        {visibleActivity.map((log, i) => (
                           <motion.tr
                             key={`${log.txHash}-${i}`}
                             initial={{ opacity: 0, x: -8 }}
@@ -630,6 +661,22 @@ export default function Analytics() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+                {activityPageCount > 1 && (
+                  <div className="mt-4 flex flex-col gap-3 border-t border-border/40 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Showing {safeActivityPage * activityPageSize + 1}–{Math.min((safeActivityPage + 1) * activityPageSize, swapLogs.length)} of {swapLogs.length} indexed events
+                    </p>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => setActivityPage(page => Math.max(0, page - 1))} disabled={safeActivityPage === 0}>
+                        Previous
+                      </Button>
+                      <span className="min-w-16 text-center text-xs text-muted-foreground">{safeActivityPage + 1} / {activityPageCount}</span>
+                      <Button variant="outline" size="sm" onClick={() => setActivityPage(page => Math.min(activityPageCount - 1, page + 1))} disabled={safeActivityPage >= activityPageCount - 1}>
+                        Next
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
