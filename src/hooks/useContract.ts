@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useWriteContract, useWaitForTransactionReceipt, useReadContract, useReadContracts, useAccount, useChainId } from 'wagmi';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import { parseEther, formatEther, parseUnits, formatUnits, encodeFunctionData } from 'viem';
 import { getContracts } from '@/config/contracts';
 import { QMS_CHAIN_ID } from '@/config/chains';
@@ -12,6 +14,36 @@ function writeOnQms(writeContract: (request: any) => void, chainId: number, requ
     return;
   }
   writeContract(request);
+}
+
+export function useRefreshWalletBalances() {
+  const queryClient = useQueryClient();
+
+  return useCallback((walletAddress?: `0x${string}`) => {
+    const targetAddress = walletAddress?.toLowerCase();
+    const matchesAddress = (value: unknown) =>
+      !targetAddress || (typeof value === 'string' && value.toLowerCase() === targetAddress);
+    const matchesBalanceOf = (value: unknown) => {
+      if (!value || typeof value !== 'object') return false;
+      const contract = value as { functionName?: unknown; args?: unknown[] };
+      return contract.functionName === 'balanceOf' &&
+        (!targetAddress || (Array.isArray(contract.args) && matchesAddress(contract.args[0])));
+    };
+
+    return queryClient.invalidateQueries({
+      predicate: ({ queryKey }) => {
+        const [scope, rawFilters] = queryKey;
+        if (!rawFilters || typeof rawFilters !== 'object') return false;
+        const filters = rawFilters as { address?: unknown; functionName?: unknown; args?: unknown[]; contracts?: unknown[] };
+
+        if (scope === 'balance') return matchesAddress(filters.address);
+        if (scope === 'readContract') return matchesBalanceOf(filters);
+        if (scope === 'readContracts') return Array.isArray(filters.contracts) && filters.contracts.some(matchesBalanceOf);
+        return false;
+      },
+      refetchType: 'all',
+    });
+  }, [queryClient]);
 }
 
 // ============= ROUTER HOOKS =============

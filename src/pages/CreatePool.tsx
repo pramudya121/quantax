@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TokenSelector } from '@/components/swap/TokenSelector';
 import { getTokenList, TokenInfo, getContracts } from '@/config/contracts';
-import { useFactory, useGetPair, useApprove, useTokenAllowance, useTokenBalance, useRouter } from '@/hooks/useContract';
+import { useFactory, useGetPair, useApprove, useTokenAllowance, useTokenBalance, useRouter, useRefreshWalletBalances } from '@/hooks/useContract';
 import { MovingBorder } from '@/components/ui/aceternity/MovingBorder';
 import { BackgroundGradient } from '@/components/ui/aceternity/BackgroundGradient';
 import { Spotlight } from '@/components/ui/magic/Spotlight';
@@ -21,6 +21,7 @@ const NATIVE_GAS_RESERVE = 0.01;
 
 export default function CreatePool() {
   const { address, isConnected } = useAccount();
+  const refreshWalletBalances = useRefreshWalletBalances();
   const chainId = useChainId();
   const C = getContracts(chainId);
   const tokenList = getTokenList(chainId);
@@ -110,6 +111,7 @@ export default function CreatePool() {
       });
       // Refetch pair after creation
       setTimeout(() => refetchPair(), 2000);
+      void refreshWalletBalances(address);
       
       if (needsApprovalA || needsApprovalB) {
         setStep('approve');
@@ -117,7 +119,7 @@ export default function CreatePool() {
         setStep('add-liquidity');
       }
     }
-  }, [factory.isSuccess, factory.hash]);
+  }, [factory.isSuccess, factory.hash, address, refreshWalletBalances]);
 
   // After approval A
   useEffect(() => {
@@ -149,8 +151,9 @@ export default function CreatePool() {
         },
       });
       setStep('done');
+      void refreshWalletBalances(address);
     }
-  }, [router.isSuccess, router.hash]);
+  }, [router.isSuccess, router.hash, refreshWalletBalances, address]);
 
   // Watch router error
   useEffect(() => {

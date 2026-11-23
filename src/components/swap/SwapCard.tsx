@@ -10,7 +10,7 @@ import { Slider } from '@/components/ui/slider';
 import { TokenSelector } from './TokenSelector';
 import { PriceImpactWarning } from './PriceImpactWarning';
 import { getTokenList, TokenInfo, getContracts } from '@/config/contracts';
-import { useRouter, useApprove, useTokenBalance, useTokenAllowance, useGetPair, usePairReserves, usePairTokens, useWETH, useRouterWETH } from '@/hooks/useContract';
+import { useRouter, useApprove, useTokenBalance, useTokenAllowance, useGetPair, usePairReserves, usePairTokens, useWETH, useRouterWETH, useRefreshWalletBalances } from '@/hooks/useContract';
 import { useBestRoute } from '@/hooks/useSwapRouter';
 import { RouteComparison } from './RouteComparison';
 import { useWallet } from '@/hooks/useWallet';
@@ -25,6 +25,7 @@ import { cn } from '@/lib/utils';
 
 export function SwapCard() {
   const { address, isConnected } = useAccount();
+  const refreshWalletBalances = useRefreshWalletBalances();
   const { isCorrectNetwork, switchToQMS } = useWallet();
 
   const chainId = useChainId();
@@ -236,8 +237,9 @@ export function SwapCard() {
       });
       setFromAmount('');
       setToAmount('');
+      void refreshWalletBalances(address);
     }
-  }, [router.isSuccess, router.hash, processedHash, lastSwapParams, fromAmount, toAmount, fromToken, toToken, addTransaction]);
+  }, [router.isSuccess, router.hash, processedHash, lastSwapParams, fromAmount, toAmount, fromToken, toToken, addTransaction, refreshWalletBalances, address]);
 
   // Watch for wrap/unwrap success
   useEffect(() => {
@@ -264,8 +266,9 @@ export function SwapCard() {
       });
       setFromAmount('');
       setToAmount('');
+      void refreshWalletBalances(address);
     }
-  }, [weth.isSuccess, weth.hash, processedHash, lastSwapParams, fromAmount, toAmount, fromToken, toToken, isWrapping, addTransaction]);
+  }, [weth.isSuccess, weth.hash, processedHash, lastSwapParams, fromAmount, toAmount, fromToken, toToken, isWrapping, addTransaction, refreshWalletBalances, address]);
 
   // Watch for errors with decoded revert reasons
   useEffect(() => {

@@ -8,7 +8,7 @@ import { parseEther, formatEther, parseUnits, formatUnits } from 'viem';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTokenBalance, useRouter, useApprove, useTokenAllowance, useGetPair, usePairReserves, useApprovePair, usePairBalance, usePairAllowance, usePairTokens, usePairTotalSupply, useRouterWETH, useFactory } from '@/hooks/useContract';
+import { useTokenBalance, useRouter, useApprove, useTokenAllowance, useGetPair, usePairReserves, useApprovePair, usePairBalance, usePairAllowance, usePairTokens, usePairTotalSupply, useRouterWETH, useFactory, useRefreshWalletBalances } from '@/hooks/useContract';
 import { useTransactionHistory } from '@/components/history/TransactionHistory';
 import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
 import { TokenSelector } from '@/components/swap/TokenSelector';
@@ -30,6 +30,7 @@ const NATIVE_GAS_RESERVE = 0.01;
 
 export default function Liquidity() {
   const { address, isConnected } = useAccount();
+  const refreshWalletBalances = useRefreshWalletBalances();
   const { isCorrectNetwork, switchToQMS } = useWallet();
   const { addTransaction } = useTransactionHistory();
   const { data: routerWETH } = useRouterWETH();
@@ -285,8 +286,9 @@ export default function Liquidity() {
       setAmountB('');
       refetchLpBalance();
       refetchLpAllowance();
+      void refreshWalletBalances(address);
     }
-  }, [router.isSuccess, router.hash, activeTab, refetchLpBalance, refetchLpAllowance]);
+  }, [router.isSuccess, router.hash, activeTab, refetchLpBalance, refetchLpAllowance, refreshWalletBalances, address]);
 
   // Watch router error
   useEffect(() => {
