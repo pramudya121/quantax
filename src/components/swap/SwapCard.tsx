@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDownUp, Settings, Loader2, ExternalLink, Check, Info, X, Flame, Wallet, RotateCw, Route, Zap, Clock, ChevronDown, RefreshCw, Sparkles } from 'lucide-react';
 import { useAccount, useBalance } from 'wagmi';
@@ -48,6 +48,7 @@ export function SwapCard() {
   const [autoSlippage, setAutoSlippage] = useState(true);
   const [processedHash, setProcessedHash] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(false);
+  const handleSwapRef = useRef<(() => Promise<void>) | null>(null);
 
   const NATIVE_GAS_RESERVE = 0.01;
 
@@ -194,7 +195,7 @@ export function SwapCard() {
       });
       setTimeout(() => refetchAllowance(), 1500);
     }
-  }, [approveSuccess, approveHash, fromToken, refetchAllowance]);
+  }, [approveSuccess, approveHash, fromToken, refetchAllowance, addTransaction]);
 
   // Watch for approval errors
   useEffect(() => {
@@ -284,12 +285,12 @@ export function SwapCard() {
           duration: config.duration,
           action: parsed.canRetry && lastSwapParams ? {
             label: 'Retry',
-            onClick: () => handleSwap(),
+            onClick: () => { void handleSwapRef.current?.(); },
           } : undefined,
         });
       }
     }
-  }, [router.error]);
+  }, [router.error, lastSwapParams]);
 
   useEffect(() => {
     if (weth.error) {
@@ -308,7 +309,7 @@ export function SwapCard() {
           duration: config.duration,
           action: parsed.canRetry ? {
             label: 'Retry',
-            onClick: () => handleSwap(),
+            onClick: () => { void handleSwapRef.current?.(); },
           } : undefined,
         });
       }
@@ -317,13 +318,18 @@ export function SwapCard() {
 
   // Record pending swap transaction
   useEffect(() => {
-    if (router.isPending && router.hash) {
+    if (router.isPending && router.hash && lastSwapParams) {
       addTransaction({
         hash: router.hash, type: 'swap', status: 'pending',
-        details: { fromToken: fromToken?.symbol, toToken: toToken?.symbol, fromAmount, toAmount },
+        details: {
+          fromToken: lastSwapParams.fromToken.symbol,
+          toToken: lastSwapParams.toToken.symbol,
+          fromAmount: lastSwapParams.from,
+          toAmount: lastSwapParams.to,
+        },
       });
     }
-  }, [router.isPending, router.hash]);
+  }, [router.isPending, router.hash, lastSwapParams, addTransaction]);
 
   // For wrap/unwrap, output = input (1:1 ratio)
   useEffect(() => {
@@ -438,6 +444,8 @@ export function SwapCard() {
       router.swapExactTokensForTokens(amountIn!, minOutput, swapPath, address, deadline);
     }
   }, [address, fromToken, toToken, fromAmount, toAmount, isWrapUnwrap, isWrapping, amountsOut, slippage, swapPath, amountIn, wethAddress, cooldown, fromBalance, needsApproval, allowance, hasLiquidity, router, weth]);
+
+  handleSwapRef.current = handleSwap;
 
   const handleApprove = async () => {
     if (!fromToken || fromToken.isNative || !amountIn) return;
