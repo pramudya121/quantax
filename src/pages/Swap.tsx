@@ -66,8 +66,8 @@ export default function Swap() {
           </div>
         </header>
 
-        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
-          <section aria-label="Token swap" className="w-full">
+        <div className="grid min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10">
+          <section aria-label="Token swap" className="min-w-0 w-full">
             <SwapCard />
           </section>
 
