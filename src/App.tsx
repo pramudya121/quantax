@@ -36,9 +36,9 @@ const queryClient = new QueryClient({
       // Snappier page transitions: serve cached data instantly while
       // background refetch keeps things fresh. gcTime keeps queries alive
       // across route changes so navigating back is instant.
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-      refetchOnMount: false,
+      staleTime: 15_000,
+      gcTime: 10 * 60_000,
+      refetchOnMount: true,
       refetchOnReconnect: 'always',
     },
   },
