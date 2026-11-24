@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, CheckCircle, Loader2, XCircle, ExternalLink, ArrowRightLeft, Plus, Minus, Trash2, Sparkles } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import { useTransactionHistory, type Transaction } from '@/components/history/TransactionHistory';
+import { useTransactionHistory, type Transaction } from '@/hooks/useTransactionHistory';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 

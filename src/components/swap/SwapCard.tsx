@@ -19,7 +19,7 @@ import { parseTransactionError, getErrorToastConfig } from '@/lib/transactionErr
 import { sanitizeAmountInput, sanitizeSlippage, getSafeDeadline, calculateMinOutput, getSafeApprovalAmount, needsTokenApproval, validatePreTx } from '@/lib/inputValidation';
 import { WalletConnectModal } from '@/components/wallet/WalletConnectModal';
 import { SwapConfirmModal } from './SwapConfirmModal';
-import { useTransactionHistory } from '@/components/history/TransactionHistory';
+import { useTransactionHistory } from '@/hooks/useTransactionHistory';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
