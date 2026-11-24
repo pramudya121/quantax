@@ -151,12 +151,15 @@ export function QuantaBot() {
   const tts = useTextToSpeech();
   const portfolio = useWalletPortfolio();
 
-  // Persist messages
-  useEffect(() => { saveMessages(messages); }, [messages]);
+  // Batch synchronous storage writes so streamed tokens stay responsive.
+  useEffect(() => {
+    const timeout = window.setTimeout(() => saveMessages(messages), 250);
+    return () => window.clearTimeout(timeout);
+  }, [messages]);
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+      scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'auto' });
     }
   }, [messages]);
 
@@ -205,7 +208,9 @@ export function QuantaBot() {
       setMessages(prev => {
         const last = prev[prev.length - 1];
         if (last?.role === 'assistant') {
-          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantSoFar } : m);
+          const next = [...prev];
+          next[next.length - 1] = { ...last, content: assistantSoFar };
+          return next;
         }
         return [...prev, { role: 'assistant', content: assistantSoFar }];
       });

@@ -28,13 +28,20 @@ export function prefetchRoute(path: string) {
   loader().catch(() => warmed.delete(path));
 }
 
-// Idle-warm the top routes after the app boots so the first hover is instant.
+// Warm only the most-used route when the browser is idle and the connection
+// can afford it. Other pages are prefetched on navigation intent in the header.
 export function warmCriticalRoutes() {
-  const idle = (cb: () => void) =>
-    (typeof window !== 'undefined' && 'requestIdleCallback' in window)
-      ? (window as any).requestIdleCallback(cb, { timeout: 2000 })
-      : setTimeout(cb, 1200);
-  idle(() => {
-    ['/swap', '/liquidity', '/pools', '/analytics', '/portfolio'].forEach(prefetchRoute);
-  });
+  if (typeof window === 'undefined') return;
+
+  const connection = (navigator as Navigator & {
+    connection?: { saveData?: boolean; effectiveType?: string };
+  }).connection;
+  if (connection?.saveData || connection?.effectiveType?.includes('2g')) return;
+
+  const warmSwap = () => prefetchRoute('/swap');
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(warmSwap, { timeout: 2000 });
+  } else {
+    window.setTimeout(warmSwap, 1200);
+  }
 }

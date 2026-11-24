@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowRightLeft, ExternalLink, History, Loader2, CheckCircle, XCircle, Inbox } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
-import { useTransactionHistory, Transaction } from '@/components/history/TransactionHistory';
+import { useTransactionHistory, type Transaction } from '@/hooks/useTransactionHistory';
 import { cn } from '@/lib/utils';
 
 const EXPLORER = 'https://testnet.qmsscan.io/tx/';

@@ -35,8 +35,6 @@ export async function streamChat({
       signal: controller.signal,
     });
 
-    clearTimeout(timeout);
-
     if (resp.status === 429) {
       onError("Rate limit exceeded. Please wait a moment and try again. 🐉");
       return;
@@ -99,6 +97,7 @@ export async function streamChat({
     }
 
     // Flush remaining buffer
+    textBuffer += decoder.decode();
     if (textBuffer.trim()) {
       for (let raw of textBuffer.split("\n")) {
         if (!raw) continue;
@@ -125,12 +124,13 @@ export async function streamChat({
 
     onDone();
   } catch (e: any) {
-    clearTimeout(timeout);
     if (e?.name === 'AbortError') {
       onError("Request timed out. QuantaBot is busy, please try again. 🐉");
     } else {
       console.error("[QuantaBot. Stream error:", e?.message || e);
       onError("Connection lost. Please try again.");
     }
+  } finally {
+    clearTimeout(timeout);
   }
 }

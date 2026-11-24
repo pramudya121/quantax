@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTokenBalance, useRouter, useApprove, useTokenAllowance, useGetPair, usePairReserves, useApprovePair, usePairBalance, usePairAllowance, usePairTokens, usePairTotalSupply, useRouterWETH, useFactory, useRefreshWalletBalances } from '@/hooks/useContract';
-import { useTransactionHistory } from '@/components/history/TransactionHistory';
+import { useTransactionHistory } from '@/hooks/useTransactionHistory';
 import { getContracts, getTokenList, TokenInfo } from '@/config/contracts';
 import { TokenSelector } from '@/components/swap/TokenSelector';
 import { TextGenerateEffect } from '@/components/ui/aceternity/TextGenerateEffect';
